@@ -15,3 +15,20 @@ h2 { font-weight: 600; }
 main { padding-bottom: 3rem; }
 button, select { font: inherit; color: inherit; }
 .site-foot { background: var(--frame); border-top: 1px solid var(--rule); color: var(--slate); font-size: .85rem; padding: 1.2rem 0; }
+
+/* the US map at the top of the page */
+.us-lede { font-size: 1.1rem; margin: 0 0 1rem; }
+.us-map { position: relative; width: 100%; }
+.us-map img { display: block; width: 100%; height: auto; }
+.us-hot { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.us-hot path { fill: transparent; stroke: transparent; stroke-width: 6; cursor: pointer; pointer-events: all; transition: fill .15s, stroke .15s; }
+.us-hot path:hover, .us-hot path:focus-visible { fill: rgba(255,255,255,.25); stroke: #222; outline: none; }
+.us-hot path.active { stroke: #222; }
+.us-hot circle.city { fill: transparent; stroke: transparent; stroke-width: 5; cursor: pointer; pointer-events: all; transition: stroke .15s; }
+.us-hot circle.city:hover, .us-hot circle.city:focus-visible, .us-hot circle.city.active { stroke: #222; outline: none; }
+.us-hot :focus:not(:focus-visible) { outline: none; }
+.us-cap { font-size: .9rem; color: var(--slate); margin: .5rem 0 1.2rem; }
+.us-key { margin: 0 0 1.5rem; }
+.us-key img { display: block; width: 100%; height: auto; }
+.us-key figcaption { font-size: .8rem; color: var(--slate); }
+h2.ap-name { font-size: 1.7rem; margin: 1rem 0 .4rem; padding-top: 1rem; border-top: 1px solid var(--rule); scroll-margin-top: .5rem; }

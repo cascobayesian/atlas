@@ -10,7 +10,10 @@
   const root = document.getElementById("ap"), qp = new URLSearchParams(location.search).get("place");
   // where the data lives: data/ next to the page, or another host (e.g. a Cloudflare R2 bucket) set on #ap's data-data
   const DATA = root.dataset.data || "data/";
-  const base = qp && /^[a-z_]+$/.test(qp) ? `${DATA}${qp}/` : root.dataset.base;
+  // no place chosen: the page is just the US map (assets/us_map.js); clicking a place reloads with ?place=<key>
+  if (!(qp && /^[a-z_]+$/.test(qp))) return;
+  const base = `${DATA}${qp}/`;
+  root.hidden = false; document.getElementById("ap-name").hidden = false;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const lum = c => { const n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255].map(v => (v / 255) ** 2.2).reduce((s, x, i) => s + [0.2126, 0.7152, 0.0722][i] * x, 0); };
   const ink = c => lum(c) > 0.32 ? "#111" : "#fff";
@@ -41,7 +44,7 @@
     const sel = document.getElementById("ap-place"); if (!sel || !list.length) return;
     const cur = base.match(/([a-z_]+)\/$/)[1];
     sel.innerHTML = list.map(p => `<option value="${p.key}"${p.key === cur ? " selected" : ""}>${esc(p.title)}</option>`).join("");
-    sel.addEventListener("change", () => { const u = new URL(location.href); u.searchParams.set("place", sel.value); location.href = u.href; });
+    sel.addEventListener("change", () => { const u = new URL(location.href); u.searchParams.set("place", sel.value); u.hash = "ap-name"; location.href = u.href; });
   }).catch(() => {});
   const J = f => fetch(base + f).then(r => { if (!r.ok) throw new Error(f + " " + r.status); return r.json(); });
   Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json")]).then(([D, G, PF, HJ]) => {
@@ -50,7 +53,8 @@
     document.getElementById("ap-sub").textContent = `${N.toLocaleString()} ${D.unit}, ${D.n_q} ballot questions and races, ${D.blocs.length} voting blocs.`;
     document.querySelector('[data-tab="unit"]').textContent = UnitWord + " profile";
     document.title = D.title + " · Atlas of US Voting Blocs";
-    const h1 = document.querySelector("h1.title"); if (h1) h1.textContent = D.title;
+    document.getElementById("ap-name").textContent = D.title;
+    if (location.hash === "#ap-name") requestAnimationFrame(() => document.getElementById("ap-name").scrollIntoView());
     root.querySelectorAll("[data-words]").forEach(el => { el.innerHTML = el.innerHTML.replace(/\bdivisions\b/g, D.unit).replace(/\bdivision\b/g, unitWord)
       .replace(/the city&rsquo;s|the city’s/g, esc(D.title) + "&rsquo;s"); });
     const swatch = (b, cls = "") => `<span class="ap-swatch ${cls}" style="background:${b.color};color:${ink(b.color)}">${b.b}</span>`;
