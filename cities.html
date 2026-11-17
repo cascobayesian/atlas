@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cities · Atlas of Voting Blocs</title>
+<meta name="description" content="Voting blocs in 22 US cities, inferred from precinct-level ballot questions and races.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css">
+<link rel="stylesheet" href="assets/bloc_profiles.css">
+<link rel="stylesheet" href="assets/atlas_heatmap.css">
+<link rel="stylesheet" href="assets/atlas.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>try { if (sessionStorage.getItem("atlas-scroll") && /[?&]place=/.test(location.search)) document.documentElement.classList.add("restoring"); } catch (e) {}</script>
+<style>.restoring body { visibility: hidden; }</style>
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="site-name" href="./">Atlas of Voting Blocs</a>
+    <nav class="site-nav" aria-label="Sections"><a href="us.html">United States</a><a href="cities.html" aria-current="page">Cities</a><a href="world.html">World</a></nav>
+    <a class="site-home" href="https://cascobayesian.github.io/">Jack O&rsquo;Brien &middot; Bowdoin College</a>
+  </div>
+</header>
+<main class="wrap">
+<h1 class="title">Cities</h1>
+<p class="us-lede">Twenty-two American cities, each drawn on its own, in the atlas&rsquo;s national colors. Click a city to explore its blocs.</p>
+<section class="city-grid" id="us">
+  <figure data-state="portland" tabindex="0" role="button" aria-label="Show Portland"><img src="assets/cities/portland.png" width="600" height="600" alt="Voting blocs of Portland" loading="lazy"><figcaption>Portland</figcaption></figure>
+  <figure data-state="sf" tabindex="0" role="button" aria-label="Show San Francisco"><img src="assets/cities/sf.png" width="600" height="600" alt="Voting blocs of San Francisco" loading="lazy"><figcaption>San Francisco</figcaption></figure>
+  <figure data-state="seattle" tabindex="0" role="button" aria-label="Show Seattle"><img src="assets/cities/seattle.png" width="600" height="600" alt="Voting blocs of Seattle" loading="lazy"><figcaption>Seattle</figcaption></figure>
+  <figure data-state="la_county" tabindex="0" role="button" aria-label="Show Los Angeles"><img src="assets/cities/la_county.png" width="600" height="600" alt="Voting blocs of Los Angeles" loading="lazy"><figcaption>Los Angeles</figcaption></figure>
+  <figure data-state="san_diego" tabindex="0" role="button" aria-label="Show San Diego"><img src="assets/cities/san_diego.png" width="600" height="600" alt="Voting blocs of San Diego" loading="lazy"><figcaption>San Diego</figcaption></figure>
+  <figure data-state="slc" tabindex="0" role="button" aria-label="Show Salt Lake City"><img src="assets/cities/slc.png" width="600" height="600" alt="Voting blocs of Salt Lake City" loading="lazy"><figcaption>Salt Lake City</figcaption></figure>
+  <figure data-state="phoenix_tucson" tabindex="0" role="button" aria-label="Show Phoenix &amp; Tucson"><img src="assets/cities/phoenix_tucson.png" width="600" height="600" alt="Voting blocs of Phoenix &amp; Tucson" loading="lazy"><figcaption>Phoenix &amp; Tucson</figcaption></figure>
+  <figure data-state="denver" tabindex="0" role="button" aria-label="Show Denver"><img src="assets/cities/denver.png" width="600" height="600" alt="Voting blocs of Denver" loading="lazy"><figcaption>Denver</figcaption></figure>
+  <figure data-state="austin" tabindex="0" role="button" aria-label="Show Austin"><img src="assets/cities/austin.png" width="600" height="600" alt="Voting blocs of Austin" loading="lazy"><figcaption>Austin</figcaption></figure>
+  <figure data-state="dallas" tabindex="0" role="button" aria-label="Show Dallas"><img src="assets/cities/dallas.png" width="600" height="600" alt="Voting blocs of Dallas" loading="lazy"><figcaption>Dallas</figcaption></figure>
+  <figure data-state="msp" tabindex="0" role="button" aria-label="Show Minneapolis–St. Paul"><img src="assets/cities/msp.png" width="600" height="600" alt="Voting blocs of Minneapolis–St. Paul" loading="lazy"><figcaption>Minneapolis–St. Paul</figcaption></figure>
+  <figure data-state="new_orleans" tabindex="0" role="button" aria-label="Show New Orleans"><img src="assets/cities/new_orleans.png" width="600" height="600" alt="Voting blocs of New Orleans" loading="lazy"><figcaption>New Orleans</figcaption></figure>
+  <figure data-state="chicago" tabindex="0" role="button" aria-label="Show Chicago"><img src="assets/cities/chicago.png" width="600" height="600" alt="Voting blocs of Chicago" loading="lazy"><figcaption>Chicago</figcaption></figure>
+  <figure data-state="atlanta" tabindex="0" role="button" aria-label="Show Atlanta"><img src="assets/cities/atlanta.png" width="600" height="600" alt="Voting blocs of Atlanta" loading="lazy"><figcaption>Atlanta</figcaption></figure>
+  <figure data-state="detroit" tabindex="0" role="button" aria-label="Show Detroit"><img src="assets/cities/detroit.png" width="600" height="600" alt="Voting blocs of Detroit" loading="lazy"><figcaption>Detroit</figcaption></figure>
+  <figure data-state="columbus" tabindex="0" role="button" aria-label="Show Columbus"><img src="assets/cities/columbus.png" width="600" height="600" alt="Voting blocs of Columbus" loading="lazy"><figcaption>Columbus</figcaption></figure>
+  <figure data-state="charlotte" tabindex="0" role="button" aria-label="Show Charlotte"><img src="assets/cities/charlotte.png" width="600" height="600" alt="Voting blocs of Charlotte" loading="lazy"><figcaption>Charlotte</figcaption></figure>
+  <figure data-state="south_florida" tabindex="0" role="button" aria-label="Show South Florida"><img src="assets/cities/south_florida.png" width="600" height="600" alt="Voting blocs of South Florida" loading="lazy"><figcaption>South Florida</figcaption></figure>
+  <figure data-state="dc" tabindex="0" role="button" aria-label="Show Washington, DC"><img src="assets/cities/dc.png" width="600" height="600" alt="Voting blocs of Washington, DC" loading="lazy"><figcaption>Washington, DC</figcaption></figure>
+  <figure data-state="philadelphia" tabindex="0" role="button" aria-label="Show Philadelphia"><img src="assets/cities/philadelphia.png" width="600" height="600" alt="Voting blocs of Philadelphia" loading="lazy"><figcaption>Philadelphia</figcaption></figure>
+  <figure data-state="nyc" tabindex="0" role="button" aria-label="Show New York City"><img src="assets/cities/nyc.png" width="600" height="600" alt="Voting blocs of New York City" loading="lazy"><figcaption>New York City</figcaption></figure>
+  <figure data-state="boston" tabindex="0" role="button" aria-label="Show Boston"><img src="assets/cities/boston.png" width="600" height="600" alt="Voting blocs of Boston" loading="lazy"><figcaption>Boston</figcaption></figure>
+</section>
+<div class="us-foot"><p class="us-cap">Cities inside a covered state show the state&rsquo;s blocs, cut to the city.</p>
+<a class="us-more" href="colors.html">For more about the color scheme &rarr;</a></div>
+<div id="ap-mount"></div>
+</main>
+<footer class="site-foot">
+  <div class="wrap">Blocs from a beta-binomial mixture model of precinct-level ballot questions and races.
+    <a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
+    Basemap &copy; OpenFreeMap, OpenMapTiles, OpenStreetMap.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<script src="assets/panel.js"></script>
+<script src="assets/us_map.js"></script>
+<script src="assets/high_contrast.js"></script>
+<script src="assets/atlas.js"></script>
+</body>
+</html>

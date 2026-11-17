@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World · Atlas of Voting Blocs</title>
+<meta name="description" content="The Atlas of Voting Blocs beyond the United States.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="site-name" href="./">Atlas of Voting Blocs</a>
+    <nav class="site-nav" aria-label="Sections"><a href="us.html">United States</a><a href="cities.html">Cities</a><a href="world.html" aria-current="page">World</a></nav>
+    <a class="site-home" href="https://cascobayesian.github.io/">Jack O&rsquo;Brien &middot; Bowdoin College</a>
+  </div>
+</header>
+<main class="wrap">
+<h1 class="title">World</h1>
+<p class="us-lede">Voting blocs beyond the United States are on their way. For now, the world in the Equal Earth projection.</p>
+<div class="world"><svg id="world" role="img" aria-label="World map in the Equal Earth projection with country outlines"></svg><div class="wm-tip" id="wm-tip" hidden></div></div>
+<p class="us-cap">Equal Earth projection (&Scaron;avri&ccaron;, Patterson &amp; Jenny, 2018): every country drawn at its true relative size; graticule every 15&deg;. Boundaries: Natural Earth 1:50m.</p>
+</main>
+<footer class="site-foot">
+  <div class="wrap">Blocs from a beta-binomial mixture model of precinct-level ballot questions and races.
+    <a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
+    Basemap &copy; OpenFreeMap, OpenMapTiles, OpenStreetMap.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="assets/world.js"></script>
+<script>drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip") });</script>
+</body>
+</html>

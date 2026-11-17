@@ -1,4 +1,5 @@
-// The US map at the top of the atlas: click (or Enter/Space on) a state or point to open that place's panels below.
+// Picking a place: the US map's states and points (us.html) or a city tile (cities.html); click or Enter/Space opens
+// that place's panels below.
 // Opening a place reloads the page with ?place=<key>. To make that feel like one motion rather than a jump, the click
 // saves the scroll position; the new page comes back at that position (kept hidden until then, so the browser goes on
 // showing the old one), and once the place has drawn, atlas.js calls glide() to ease down to its panels.
@@ -7,6 +8,7 @@
   const store = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} };
   const read = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
   const params = new URLSearchParams(location.search), cur = params.get("place");
+  const PICK = ".us-hot [data-state], .city-grid [data-state]";   // the US map's states and points; the Cities page's tiles
 
   // open a place, remembering where we are
   const open = key => {
@@ -20,7 +22,8 @@
   if (cur) {                                     // unhide the (still empty) panel first, so the page is tall enough
     const ap = document.getElementById("ap"), hd = document.getElementById("ap-head"), nm = document.getElementById("ap-name");
     if (ap) ap.hidden = false; if (hd) hd.hidden = false;
-    const t = document.querySelector(`.us-hot [data-state="${cur}"] title`);     // the name now; atlas.js confirms it
+    const el = document.querySelector(`${PICK.split(",").map(s => s.trim() + `[data-state="${cur}"]`).join(",")}`);
+    const t = el && (el.querySelector("title, figcaption") || null);       // the name now; atlas.js confirms it
     if (nm && t && !nm.textContent) nm.textContent = t.textContent;
   }
   if (saved != null && cur) { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; scrollTo(0, +saved); }
@@ -53,12 +56,11 @@
   // on arrival at a place, start down to it at once: the panels load, draw and fade in during and after the glide
   if (cur && document.getElementById("ap-head")) requestAnimationFrame(() => window.atlasGlide(document.getElementById("ap-head")));
 
-  document.querySelectorAll(".us-hot [data-state]").forEach(el => {
+  document.querySelectorAll(PICK).forEach(el => {
     const key = el.dataset.state;
     el.classList.toggle("active", key === cur);
     const go = () => {
-      document.querySelectorAll(".us-hot .active").forEach(a => a.classList.remove("active"));
-      document.querySelectorAll(`.us-hot [data-state="${key}"]`).forEach(a => a.classList.add("active"));
+      document.querySelectorAll(PICK).forEach(a => a.classList.toggle("active", a.dataset.state === key));
       open(key);
     };
     el.addEventListener("click", go);

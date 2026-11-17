@@ -1,6 +1,7 @@
 /* page frame for the atlas (matches cascobayesian.github.io's light theme) */
 :root { --ink: #1d2733; --slate: #5d6a76; --accent: #1f5f7a; --frame: #f4f3ef; --paper: #fff; --rule: #e4e2dc; color-scheme: light; }
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* even on elements this sheet makes flex or grid */
 html { font-size: 17px; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; }
 a { color: var(--accent); }
@@ -68,3 +69,53 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 /* room for the place's heading to scroll to the top of the window, and for the restored scroll position on arrival */
 #ap { min-height: calc(100vh - 5.5rem); }
 .details-note { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--slate); font-style: italic; }
+
+/* ---- site navigation ---- */
+.site-nav { display: flex; gap: 1.3rem; align-items: baseline; flex-wrap: wrap; }
+.site-nav a { font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif; font-size: 1rem; font-weight: 500; color: var(--slate); text-decoration: none; padding-bottom: 2px; border-bottom: 2px solid transparent; }
+.site-nav a:hover { color: var(--accent); }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.site-head .wrap { row-gap: .4rem; }
+
+/* ---- landing: three sections ---- */
+.home-lede { font-size: 1.1rem; margin: 0 0 1.6rem; max-width: 46rem; }
+.sections { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; margin-bottom: 1rem; }
+.section-card { display: flex; flex-direction: column; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper);
+                color: var(--ink); text-decoration: none; transition: border-color .15s, box-shadow .2s, transform .2s;
+                animation: card-in .7s cubic-bezier(.2,.7,.2,1) both; }
+.section-card:nth-child(2) { animation-delay: .12s; } .section-card:nth-child(3) { animation-delay: .24s; }
+@keyframes card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.section-card:hover, .section-card:focus-visible { border-color: var(--accent); box-shadow: 0 6px 22px rgba(29,39,51,.12); transform: translateY(-2px); outline: none; }
+.card-pic { aspect-ratio: 16 / 10; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--rule); }
+.card-pic img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.card-pic.us img { object-fit: cover; }
+.card-pic.world img { width: 92%; height: auto; }
+.card-cities { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem 1rem; width: 88%; }
+.card-cities img { aspect-ratio: 1; object-fit: contain; }
+.card-text { padding: .9rem 1.1rem 1.1rem; display: flex; flex-direction: column; flex: 1; }
+.card-text h2 { margin: 0 0 .25rem; font-size: 1.3rem; }
+.card-text p { margin: 0; color: var(--slate); font-size: .92rem; line-height: 1.45; }
+.card-text .go { display: inline-block; margin-top: auto; padding-top: .7rem; color: var(--accent); font-weight: 500; font-size: .9rem; }
+@media (max-width: 860px) { .sections { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .section-card { animation: none; } }
+
+/* ---- cities grid ---- */
+.city-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1.2rem 1rem; margin: 1rem 0 1rem; align-items: start; }
+.city-grid figure { margin: 0; cursor: pointer; border-radius: 6px; padding: .3rem; transition: background .15s; }
+.city-grid img { display: block; width: 100%; aspect-ratio: 1; height: auto; }
+.city-grid figcaption { text-align: center; font-weight: 600; font-size: .95rem; line-height: 1.25; margin-top: .4rem; }
+.city-grid figure:hover, .city-grid figure:focus-visible, .city-grid figure.active { background: #eef1f3; outline: none; }
+.city-grid figure.active figcaption { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+@media (min-width: 1101px) { .city-grid figure:nth-child(17) { grid-column-start: 2; } }
+@media (max-width: 1100px) { .city-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 600px) { .city-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ---- world map ---- */
+.world { position: relative; }
+.world svg { display: block; width: 100%; height: auto; }
+.wm-sphere { fill: #a9d0e6; } .wm-grat { fill: none; stroke: #d6e9f3; stroke-width: .7; }
+.wm-land { fill: #fbfbf7; stroke: #7d8a8f; stroke-width: .45; stroke-linejoin: round; }
+.world .wm-land:hover { fill: #f0c95a; }
+.wm-edge { fill: none; stroke: #1b2f3a; stroke-width: 1.2; }
+.wm-tip { position: absolute; pointer-events: none; font-size: 12px; background: var(--paper); border: 1px solid #7d8a8f; padding: 2px 7px; border-radius: 3px;
+          white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); }
