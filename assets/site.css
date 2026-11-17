@@ -67,3 +67,4 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 @media (prefers-reduced-motion: reduce) { #ap.ap-enter .ap-top, #ap.ap-enter .ap-grid { animation: none; } }
 /* room for the place's heading to scroll to the top of the window, and for the restored scroll position on arrival */
 #ap { min-height: calc(100vh - 5.5rem); }
+.details-note { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--slate); font-style: italic; }
