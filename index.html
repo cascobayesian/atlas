@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas of US Voting Blocs</title>
+<meta name="description" content="Voting blocs in 38 US states and cities, inferred from precinct-level ballot questions and races with a beta-binomial mixture model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css">
+<link rel="stylesheet" href="assets/bloc_profiles.css">
+<link rel="stylesheet" href="assets/atlas_heatmap.css">
+<link rel="stylesheet" href="assets/atlas.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="site-name" href="./">Atlas of US Voting Blocs</a>
+    <a class="site-home" href="https://cascobayesian.github.io/">Jack O&rsquo;Brien &middot; Bowdoin College</a>
+  </div>
+</header>
+<main class="wrap">
+<h1 class="title">Philadelphia</h1>
+<section class="ap-panel" id="ap" data-data="data/" data-base="data/philadelphia/">
+  <div class="ap-top"><p class="ap-sub" id="ap-sub"></p><label class="ap-pick">Place <select id="ap-place" aria-label="Choose a place"></select></label></div>
+  <div class="ap-grid">
+    <div class="ap-col">
+      <div class="ap-title">PCA <button type="button" class="ap-enlarge" data-target="pca" aria-label="Enlarge the PCA plot" title="Enlarge">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5l-5 5M6.5 13.5h-4v-4M2.5 13.5l5-5"/></svg></button></div>
+      <div data-slot="pca"><div class="ap-pca" id="ap-pca"><button type="button" class="ap-play" aria-label="Pause rotation" title="Pause rotation">&#10074;&#10074;</button></div></div>
+      <p class="ap-cap" id="ap-pca-cap"></p>
+    </div>
+    <div class="ap-col">
+      <div class="ap-title">Blocs</div>
+      <ol class="ap-blocs" id="ap-blocs"></ol>
+    </div>
+    <div class="ap-col">
+      <div class="ap-title">Map <button type="button" class="ap-enlarge" data-target="map" aria-label="Enlarge the map" title="Enlarge">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5l-5 5M6.5 13.5h-4v-4M2.5 13.5l5-5"/></svg></button></div>
+      <div data-slot="map"><div class="ap-map" id="ap-map"></div></div>
+      <p data-words class="ap-cap">Scroll or pinch to zoom, drag to pan. Click a division for its profile.</p>
+    </div>
+    <div class="ap-col">
+      <div class="ap-title">Data</div>
+      <div class="ap-heat-thumb" id="ap-heat-thumb" tabindex="0" role="button" aria-label="Open the referendum heatmap"></div>
+      <p data-words class="ap-cap">Every ballot question and race: divisions as rows, grouped by bloc; questions as columns.</p>
+    </div>
+  </div>
+  <div class="ap-subpanel" id="ap-subpanel">
+    <div class="ap-tabs" role="tablist" aria-label="Subpanels">
+      <button type="button" role="tab" data-tab="demog">Demographics</button>
+      <button type="button" role="tab" data-tab="bloc">Bloc profile</button>
+      <button type="button" role="tab" data-tab="unit">Division profile</button>
+      <button type="button" role="tab" data-tab="heat">Heatmap</button>
+      <button type="button" class="ap-sub-close" aria-label="Close subpanel">&times;</button>
+    </div>
+    <div data-pane="demog" role="tabpanel" hidden></div>
+    <div data-pane="bloc" role="tabpanel" hidden></div>
+    <div data-pane="unit" role="tabpanel" hidden></div>
+    <div data-pane="heat" role="tabpanel" hidden>
+      <p data-words class="ap-hint">Hover for the question, the division and its bloc&rsquo;s and the city&rsquo;s averages; click to pin. Hovering a division on either map or in the PCA marks its row here.</p>
+      <div class="ap-heat-wrap"><div class="ap-heat-plot"></div>
+        <figure class="ap-mini"><div class="ap-mini-map"></div><figcaption class="ap-mini-name">&nbsp;</figcaption></figure></div>
+    </div>
+  </div>
+</section>
+<dialog class="ap-big" id="ap-big" aria-labelledby="ap-big-title">
+  <header><h2 id="ap-big-title"></h2><button type="button" class="ap-big-close" aria-label="Close">&times;</button></header>
+  <div class="ap-big-body"><div class="ap-big-slot"></div><div class="ap-big-mapbox" hidden><div class="ap-big-map"></div><div class="ap-big-stat" hidden></div></div>
+    <div class="ap-big-side"><div class="ap-big-key" hidden></div><ol class="ap-blocs ap-big-blocs"></ol><div class="ap-big-profile" hidden></div></div></div>
+</dialog>
+<div class="ap-tip" id="ap-tip" hidden></div>
+</main>
+<footer class="site-foot">
+  <div class="wrap">Blocs from a beta-binomial mixture model of precinct-level ballot questions and races.
+    <a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
+    Basemap &copy; OpenFreeMap, OpenMapTiles, OpenStreetMap.</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<script src="assets/atlas.js"></script>
+</body>
+</html>
