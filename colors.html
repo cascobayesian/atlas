@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Color Scheme · Atlas of US Voting Blocs</title>
+<meta name="description" content="How the Atlas of US Voting Blocs colors every bloc in every place on one scale.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap">
+    <a class="site-name" href="./">Atlas of US Voting Blocs</a>
+    <a class="site-home" href="https://cascobayesian.github.io/">Jack O&rsquo;Brien &middot; Bowdoin College</a>
+  </div>
+</header>
+<main class="wrap prose">
+<p class="back"><a href="./">&larr; Back to the map</a></p>
+<h1 class="title">The color scheme</h1>
+<p class="us-lede">Every bloc in every place is colored by one rule, so a color means the same kind of bloc wherever it appears. A blue bloc in Atlanta and a blue bloc in Seattle voted about the same way; a gold bloc in Phoenix and a gold bloc in Miami are both Latino-plurality blocs that split about evenly. The US map, each place&rsquo;s map, its PCA, its bloc list and its heatmap all use the same colors.</p>
+
+<figure class="us-key"><img src="assets/key.png" width="2400" height="720" alt="Colour key. Three blue-to-red ramps over the Trump 2024 two-party share, from 0 to 100 percent: white, Black and mixed blocs; Asian-plurality blocs fused with green; and Latino-plurality blocs fused with yellow.">
+<figcaption>Every bloc starts on the top ramp, at its Trump 2024 two-party share. Asian- and Latino-plurality blocs take the same position on the ramp below, with the group&rsquo;s color fused in. The dashed line marks an even split.</figcaption></figure>
+
+<h2>The vote: blue to red</h2>
+<p>The starting point is each bloc&rsquo;s share of the two-party vote for Trump in 2024: Trump&rsquo;s votes divided by Trump&rsquo;s and Harris&rsquo;s together. A bloc at 0% would be deep blue, a bloc at 100% deep red, and an even split mid grey.</p>
+<p>The blocs don&rsquo;t spread evenly over that range. They run from about 5% to about 92% Trump, but half of them sit below 36%, and most city blocs fall between 5% and 20%. An evenly spaced ramp would paint nearly every urban bloc the same blue. So the blue half is stretched where the blocs crowd together: the ramp passes from indigo at 4% to bright azure at 10% and only reaches pale sky blue around 30%. Small differences among very Democratic neighborhoods stay visible.</p>
+<p>The middle of the ramp is a mid grey, reached through slate blue on one side and dusty rose on the other, rather than white. A white midpoint would make the most evenly split blocs vanish into the page and into the pale grey of places the atlas doesn&rsquo;t cover. With the grey midpoint they still stand apart from both.</p>
+
+<h2>Asian- and Latino-plurality blocs</h2>
+<p>A bloc&rsquo;s <em>plurality</em> is the largest of four groups among its residents: white, Black, Asian and Latino. When that group is Asian or Latino, the bloc&rsquo;s blue-to-red color is mixed halfway toward a group color, green for Asian and yellow for Latino, and then made more vivid.</p>
+<p>The mixing happens in CIELAB, a color space built so that equal distances look like roughly equal differences to the eye. Mixing there keeps each bloc&rsquo;s left-to-right position readable. Latino-plurality blocs run from sand through gold to orange as the Trump share rises, and Asian-plurality blocs from teal through green to olive. A dark teal bloc and a deep blue bloc both voted heavily Democratic; one is Asian-plurality and the other isn&rsquo;t.</p>
+<p>White-, Black- and mixed-plurality blocs share the plain blue-to-red ramp. Across the atlas there are a few dozen Latino-plurality blocs and seven Asian-plurality ones; every other bloc is on the top ramp.</p>
+
+<h2>Five ethnically specific blocs</h2>
+<p>In a handful of places the model finds a bloc defined less by its vote than by a particular community. These blocs take their own colors, browns and oranges, plus one lime. Each was chosen by a random search to sit clearly apart from every color on the three ramps and from the others.</p>
+<ul class="swatches">
+  <li><span style="background:#AC3A00"></span><div><strong>Hasidic and Orthodox Brooklyn</strong><br>New York City &middot; 87% Trump</div></li>
+  <li><span style="background:#F34F00"></span><div><strong>Cuban-Americans</strong><br>Florida and South Florida &middot; 70% Trump</div></li>
+  <li><span style="background:#82491F"></span><div><strong>East African and Southeast Asian immigrant neighborhoods</strong><br>Minneapolis&ndash;St. Paul, two blocs &middot; 22&ndash;26% Trump</div></li>
+  <li><span style="background:#7A4A1A"></span><div><strong>Native nations</strong><br>New Mexico &middot; 15% Trump</div></li>
+  <li><span style="background:#8DC63F"></span><div><strong>Franco-Americans</strong> (New France)<br>Maine &middot; 57% Trump</div></li>
+</ul>
+<p>These colors don&rsquo;t vary much with the vote: they are 85% the group&rsquo;s own color, so a bloc&rsquo;s identity comes through first. Read the vote share from the bloc list beside each place&rsquo;s map. New Mexico&rsquo;s and Maine&rsquo;s blocs keep the brown and lime from the atlas&rsquo;s earlier race-and-rurality scheme.</p>
+
+<h2>Exceptions</h2>
+<ul>
+  <li><strong>Chicago, Salt Lake City and Utah</strong> are colored by the Trump share in 2020, since that is the most recent presidential race in their data.</li>
+  <li><strong>Utah&rsquo;s</strong> five lighter-red blocs, between about 53% and 76% Trump, keep pinks from the atlas&rsquo;s earlier race-and-rurality scheme.</li>
+  <li><strong>Cities inside a covered state</strong>, such as Denver, Boston, Seattle and Atlanta, show their state&rsquo;s blocs, cut to the city, in the state&rsquo;s colors.</li>
+</ul>
+
+<h2>Reading the colors</h2>
+<ul>
+  <li><strong>Color is about a bloc, not a precinct.</strong> Every precinct or town in a bloc takes the bloc&rsquo;s color, which reflects the bloc&rsquo;s combined vote and makeup. A single precinct can differ from its bloc.</li>
+  <li><strong>Names and numbers are each place&rsquo;s own.</strong> Blocs are numbered within each place, from most Democratic to most Republican. &ldquo;Bloc 3&rdquo; in Columbus has nothing to do with &ldquo;Bloc 3&rdquo; in Dallas, but two blocs of the same color voted alike.</li>
+  <li><strong>The listed vote can differ slightly.</strong> The share printed under each bloc&rsquo;s name in a place&rsquo;s panel comes from that place&rsquo;s own data, which for some places is the 2020 race. It can differ a little from the 2024 share that sets the color.</li>
+  <li><strong>Plurality is a coarse cut.</strong> A bloc that is 35% Latino and 34% white is colored as Latino-plurality. The demographic panels under each place&rsquo;s PCA show the full picture.</li>
+  <li><strong>Color doesn&rsquo;t show certainty.</strong> How firmly a precinct belongs to its bloc isn&rsquo;t encoded in the color.</li>
+</ul>
+<p class="back"><a href="./">&larr; Back to the map</a></p>
+</main>
+<footer class="site-foot">
+  <div class="wrap">Blocs from a beta-binomial mixture model of precinct-level ballot questions and races.
+    <a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a></div>
+</footer>
+</body>
+</html>
