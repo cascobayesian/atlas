@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cities · Atlas of Voting Blocs</title>
-<meta name="description" content="Voting blocs in 22 US cities, inferred from precinct-level ballot questions and races.">
+<meta name="description" content="Voting blocs in 22 US cities, inferred from precinct-level ballot questions and races, and in 8 Canadian cities, from federal elections.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
@@ -26,7 +26,7 @@
 </header>
 <main class="wrap">
 <h1 class="title">Cities</h1>
-<p class="us-lede">Twenty-two American cities, each drawn on its own. Click a city to explore its blocs.</p>
+<p class="us-lede">Twenty-two American and eight Canadian cities, each drawn on its own. Click a city to explore its blocs.</p>
 <section class="city-grid" id="us">
   <figure data-state="portland" tabindex="0" role="button" aria-label="Show Portland"><img src="assets/cities/portland.png" width="600" height="600" alt="Voting blocs of Portland" loading="lazy"><figcaption>Portland</figcaption></figure>
   <figure data-state="sf" tabindex="0" role="button" aria-label="Show San Francisco"><img src="assets/cities/sf.png" width="600" height="600" alt="Voting blocs of San Francisco" loading="lazy"><figcaption>San Francisco</figcaption></figure>
@@ -51,13 +51,23 @@
   <figure data-state="nyc" tabindex="0" role="button" aria-label="Show New York City"><img src="assets/cities/nyc.png" width="600" height="600" alt="Voting blocs of New York City" loading="lazy"><figcaption>New York City</figcaption></figure>
   <figure data-state="boston" tabindex="0" role="button" aria-label="Show Boston"><img src="assets/cities/boston.png" width="600" height="600" alt="Voting blocs of Boston" loading="lazy"><figcaption>Boston</figcaption></figure>
 </section>
-<div class="us-foot"><p class="us-cap">Cities inside a covered state show the state&rsquo;s blocs, cut to the city.</p>
+<h2 class="city-head">Canada</h2>
+<section class="city-grid" id="canada">
+  <figure data-state="toronto" tabindex="0" role="button" aria-label="Show Toronto"><img src="assets/cities/toronto.png" width="600" height="600" alt="Voting blocs of Toronto" loading="lazy"><figcaption>Toronto</figcaption></figure>
+  <figure data-state="ottawa_gatineau" tabindex="0" role="button" aria-label="Show Ottawa–Gatineau"><img src="assets/cities/ottawa_gatineau.png" width="600" height="600" alt="Voting blocs of Ottawa–Gatineau" loading="lazy"><figcaption>Ottawa–Gatineau</figcaption></figure>
+  <figure data-state="montreal" tabindex="0" role="button" aria-label="Show Montréal"><img src="assets/cities/montreal.png" width="600" height="600" alt="Voting blocs of Montréal" loading="lazy"><figcaption>Montréal</figcaption></figure>
+  <figure data-state="quebec_city" tabindex="0" role="button" aria-label="Show Québec City"><img src="assets/cities/quebec_city.png" width="600" height="600" alt="Voting blocs of Québec City" loading="lazy"><figcaption>Québec City</figcaption></figure>
+  <figure data-state="vancouver" tabindex="0" role="button" aria-label="Show Vancouver"><img src="assets/cities/vancouver.png" width="600" height="600" alt="Voting blocs of Vancouver" loading="lazy"><figcaption>Vancouver</figcaption></figure>
+  <figure data-state="calgary" tabindex="0" role="button" aria-label="Show Calgary"><img src="assets/cities/calgary.png" width="600" height="600" alt="Voting blocs of Calgary" loading="lazy"><figcaption>Calgary</figcaption></figure>
+  <figure data-state="edmonton" tabindex="0" role="button" aria-label="Show Edmonton"><img src="assets/cities/edmonton.png" width="600" height="600" alt="Voting blocs of Edmonton" loading="lazy"><figcaption>Edmonton</figcaption></figure>
+  <figure data-state="winnipeg" tabindex="0" role="button" aria-label="Show Winnipeg"><img src="assets/cities/winnipeg.png" width="600" height="600" alt="Voting blocs of Winnipeg" loading="lazy"><figcaption>Winnipeg</figcaption></figure>
+</section>
+<div class="us-foot"><p class="us-cap">Cities inside a covered state show the state&rsquo;s blocs, cut to the city. Canadian cities show Canada&rsquo;s fifteen national blocs (2015&ndash;2025 federal elections), cut to the city, in Canada&rsquo;s own color scheme.</p>
 <a class="us-more" href="colors.html">For more about the color scheme &rarr;</a></div>
 <div id="ap-mount"></div>
 </main>
 <footer class="site-foot">
-  <div class="wrap">Blocs from a beta-binomial mixture model of precinct-level ballot questions and races.
-    <a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
+  <div class="wrap"><a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
     Basemap &copy; OpenFreeMap, OpenMapTiles, OpenStreetMap.</div>
 </footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>

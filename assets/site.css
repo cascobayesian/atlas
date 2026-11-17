@@ -78,7 +78,8 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .site-head .wrap { row-gap: .4rem; }
 
 /* ---- landing: three sections ---- */
-.home-lede { font-size: 1.1rem; margin: 0 0 1.6rem; max-width: 46rem; }
+.home-lede { font-size: 1.1rem; margin: 0 0 .6rem; max-width: 46rem; }
+.home-refs { font-size: .9rem; color: #555; margin: 0 0 1.6rem; max-width: 46rem; line-height: 1.5; }
 .sections { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; margin-bottom: 1rem; }
 .section-card { display: flex; flex-direction: column; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper);
                 color: var(--ink); text-decoration: none; transition: border-color .15s, box-shadow .2s, transform .2s;
@@ -107,6 +108,7 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .city-grid figure:hover, .city-grid figure:focus-visible, .city-grid figure.active { background: #eef1f3; outline: none; }
 .city-grid figure.active figcaption { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 @media (min-width: 1101px) { .city-grid figure:nth-child(17) { grid-column-start: 2; } }
+.city-head { font-size: 1.35rem; margin: 2rem 0 0; }
 @media (max-width: 1100px) { .city-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 600px) { .city-grid { grid-template-columns: repeat(2, 1fr); } }
 
@@ -117,5 +119,10 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .wm-land { fill: #fbfbf7; stroke: #7d8a8f; stroke-width: .45; stroke-linejoin: round; }
 .world .wm-land:hover { fill: #f0c95a; }
 .wm-edge { fill: none; stroke: #1b2f3a; stroke-width: 1.2; }
+.wm-place { cursor: pointer; outline: none; }
+.wm-place path { stroke: none; }
+.wm-place:hover path, .wm-place:focus-visible path { filter: brightness(1.08); }
+.wm-place:hover, .wm-place:focus-visible, .wm-place.active { stroke: #1b2f3a; }
+.wm-place.active path, .wm-place:focus-visible path { stroke: #1b2f3a; stroke-width: .5; }
 .wm-tip { position: absolute; pointer-events: none; font-size: 12px; background: var(--paper); border: 1px solid #7d8a8f; padding: 2px 7px; border-radius: 3px;
           white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); }

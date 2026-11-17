@@ -22,7 +22,8 @@ if (/[?&]place=/.test(location.search)) location.replace("us.html" + location.se
 </header>
 <main class="wrap">
 <h1 class="title">The Atlas of Voting Blocs</h1>
-<p class="home-lede">Voting blocs inferred from how places vote on ballot questions and races, precinct by precinct: across the United States, city by city, and, before long, around the world.</p>
+<p class="home-lede">Voting blocs inferred from electoral return data.</p>
+<p class="home-refs">For further information: J. D. O&rsquo;Brien (2026), &ldquo;<a href="https://doi.org/10.1017/psrm.2025.10050">A Bayesian mixture model captures temporal and spatial structure of voting blocs within longitudinal referendum data</a>,&rdquo; <i>Political Science Research and Methods</i>, 1&ndash;22; the beta-binomial mixture model code, <a href="https://github.com/cascobayesian/Elections.BBMM">Elections.BBMM</a>; and the data and analyses behind the atlas, <a href="https://github.com/cascobayesian/Local.Politics">Local.Politics</a> (GitHub).</p>
 <section class="sections" aria-label="Sections of the atlas">
   <a class="section-card" href="us.html">
     <div class="card-pic us"><img src="assets/us_map.png" width="2200" height="1380" alt="Map of the United States with the atlas's statewide and city voting blocs"></div>
@@ -30,17 +31,16 @@ if (/[?&]place=/.test(location.search)) location.replace("us.html" + location.se
   </a>
   <a class="section-card" href="cities.html">
     <div class="card-pic"><div class="card-cities" aria-hidden="true"><img src="assets/cities/philadelphia.png" alt="" width="600" height="600"><img src="assets/cities/nyc.png" alt="" width="600" height="600"><img src="assets/cities/chicago.png" alt="" width="600" height="600"><img src="assets/cities/sf.png" alt="" width="600" height="600"><img src="assets/cities/atlanta.png" alt="" width="600" height="600"><img src="assets/cities/denver.png" alt="" width="600" height="600"><img src="assets/cities/seattle.png" alt="" width="600" height="600"><img src="assets/cities/boston.png" alt="" width="600" height="600"></div></div>
-    <div class="card-text"><h2>Cities</h2><p>Twenty-two American cities side by side, from Portland to Boston.</p><span class="go">Browse the cities &rarr;</span></div>
+    <div class="card-text"><h2>Cities</h2><p>Voting blocs from within cities across the world.</p><span class="go">Browse the cities &rarr;</span></div>
   </a>
   <a class="section-card" href="world.html">
     <div class="card-pic world"><img src="assets/world_card.png" width="1200" height="592" alt="World map in the Equal Earth projection"></div>
-    <div class="card-text"><h2>World</h2><p>Voting blocs beyond the United States, coming soon.</p><span class="go">See the world map &rarr;</span></div>
+    <div class="card-text"><h2>World</h2><p>Country results.</p><span class="go">See the world map &rarr;</span></div>
   </a>
 </section>
 </main>
 <footer class="site-foot">
-  <div class="wrap">Blocs from a beta-binomial mixture model of precinct-level ballot questions and races.
-    <a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
+  <div class="wrap"><a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
     Basemap &copy; OpenFreeMap, OpenMapTiles, OpenStreetMap.</div>
 </footer>
 </body>

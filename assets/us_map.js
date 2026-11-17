@@ -8,7 +8,7 @@
   const store = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} };
   const read = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
   const params = new URLSearchParams(location.search), cur = params.get("place");
-  const PICK = ".us-hot [data-state], .city-grid [data-state]";   // the US map's states and points; the Cities page's tiles
+  const PICK = ".us-hot [data-state], .city-grid [data-state], .world [data-state]";   // the US map's states and points; the Cities page's tiles; the World map's countries
 
   // open a place, remembering where we are
   const open = key => {

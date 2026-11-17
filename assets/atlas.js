@@ -50,13 +50,15 @@
   Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json")]).then(([D, G, PF, HJ]) => {
     const U = D.units, N = U.id.length, B = Object.fromEntries(D.blocs.map(b => [b.b, b]));
     const unitWord = D.unit.replace(/s$/, ""), UnitWord = unitWord[0].toUpperCase() + unitWord.slice(1);
-    document.getElementById("ap-sub").textContent = `${N.toLocaleString()} ${D.unit}, ${D.n_q} ballot questions and races, ${D.blocs.length} voting blocs.`;
+    document.getElementById("ap-sub").textContent = `${N.toLocaleString()} ${D.unit}, ${D.what || D.n_q + " ballot questions and races"}, ${D.blocs.length} voting blocs.`;
     document.querySelector('[data-tab="unit"]').textContent = UnitWord + " profile";
-    document.title = D.title + " · Atlas of US Voting Blocs";
+    document.title = D.title + (D.what ? " · Atlas of Voting Blocs" : " · Atlas of US Voting Blocs");
     document.getElementById("ap-name").textContent = D.title;
     requestAnimationFrame(() => root.classList.add("ap-enter"));   // the panels are built: fade them in (assets/site.css)
     root.querySelectorAll("[data-words]").forEach(el => { el.innerHTML = el.innerHTML.replace(/\bdivisions\b/g, D.unit).replace(/\bdivision\b/g, unitWord)
       .replace(/the city&rsquo;s|the city’s/g, esc(D.title) + "&rsquo;s"); });
+    // places outside the US (e.g. Canada) rewrite the captions that speak of ballot questions: CSS selector -> html
+    if (D.text) Object.entries(D.text).forEach(([sel, html]) => document.querySelectorAll(sel).forEach(el => { el.innerHTML = html; }));
     const swatch = (b, cls = "") => `<span class="ap-swatch ${cls}" data-sb="${b.b}" style="background:${b.color};color:${ink(b.color)}">${b.b}</span>`;
     // two colour schemes: national (data.json, the default) and high contrast (assets/high_contrast.js, made on first use)
     D.blocs.forEach(b => { b.national = b.color; });
@@ -274,7 +276,8 @@
     let header = null;
     // a full interactive map of the units: zoom and pan, no further than 20 miles beyond the place's edges
     const liveMap = (container, h, tipOf, onClick, ready, opts = {}) => {
-      const bounds = [[h.minLon, h.minLat], [h.maxLon, h.maxLat]];
+      // the opening view: the tiles' extent, or the place's own (D.view, e.g. southern Canada rather than the Arctic)
+      const bounds = D.view || [[h.minLon, h.minLat], [h.maxLon, h.maxLat]];
       // the limit is 20 miles beyond the place, widened first to a square around it, so that a tall or wide place
       // (Maine) still fits whole in a square map when zoomed out
       const cos = Math.cos((h.minLat + h.maxLat) / 2 * Math.PI / 180), dLat = 20 / 69.0, dLon = 20 / (69.17 * cos);
@@ -331,7 +334,11 @@
 
     // ---- heatmap: thumbnail in the row, full grouped heatmap in a subpanel ----
     const LOW = [178, 24, 43], MID = [247, 247, 247], HIGH = [33, 102, 172], NA = [217, 217, 217];
-    const hramp = v => { if (v < 0 || v == null) return NA; const t = v / 100, [a, b, w] = t < 0.5 ? [LOW, MID, t / 0.5] : [MID, HIGH, (t - 0.5) / 0.5];
+    // vote shares (HJ.ramp "seq", e.g. Canada's party x election columns): white to dark blue up to HJ.max
+    const SEQ = [[247, 251, 255], [198, 219, 239], [107, 174, 214], [33, 113, 181], [8, 48, 107]];
+    const sramp = v => { if (v < 0 || v == null) return NA; const t = Math.min(1, v / (HJ.max || 100)) * (SEQ.length - 1), i = Math.min(SEQ.length - 2, Math.floor(t));
+      return SEQ[i].map((x, j) => Math.round(x + (SEQ[i + 1][j] - x) * (t - i))); };
+    const hramp = HJ.ramp === "seq" ? sramp : v => { if (v < 0 || v == null) return NA; const t = v / 100, [a, b, w] = t < 0.5 ? [LOW, MID, t / 0.5] : [MID, HIGH, (t - 0.5) / 0.5];
       return a.map((x, i) => Math.round(x + (b[i] - x) * w)); };
     const nr = HJ.rn.length, nc = HJ.nc, rowOf = new Map(HJ.u.map((u, r) => [u, r]));
     const cells = document.createElement("canvas"); cells.width = nc; cells.height = nr;
@@ -396,7 +403,7 @@
       }
       const show = (h, x, y) => {
         if (!h) { htip.hidden = true; return; }
-        const q = HJ.q[h.c], b = BLOC_C[h.g.b], word = q.k === "dem" ? "Democratic" : "yes", v = HJ.v[h.r * nc + h.c];
+        const q = HJ.q[h.c], b = BLOC_C[h.g.b], word = q.w || (q.k === "dem" ? "Democratic" : "yes"), v = HJ.v[h.r * nc + h.c];
         const p = x => x == null || x < 0 ? "no vote" : `${Math.round(x)}%`;
         htip.innerHTML = `<p class="q">${esc(q.l)}</p>` + (q.d ? `<p class="qd">${esc(q.d)}</p>` : "") +
           `<table><tr><th>${esc(HJ.rn[h.r])}</th><td>${p(v)}${v >= 0 ? " " + word : ""}</td></tr>` +
@@ -467,7 +474,7 @@
       const go = h => {
         const mm = new maplibregl.Map({ container: box, style: "https://tiles.openfreemap.org/styles/positron", interactive: true,
           dragPan: false, scrollZoom: false, boxZoom: false, dragRotate: false, doubleClickZoom: false, keyboard: false, touchZoomRotate: false, touchPitch: false,
-          bounds: [[h.minLon, h.minLat], [h.maxLon, h.maxLat]], fitBoundsOptions: { padding: 6 }, attributionControl: { compact: true },
+          bounds: D.view || [[h.minLon, h.minLat], [h.maxLon, h.maxLat]], fitBoundsOptions: { padding: 6 }, attributionControl: { compact: true },
           preserveDrawingBuffer: /[?&]test/.test(location.search) });
         mm.once("load", () => mm.getContainer().querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
         mm.once("style.load", () => {
@@ -499,7 +506,7 @@
       const lg = G.legend, host = pane("demog");
       const fmt = x => Math.round(x).toLocaleString("en-US"), fmtD = d => d >= 1000 ? fmt(d / 1000) + "k" : fmt(d);
       const grad = stops => `linear-gradient(90deg, ${stops.map((c, i) => `${c} ${Math.round(100 * i / (stops.length - 1))}%`).join(", ")})`;
-      const K = [
+      const K = G.panels ? G.panels.map(x => ({ ...x })) : [
         { k: "dens", t: "Population density", key: `<h4>Residents per km&sup2;</h4><div class="ap-ramp" style="background:${grad(lg.dens_stops)}"></div>` +
             `<div class="ap-ticks">${lg.ticks.map((x, i) => `<span style="left:${(100 * lg.ticks_s[i]).toFixed(1)}%">${fmtD(x)}</span>`).join("")}</div>` +
             `<p>Ranked within ${esc(D.title)}, so ticks sit at shares of ${D.unit}; the median has ${fmt(lg.dens_median)} per km&sup2;.</p>` },
@@ -511,14 +518,16 @@
         { k: "dem", t: "Partisanship", key: `<h4>${esc(PRES_WHO)} share of the ${PRES_YR} presidential vote</h4><div class="ap-ramp" style="background:${grad(DEM_STOPS)}"></div>` +
             `<div class="ap-ticks">${[0, 25, 50, 75, 100].map(x => `<span style="left:${x}%">${x}%</span>`).join("")}</div>` +
             `<p>Two-candidate share (Democrat against Republican). ${esc(D.title)} overall: ${PRES_PLACE == null ? "&ndash;" : Math.round(PRES_PLACE) + "%"}. Gray: no returns.</p>` } ];
-      if (!biden.some(v => v != null)) K.splice(K.findIndex(x => x.k === "dem"), 1);   // no presidential returns for this place
+      if (!G.panels && !biden.some(v => v != null)) K.splice(K.findIndex(x => x.k === "dem"), 1);   // no presidential returns for this place
       host.innerHTML = `<div class="ap-demog-grid">${K.map(x => `<figure><div class="ap-title">${x.t}${ENLARGE(x.k, x.t)}</div>` +
           `<div data-slot="${x.k}"><div class="ap-pca ap-pca-sm" id="ap-pca-${x.k}"></div></div><figcaption>${x.key}</figcaption></figure>`).join("")}</div>` +
-        `<p class="ap-note">The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too. ` +
+        (G.note ? `<p class="ap-note">${G.note}</p>` : `<p class="ap-note">The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too. ` +
         `PC1 accounts for ${Math.round(100 * lg.r2_pc1_logdens)}% of the variation in log density, ${Math.round(100 * lg.r2_pc1_white)}% in white share and ` +
-        `${Math.round(100 * lg.r2_pc1_ba)}% in bachelor&rsquo;s share across these ${D.unit}. Gray: no residents (no returns for partisanship).</p>`;
+        `${Math.round(100 * lg.r2_pc1_ba)}% in bachelor&rsquo;s share across these ${D.unit}. Gray: no residents (no returns for partisanship).</p>`);
       host.querySelector(".ap-demog-grid").style.setProperty("--n", K.length);
-      K.forEach(x => { makePCA(document.getElementById("ap-pca-" + x.k), i => G.col[x.k][i], demogTip[x.k], pcaClick(false), true); BIG[x.k] = { title: x.t, key: x.key }; });
+      // readouts for data-defined panels: G.tipfmt[k] with {v} for the unit's value G.val[k]
+      const tipOf = k => demogTip[k] || (G.tipfmt && G.tipfmt[k] ? u => G.val[k][u] != null ? `<div class="ap-tnum">${G.tipfmt[k].replace("{v}", G.val[k][u].toLocaleString("en-US"))}</div>` : "" : null);
+      K.forEach(x => { makePCA(document.getElementById("ap-pca-" + x.k), i => G.col[x.k][i], tipOf(x.k), pcaClick(false), true); BIG[x.k] = { title: x.t, key: x.key }; });
       host.querySelectorAll(".ap-enlarge").forEach(wireEnlarge);
     }
 
@@ -526,7 +535,8 @@
     const RAMP = (m, lo = [227, 236, 245], hi = [29, 69, 128]) => Array.from({ length: m }, (_, i) => { const t = m === 1 ? 1 : i / (m - 1);
       return "#" + lo.map((a, j) => Math.round(a + (hi[j] - a) * t).toString(16).padStart(2, "0")).join(""); });
     const withCols = (cats, cols) => cats.map((c, i) => [c[0], c[1], cols[i]]);
-    const TOPICS = [
+    // a place can bring its own topics (PF.topics, e.g. Canada's party shares by election) instead of the ACS ones
+    const TOPICS = PF.topics || [
       { k: "race", t: "Race and ethnicity", cats: [["white", "White", "#E31A1C"], ["hispanic", "Hispanic", "#F2C200"], ["aian", "American Indian", "#00A9A5"],
         ["black", "Black", "#1F78B4"], ["asian", "Asian", "#33A02C"], ["other", "Other or multiracial", "#B5B1A7"]] },
       { k: "language", t: "Language spoken at home", cats: [["english", "English only", "#CFCAC0"], ["spanish", "Spanish", "#F2C200"],
@@ -540,7 +550,7 @@
     const bar = (vals, cats, label, who) => `<div class="bp-row"><span class="bp-who">${who}</span><div class="bp-bar">` +
       cats.filter(c => vals[c[0]] > 0.0005).map(c => { const v = vals[c[0]];
         return `<span class="bp-seg" style="flex:${v} 1 0;background:${c[2]};color:${ink(c[2])}" data-tip="${c[1]}: <b>${pct(v)}</b> ${label}">${v >= 0.09 ? pct(v) : ""}</span>`; }).join("") + "</div></div>";
-    const placeLab = PF.title, note = who => `Race from 2020 Census blocks; everything else from the ACS 2020&ndash;24 (block groups; language and nativity by tract), shared out to blocks by population and summed over ${who}.`;
+    const placeLab = PF.title, note = who => PF.note || `Race from 2020 Census blocks; everything else from the ACS 2020&ndash;24 (block groups; language and nativity by tract), shared out to blocks by population and summed over ${who}.`;
     function renderBloc() {
       const host = pane("bloc"), b = S.selBloc;
       if (b == null) { delete host.dataset.b; host.innerHTML = ""; return; }
@@ -564,19 +574,19 @@
       const b = U.b[i], p = PF.blocs[b], all = PF.place, bl = B[b], who = esc(U.name[i]), pop = G.pop[i];
       const val = (T, c) => { const v = G.shares[T.k][c[0]][i]; return v == null ? null : v / 100; };
       const p1 = x => x == null ? "&ndash;" : pct(x);
-      const hasPop = pop > 0 && G.shares.race.white[i] != null;
+      const hasPop = PF.topics ? TOPICS.some(T => G.shares[T.k][T.cats[0][0]][i] != null) : pop > 0 && G.shares.race.white[i] != null;
       const cert = U.p[i] == null || U.measure === "none" ? "Assignment certainty not recorded for this fit" :
         (U.measure === "stability" ? `In this bloc in <b>${pct(U.p[i])}</b> of the model&rsquo;s posterior samples` : `<b>${pct(U.p[i])}</b> probability of belonging to this bloc` +
           (G.alt[i] != null && G.alt_p[i] >= 0.01 ? `; next most likely bloc ${G.alt[i]} (${pct(G.alt_p[i])})` : ""));
       const meter = U.p[i] == null ? "" : `<span class="uc-meter" title="Assignment certainty"><span data-sbg="${bl.b}" style="width:${Math.round(100 * U.p[i])}%;background:${bl.color}"></span></span>`;
       return `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(pop || 0).toLocaleString("en-US")} residents</p>` +
         `<p class="uc-cert">${meter}${cert}</p></div></header>` +
-        (!hasPop ? `<p class="bp-note">No residents are recorded in this ${unitWord} (2020 Census), so it has no demographic summary.</p>` :
+        (!hasPop ? `<p class="bp-note">${PF.topics ? `No votes are recorded in this ${unitWord}.` : `No residents are recorded in this ${unitWord} (2020 Census), so it has no demographic summary.`}</p>` :
         `<div class="bp-grid uc">${TOPICS.map(T => { const uv = Object.fromEntries(T.cats.map(c => [c[0], val(T, c) || 0])), mi = G.median_income[i];
           return `<section><h4>${T.t}</h4>` + (T.k === "income" ? `<p class="bp-stat">Median <b>${mi == null ? "&ndash;" : money(mi)}</b> <span>(bloc ${money(p.median_income)}, ${placeLab} ${money(all.median_income)})</span></p>` : "") +
             bar(uv, T.cats, "in " + who, who) + bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
             `<ul class="bp-key">${T.cats.map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${p1(val(T, c))}</b> <i>${pct(p[T.k][c[0]])} &middot; ${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>`; }).join("")}</div>` +
-        `<p class="bp-note">Bold: this ${unitWord}; gray: bloc ${b} &middot; ${placeLab} overall. ${note("the " + unitWord)} For a single ${unitWord} these survey estimates carry wide margins of error.</p>`);
+        `<p class="bp-note">Bold: this ${unitWord}; gray: bloc ${b} &middot; ${placeLab} overall. ${note("the " + unitWord)}${PF.topics ? "" : ` For a single ${unitWord} these survey estimates carry wide margins of error.`}</p>`);
     }
     subp.addEventListener("pointermove", e => { const s = e.target.closest(".bp-seg"); if (s) showTip(s.dataset.tip, e.clientX, e.clientY); else if (!e.target.closest("canvas")) showTip(null); });
     subp.addEventListener("pointerleave", () => showTip(null));
