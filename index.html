@@ -76,7 +76,11 @@
 <div class="us-foot"><p class="us-cap"><strong>Click any colored state or point</strong> to explore its blocs. Points mark city and county fits; Phoenix and Tucson share one fit, filled like a state.</p>
 <a class="us-more" href="colors.html">For more about the color scheme &rarr;</a></div>
 </section>
-<h2 class="ap-name" id="ap-name" hidden></h2>
+<div class="ap-head" id="ap-head" hidden>
+  <h2 class="ap-place-name" id="ap-name"></h2>
+  <button type="button" class="ap-hc" id="ap-hc" aria-pressed="false" hidden title="Switch between the national colors and distinct colors for this place's blocs">
+    <span class="ap-hc-dots" aria-hidden="true"><i style="background:#0067A5"></i><i style="background:#F38400"></i><i style="background:#008856"></i><i style="background:#BE0032"></i></span>High-contrast color scheme</button>
+</div>
 <section class="ap-panel" id="ap" data-data="data/" hidden>
   <div class="ap-top"><p class="ap-sub" id="ap-sub"></p><label class="ap-pick">Place <select id="ap-place" aria-label="Choose a place"></select></label></div>
   <div class="ap-grid">
@@ -135,6 +139,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
 <script src="assets/us_map.js"></script>
+<script src="assets/high_contrast.js"></script>
 <script src="assets/atlas.js"></script>
 </body>
 </html>

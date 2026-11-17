@@ -31,7 +31,18 @@ button, select { font: inherit; color: inherit; }
 .us-key { margin: 0 0 1.5rem; }
 .us-key img { display: block; width: 100%; height: auto; }
 .us-key figcaption { font-size: .8rem; color: var(--slate); }
-h2.ap-name { font-size: 1.7rem; margin: 1rem 0 .4rem; padding-top: 1rem; border-top: 1px solid var(--rule); scroll-margin-top: .5rem; }
+.ap-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem 1rem; flex-wrap: wrap;
+           margin: 1rem 0 .4rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
+.ap-hc { display: inline-flex; align-items: center; gap: .55rem; padding: .4rem .85rem; border: 1px solid var(--accent); border-radius: 999px;
+         background: var(--paper); color: var(--accent); font-size: .88rem; font-weight: 500; cursor: pointer; transition: background .15s, color .15s; }
+.ap-hc:hover { background: #eef4f7; }
+.ap-hc:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ap-hc[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.ap-hc-dots { display: inline-flex; }
+.ap-hc-dots i { width: .7rem; height: .7rem; border-radius: 50%; border: 1.5px solid var(--paper); margin-left: -.22rem; }
+.ap-hc-dots i:first-child { margin-left: 0; }
+.ap-hc[aria-pressed="true"] .ap-hc-dots i { border-color: var(--accent); }
 .us-foot { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin: .5rem 0 1.5rem; }
 .us-foot .us-cap { margin: 0; flex: 1 1 22rem; }
 .us-more { margin-left: auto; display: inline-block; padding: .45rem .9rem; border: 1px solid var(--accent); border-radius: 4px; color: var(--accent);

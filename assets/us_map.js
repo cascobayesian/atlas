@@ -18,8 +18,8 @@
   // come back where we were (the head script hid the page while this was pending)
   const saved = read(KEY); store(KEY, null);
   if (cur) {                                     // unhide the (still empty) panel first, so the page is tall enough
-    const ap = document.getElementById("ap"), nm = document.getElementById("ap-name");
-    if (ap) ap.hidden = false; if (nm) nm.hidden = false;
+    const ap = document.getElementById("ap"), hd = document.getElementById("ap-head"), nm = document.getElementById("ap-name");
+    if (ap) ap.hidden = false; if (hd) hd.hidden = false;
     const t = document.querySelector(`.us-hot [data-state="${cur}"] title`);     // the name now; atlas.js confirms it
     if (nm && t && !nm.textContent) nm.textContent = t.textContent;
   }
@@ -51,7 +51,7 @@
   };
 
   // on arrival at a place, start down to it at once: the panels load, draw and fade in during and after the glide
-  if (cur && document.getElementById("ap-name")) requestAnimationFrame(() => window.atlasGlide(document.getElementById("ap-name")));
+  if (cur && document.getElementById("ap-head")) requestAnimationFrame(() => window.atlasGlide(document.getElementById("ap-head")));
 
   document.querySelectorAll(".us-hot [data-state]").forEach(el => {
     const key = el.dataset.state;

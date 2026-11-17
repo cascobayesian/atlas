@@ -13,7 +13,7 @@
   // no place chosen: the page is just the US map (assets/us_map.js); clicking a place reloads with ?place=<key>
   if (!(qp && /^[a-z_]+$/.test(qp))) return;
   const base = `${DATA}${qp}/`;
-  root.hidden = false; document.getElementById("ap-name").hidden = false;
+  root.hidden = false; document.getElementById("ap-head").hidden = false;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const lum = c => { const n = parseInt(c.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255].map(v => (v / 255) ** 2.2).reduce((s, x, i) => s + [0.2126, 0.7152, 0.0722][i] * x, 0); };
   const ink = c => lum(c) > 0.32 ? "#111" : "#fff";
@@ -57,7 +57,10 @@
     requestAnimationFrame(() => root.classList.add("ap-enter"));   // the panels are built: fade them in (assets/site.css)
     root.querySelectorAll("[data-words]").forEach(el => { el.innerHTML = el.innerHTML.replace(/\bdivisions\b/g, D.unit).replace(/\bdivision\b/g, unitWord)
       .replace(/the city&rsquo;s|the city’s/g, esc(D.title) + "&rsquo;s"); });
-    const swatch = (b, cls = "") => `<span class="ap-swatch ${cls}" style="background:${b.color};color:${ink(b.color)}">${b.b}</span>`;
+    const swatch = (b, cls = "") => `<span class="ap-swatch ${cls}" data-sb="${b.b}" style="background:${b.color};color:${ink(b.color)}">${b.b}</span>`;
+    // two colour schemes: national (data.json, the default) and high contrast (assets/high_contrast.js, made on first use)
+    D.blocs.forEach(b => { b.national = b.color; });
+    const recolorFns = [], unitMaps = new Set();
 
     // ---- tooltips ----
     const unitTip = (u, extra) => {
@@ -245,9 +248,10 @@
     let mapApi = { refit: () => {} };
     const protocol = new pmtiles.Protocol(); maplibregl.addProtocol("pmtiles", protocol.tile);
     const url = new URL(base + "units.pmtiles", location.href).href, archive = new pmtiles.PMTiles(url); protocol.add(archive);
-    const color = ["match", ["get", "b"], ...D.blocs.flatMap(b => [b.b, b.color]), "#ccc"];
+    const blocExpr = () => ["match", ["get", "b"], ...D.blocs.flatMap(b => [b.b, b.color]), "#ccc"];
+    let color = blocExpr();
     const addUnits = (map, firstLabel, opts = {}) => {
-      map.addSource("units", { type: "vector", url: "pmtiles://" + url, promoteId: "u" });
+      map.addSource("units", { type: "vector", url: "pmtiles://" + url, promoteId: "u" }); unitMaps.add(map);
       map.addLayer({ id: "units-fill", type: "fill", source: "units", "source-layer": "units", paint: { "fill-color": color, "fill-opacity": 0.82, "fill-opacity-transition": { duration: 150 } } }, firstLabel);
       map.addLayer({ id: "units-line", type: "line", source: "units", "source-layer": "units",
         paint: { "line-color": "#fff", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.1, 14, 1.2], "line-opacity": 0.8 } }, firstLabel);
@@ -344,7 +348,7 @@
         const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
         const bar = 6, gs = layoutGroups(H, 1.5);
         for (const g of gs) { ctx.drawImage(cells, 0, g.r0, nc, g.n, 0, g.y, W - bar - 2, g.h); ctx.fillStyle = BLOC_C[g.b].c; ctx.fillRect(W - bar, g.y, bar, g.h); } };
-      new ResizeObserver(draw).observe(box);
+      new ResizeObserver(draw).observe(box); recolorFns.push(draw);
       const open = () => openTab("heat");
       box.addEventListener("click", open); box.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } }); }
     // full heatmap
@@ -367,6 +371,7 @@
           if (g.h >= 13) { ctx.fillStyle = ink(b.c); ctx.fillText(String(b.b), Lh.hw + BAR_GAP + BAR / 2, g.y + g.h / 2 + 0.5); } }
         draw();
       };
+      recolorFns.push(() => layout());
       const hit = (x, y) => { if (!Lh || x < 0 || x >= Lh.hw || y < 0 || y >= Lh.H) return null;
         const g = gs.find(g => y >= g.y && y < g.y + g.h); if (!g) return null;
         return { g, r: g.r0 + Math.min(g.n - 1, Math.floor((y - g.y) / g.h * g.n)), c: Math.min(nc - 1, Math.floor(x / Lh.hw * nc)) }; };
@@ -563,7 +568,7 @@
       const cert = U.p[i] == null || U.measure === "none" ? "Assignment certainty not recorded for this fit" :
         (U.measure === "stability" ? `In this bloc in <b>${pct(U.p[i])}</b> of the model&rsquo;s posterior samples` : `<b>${pct(U.p[i])}</b> probability of belonging to this bloc` +
           (G.alt[i] != null && G.alt_p[i] >= 0.01 ? `; next most likely bloc ${G.alt[i]} (${pct(G.alt_p[i])})` : ""));
-      const meter = U.p[i] == null ? "" : `<span class="uc-meter" title="Assignment certainty"><span style="width:${Math.round(100 * U.p[i])}%;background:${bl.color}"></span></span>`;
+      const meter = U.p[i] == null ? "" : `<span class="uc-meter" title="Assignment certainty"><span data-sbg="${bl.b}" style="width:${Math.round(100 * U.p[i])}%;background:${bl.color}"></span></span>`;
       return `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(pop || 0).toLocaleString("en-US")} residents</p>` +
         `<p class="uc-cert">${meter}${cert}</p></div></header>` +
         (!hasPop ? `<p class="bp-note">No residents are recorded in this ${unitWord} (2020 Census), so it has no demographic summary.</p>` :
@@ -668,6 +673,28 @@
       if (S.sel != null || S.selBloc != null || S.heatSel != null) { S.sel = null; S.selBloc = null; S.heatSel = null; S.heatBloc = null; update(); }
     });
     dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+
+    // ---- colour scheme: the button beside the place's name switches every bloc colour on the page ----
+    const hcBtn = document.getElementById("ap-hc");
+    let hcCols = null;
+    const setScheme = hc => {
+      if (hc && !hcCols) hcCols = window.atlasHighContrast(D);
+      D.blocs.forEach(b => { b.color = hc ? hcCols[b.b] : b.national; });
+      HJ.blocs.forEach(b => { if (B[b.b]) b.c = B[b.b].color; });
+      color = blocExpr();
+      unitMaps.forEach(m => { try { if (m === bigMap) paintBig(); else if (m.getLayer("units-fill")) m.setPaintProperty("units-fill", "fill-color", color); } catch (e) {} });
+      document.querySelectorAll("[data-sb]").forEach(el => { const c = B[+el.dataset.sb].color; el.style.background = c; el.style.color = ink(c); });
+      document.querySelectorAll("[data-sbg]").forEach(el => { el.style.background = B[+el.dataset.sbg].color; });
+      recolorFns.forEach(f => f());
+      views.forEach(w => w.dirty = true);
+      if (heat && heat.draw) heat.draw();
+      hcBtn.setAttribute("aria-pressed", String(hc));
+      try { hc ? sessionStorage.setItem("atlas-hc", "1") : sessionStorage.removeItem("atlas-hc"); } catch (e) {}
+    };
+    hcBtn.addEventListener("click", () => setScheme(hcBtn.getAttribute("aria-pressed") !== "true"));
+    hcBtn.hidden = false;
+    let hcSaved = false; try { hcSaved = sessionStorage.getItem("atlas-hc") === "1"; } catch (e) {}
+    if (hcSaved) setScheme(true);         // kept while moving between places in this visit; a new visit starts national
     dlg.addEventListener("close", () => { if (dlg.open) return; const b = moved && moved.btn; restore(); dialogBack(); if (b) b.focus(); showTip(null); });
     update();
   }).catch(e => { root.insertAdjacentHTML("beforeend", `<p class="ap-hint">Could not load the data (${esc(e.message)}).</p>`); });
