@@ -44,7 +44,7 @@
     const sel = document.getElementById("ap-place"); if (!sel || !list.length) return;
     const cur = base.match(/([a-z_]+)\/$/)[1];
     sel.innerHTML = list.map(p => `<option value="${p.key}"${p.key === cur ? " selected" : ""}>${esc(p.title)}</option>`).join("");
-    sel.addEventListener("change", () => { const u = new URL(location.href); u.searchParams.set("place", sel.value); u.hash = "ap-name"; location.href = u.href; });
+    sel.addEventListener("change", () => window.atlasOpen(sel.value));
   }).catch(() => {});
   const J = f => fetch(base + f).then(r => { if (!r.ok) throw new Error(f + " " + r.status); return r.json(); });
   Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json")]).then(([D, G, PF, HJ]) => {
@@ -54,7 +54,7 @@
     document.querySelector('[data-tab="unit"]').textContent = UnitWord + " profile";
     document.title = D.title + " · Atlas of US Voting Blocs";
     document.getElementById("ap-name").textContent = D.title;
-    if (location.hash === "#ap-name") requestAnimationFrame(() => document.getElementById("ap-name").scrollIntoView());
+    requestAnimationFrame(() => root.classList.add("ap-enter"));   // the panels are built: fade them in (assets/site.css)
     root.querySelectorAll("[data-words]").forEach(el => { el.innerHTML = el.innerHTML.replace(/\bdivisions\b/g, D.unit).replace(/\bdivision\b/g, unitWord)
       .replace(/the city&rsquo;s|the city’s/g, esc(D.title) + "&rsquo;s"); });
     const swatch = (b, cls = "") => `<span class="ap-swatch ${cls}" style="background:${b.color};color:${ink(b.color)}">${b.b}</span>`;

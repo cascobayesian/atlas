@@ -49,3 +49,10 @@ h2.ap-name { font-size: 1.7rem; margin: 1rem 0 .4rem; padding-top: 1rem; border-
 .swatches span { width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 1.5px solid #111; }
 .swatches div { color: var(--slate); }
 .swatches strong { color: var(--ink); font-weight: 600; }
+/* a place's panels fade up as the page glides down to them */
+@keyframes ap-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+#ap:not(.ap-enter) .ap-top, #ap:not(.ap-enter) .ap-grid { opacity: 0; }
+#ap.ap-enter .ap-top, #ap.ap-enter .ap-grid { animation: ap-in .6s ease-out both; }
+@media (prefers-reduced-motion: reduce) { #ap.ap-enter .ap-top, #ap.ap-enter .ap-grid { animation: none; } }
+/* room for the place's heading to scroll to the top of the window, and for the restored scroll position on arrival */
+#ap { min-height: calc(100vh - 5.5rem); }
