@@ -125,7 +125,14 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .world .wm-land.wm-fit:hover, .wm-land.wm-fit:focus-visible { fill: #cdb97f; }
 .wm-land.wm-fit.active { fill: #cdb97f; stroke: #1b2f3a; stroke-width: .9; }
 .wm-key { display: flex; align-items: center; gap: .45rem; font-size: .85rem; color: var(--slate); margin: .4rem 0 0; }
-.wm-key i { width: .9rem; height: .9rem; border-radius: 2px; background: #b8a46c; border: 1px solid #7d8a8f; }
+.wm-key { flex-wrap: wrap; column-gap: 1.1rem; }
+.wm-key span { display: inline-flex; align-items: center; gap: .4rem; }
+.wm-key i { width: .9rem; height: .9rem; border-radius: 2px; background: #b8a46c; border: 1px solid #7d8a8f; flex: none; }
+.wm-key i.some { background: #a9d39e; } .wm-key i.none { background: #4b5157; }
+.wm-land.wm-some { fill: #a9d39e; } .world .wm-land.wm-some:hover { fill: #bfe0b5; }
+.wm-land.wm-none { fill: #4b5157; } .world .wm-land.wm-none:hover { fill: #646b72; }
+.wm-turn { cursor: grab; touch-action: pan-y; } .wm-turn.dragging, .wm-turn.dragging * { cursor: grabbing; }
+.wm-turn:focus { outline: none; }
 .wm-country { margin: 1.4rem 0 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
 .wm-country h2 { font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif; font-size: 1.5rem; margin: 0 0 .3rem; }
 .wm-country p { font-size: .92rem; color: var(--slate); margin: 0 0 1rem; max-width: 52rem; }

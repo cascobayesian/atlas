@@ -28,7 +28,7 @@
 <h1 class="title">World</h1>
 <p class="us-lede">Voting blocs beyond the United States. Click Canada to explore its blocs, or a gold country for its bloc map.</p>
 <div class="world"><svg id="world" role="img" aria-label="World map in the Equal Earth projection with country outlines"></svg><div class="wm-tip" id="wm-tip" hidden></div></div>
-<p class="wm-key"><i></i>Blocs fitted (a beta-binomial or Dirichlet-multinomial mixture); click for the bloc map at the chosen K and, where there is one, the PCA figure.</p>
+<p class="wm-key"><span><i></i>Blocs fitted: click for the bloc map and PCA figure</span><span><i class="some"></i>Under way: data assembled, no bloc maps yet</span><span><i class="none"></i>Planned</span><span>Drag the map sideways to turn the globe.</span></p>
 <p class="us-cap">Canada: fifteen blocs of polling divisions from the 2015, 2019, 2021 and 2025 federal elections (a Dirichlet-multinomial mixture of party vote counts, all four elections aligned to the 2025 polling divisions), in a Canadian color scheme after ColorBrewer&rsquo;s Paired: blues Conservative, reds Liberal, oranges NDP, teals Bloc Qu&eacute;b&eacute;cois, greens Green-leaning and progressive. Equal Earth projection (&Scaron;avri&ccaron;, Patterson &amp; Jenny, 2018): every country drawn at its true relative size; graticule every 15&deg;. Boundaries: Natural Earth 1:50m.</p>
 <section class="wm-country" id="wm-country" hidden aria-live="polite"></section>
 <div id="ap-mount"></div>
@@ -89,7 +89,10 @@ function showCountry(c, scroll = true) {
   if (scroll) box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
-  places: [{ key: "canada", title: "Canada", url: "assets/world_canada.json" }], fitted: FITTED, onFit: showCountry })
+  places: [{ key: "canada", title: "Canada", url: "assets/world_canada.json" }], fitted: FITTED, onFit: showCountry,
+  // from the folders in Teaching/Country.Politics/Countries: started = data or maps but no bloc fit; planned = empty folder
+  started: ["Botswana", "France", "Ghana", "Romania"],
+  planned: ["Brazil", "Czechia", "Mexico", "Slovakia", "Slovenia", "South Africa", "Turkey"] })
   .then(() => { const k = new URLSearchParams(location.search).get("country"), c = FITTED.find(f => f.key === k); if (c) showCountry(c, false); });
 </script>
 </body>
