@@ -1,6 +1,6 @@
 // The world in the Equal Earth projection (Šavrič, Patterson & Jenny, 2018), as first drawn on 6 November:
 // light land on blue water, Natural Earth 1:50m country outlines (assets/world-50m.json, via world-atlas), a 15° graticule.
-//   drawWorld(svgElement, { hover: true, tip, places: [{ key, title, url }] }) -> Promise
+//   drawWorld(svgElement, { hover: true, tip, places: [{ key, title, url }], fitted: [{ name, key, title, k }], onFit }) -> Promise
 // places: countries with a fit, drawn over the land in their blocs' colours (a GeoJSON of dissolved blocs with
 // properties b, name, color, as realign_2025/model/atlas_export_ca.R writes for Canada); click or Enter opens the
 // country's panels (window.atlasOpen, assets/us_map.js).
@@ -14,6 +14,13 @@ window.drawWorld = (el, opts = {}) => fetch("assets/world-50m.json").then(r => r
   svg.append("path").datum(d3.geoGraticule().step([15, 15])()).attr("class", "wm-grat").attr("d", path);
   const land = svg.append("g").selectAll("path").data(topojson.feature(WORLD, WORLD.objects.countries).features).join("path")
     .attr("class", "wm-land").attr("d", path);
+  // fitted: countries with a finished BBMM or DMM fit but no interactive panels yet, shaded slate gold; click or Enter
+  // calls opts.onFit(country) to show its bloc map and PCA figure. Matched on the Natural Earth name.
+  const fitBy = new Map((opts.fitted || []).map(c => [c.name, c]));
+  land.filter(d => fitBy.has(d.properties.name)).classed("wm-fit", true).attr("tabindex", 0).attr("role", "button")
+    .attr("aria-label", d => "Show " + fitBy.get(d.properties.name).title)
+    .on("click", (e, d) => opts.onFit && opts.onFit(fitBy.get(d.properties.name)))
+    .on("keydown", (e, d) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); opts.onFit && opts.onFit(fitBy.get(d.properties.name)); } });
   // GeoJSON (RFC 7946) winds outer rings anticlockwise; d3's spherical paths want them clockwise
   const rewind = g => ({ ...g, coordinates: g.type === "Polygon" ? g.coordinates.map(r => r.slice().reverse())
     : g.coordinates.map(p => p.map(r => r.slice().reverse())) });
@@ -40,7 +47,8 @@ window.drawWorld = (el, opts = {}) => fetch("assets/world-50m.json").then(r => r
     const tip = opts.tip, box = el.parentElement;
     land.on("pointermove", (e, d) => {
       const r = box.getBoundingClientRect();
-      tip.textContent = d.properties.name; tip.hidden = false;
+      const fc = fitBy.get(d.properties.name);
+      tip.textContent = fc ? `${fc.title}: ${fc.k} blocs` : d.properties.name; tip.hidden = false;
       tip.style.left = (e.clientX - r.left) + "px"; tip.style.top = (e.clientY - r.top) + "px";
     }).on("pointerleave", () => { tip.hidden = true; });
   }

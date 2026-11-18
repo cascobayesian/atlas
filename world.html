@@ -26,9 +26,11 @@
 </header>
 <main class="wrap">
 <h1 class="title">World</h1>
-<p class="us-lede">Voting blocs beyond the United States, starting with Canada. Click Canada to explore its blocs.</p>
+<p class="us-lede">Voting blocs beyond the United States. Click Canada to explore its blocs, or a gold country for its bloc map.</p>
 <div class="world"><svg id="world" role="img" aria-label="World map in the Equal Earth projection with country outlines"></svg><div class="wm-tip" id="wm-tip" hidden></div></div>
+<p class="wm-key"><i></i>Blocs fitted (a beta-binomial or Dirichlet-multinomial mixture); click for the bloc map at the chosen K and, where there is one, the PCA figure.</p>
 <p class="us-cap">Canada: fifteen blocs of polling divisions from the 2015, 2019, 2021 and 2025 federal elections (a Dirichlet-multinomial mixture of party vote counts, all four elections aligned to the 2025 polling divisions), in a Canadian color scheme after ColorBrewer&rsquo;s Paired: blues Conservative, reds Liberal, oranges NDP, teals Bloc Qu&eacute;b&eacute;cois, greens Green-leaning and progressive. Equal Earth projection (&Scaron;avri&ccaron;, Patterson &amp; Jenny, 2018): every country drawn at its true relative size; graticule every 15&deg;. Boundaries: Natural Earth 1:50m.</p>
+<section class="wm-country" id="wm-country" hidden aria-live="polite"></section>
 <div id="ap-mount"></div>
 </main>
 <footer class="site-foot">
@@ -44,7 +46,51 @@
 <script src="assets/high_contrast.js"></script>
 <script src="assets/atlas.js"></script>
 <script src="assets/world.js"></script>
-<script>drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
-  places: [{ key: "canada", title: "Canada", url: "assets/world_canada.json" }] });</script>
+<script>
+// Countries with a finished fit but no interactive panels yet: the bloc map at the chosen K and a PCA figure if one exists.
+// name = Natural Earth name; figures in assets/world/, copied from Teaching/Country.Politics/Countries/<country>/.
+const FITTED = [
+  { name: "Bosnia and Herz.", key: "bosnia", title: "Bosnia and Herzegovina", k: 8, model: "Dirichlet-multinomial mixture",
+    data: "142 municipalities, House of Representatives elections 2010–2026, votes by party family",
+    why: "K = 8 has the lowest BIC of K = 5–10", pca: true },
+  { name: "Bulgaria", key: "bulgaria", title: "Bulgaria", k: 10, model: "Dirichlet-multinomial mixture",
+    data: "265 municipalities, 11 parliamentary elections 2013–2026",
+    why: "K = 10 has the best BIC of K = 2–10 and passes the 3% rule (BIC still falling)", pca: false },
+  { name: "Colombia", key: "colombia", title: "Colombia", k: 19, model: "Dirichlet-multinomial mixture",
+    data: "municipalities, Senate national-constituency votes 2018–2026",
+    why: "K = 19, the fit carried through to profiles and PCA (BIC still falling at K = 30)", pca: true },
+  { name: "Croatia", key: "croatia", title: "Croatia", k: 10, model: "Dirichlet-multinomial mixture",
+    data: "556 municipalities, Sabor elections 2007–2024", why: "K = 10, the national fit", pca: true },
+  { name: "Hungary", key: "hungary", title: "Hungary", k: 15, model: "Dirichlet-multinomial mixture",
+    data: "3,177 settlements, parliamentary elections 2014–2026",
+    why: "K = 15, the largest fitted (BIC still falling at K = 15)", pca: true },
+  { name: "India", key: "india", title: "India", k: 16, model: "Dirichlet-multinomial mixture",
+    data: "assembly-constituency segments, Lok Sabha general elections 2009–2024",
+    why: "K = 16 has the lowest BIC of K = 2–16", pca: false },
+  { name: "Israel", key: "israel", title: "Israel", k: 12, model: "Dirichlet-multinomial mixture",
+    data: "2,873 statistical areas (2011), five Knesset elections April 2019–2022",
+    why: "K = 12 by the 3% rule (draft fit)", pca: true },
+  { name: "Netherlands", key: "netherlands", title: "Netherlands", k: 15, model: "Dirichlet-multinomial mixture",
+    data: "342 municipalities, Tweede Kamer elections 2010–2025", why: "K = 15", pca: true },
+  { name: "Switzerland", key: "switzerland", title: "Switzerland", k: 10, model: "beta-binomial mixture",
+    data: "communes, federal referendums 2010–2024", why: "K = 10 by the 3% rule (best BIC at K = 15)", pca: true }
+];
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+function showCountry(c, scroll = true) {
+  const box = document.getElementById("wm-country");
+  document.querySelectorAll(".wm-land.wm-fit").forEach(p => p.classList.toggle("active", p.__data__.properties.name === c.name));
+  box.innerHTML = `<h2>${esc(c.title)}</h2><p>${esc(c.k)} voting blocs from a ${esc(c.model)} of ${esc(c.data)}; ${esc(c.why)}.</p>` +
+    `<figure><img src="assets/world/${c.key}_map.png" alt="Map of ${esc(c.title)}'s ${c.k} voting blocs" loading="lazy">` +
+    `<figcaption>Bloc map, K = ${c.k}.</figcaption></figure>` +
+    (c.pca ? `<figure><img src="assets/world/${c.key}_pca.png" alt="${esc(c.title)}: units on their first principal coordinates, coloured by bloc" loading="lazy">` +
+      `<figcaption>Principal coordinates of the units' vote shares, coloured by bloc.</figcaption></figure>` : "");
+  box.hidden = false;
+  try { const u = new URL(location.href); u.searchParams.set("country", c.key); history.replaceState(null, "", u); } catch (e) {}
+  if (scroll) box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
+  places: [{ key: "canada", title: "Canada", url: "assets/world_canada.json" }], fitted: FITTED, onFit: showCountry })
+  .then(() => { const k = new URLSearchParams(location.search).get("country"), c = FITTED.find(f => f.key === k); if (c) showCountry(c, false); });
+</script>
 </body>
 </html>
