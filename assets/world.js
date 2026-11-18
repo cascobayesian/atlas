@@ -1,14 +1,16 @@
 // The world in the Equal Earth projection (Šavrič, Patterson & Jenny, 2018), as first drawn on 6 November:
 // light land on blue water, Natural Earth 1:50m country outlines (assets/world-50m.json, via world-atlas), a 15° graticule.
 // Drag to move the centre point; wheel, pinch, double-click or the on-map buttons to zoom (arrow keys and +/- too).
-//   drawWorld(svgElement, { hover: true, tip, places: [{ key, title, url }], fitted: [{ name, key, title, k }], onFit,
-//                           started: [name], planned: [name] }) -> Promise
-// places: countries with interactive panels, drawn over the land in their blocs' colours (a GeoJSON of dissolved blocs
-// with properties b, name, color, as realign_2025/model/atlas_export_ca.R writes for Canada); click or Enter opens the
-// country's panels (window.atlasOpen, assets/us_map.js).
-// fitted: a finished BBMM or DMM fit with a bloc map and/or PCA figure, shaded slate gold; click or Enter calls
-// opts.onFit(country). started: work begun (data, alignment) but no bloc maps yet, light green. planned: a folder but
-// no work yet, dark grey. All matched on the Natural Earth name.
+//   drawWorld(svgElement, { hover: true, tip, fitted: [{ name, key, title, k, k4, open }], onFit, started: [name],
+//                           quality: { name: grade }, places: [{ key, title, url }] }) -> Promise
+// Colouring, all matched on the Natural Earth name:
+//   fitted: a finished BBMM or DMM fit: the country is drawn as its K = 4 blocs in translucent greys (k4: a GeoJSON of
+//     dissolved blocs with properties b = 1-4, largest first, n, share; assets/world_k4/<key>.json); click or Enter
+//     calls c.open() if given (Canada opens its interactive panels) or else opts.onFit(c) (the bloc map and PCA figure).
+//   started: work begun (data pulled, maps made) but no fit yet: solid grey.
+//   quality: { name: 1-4 } the grade of the available sub-national election records from the regional surveys, on a
+//     four-step sequential scale; countries in none of these stay plain.
+// places: the older interactive layer (a GeoJSON of blocs with a color property), still supported.
 window.drawWorld = (el, opts = {}) => fetch("assets/world-50m.json").then(r => r.json()).then(WORLD => {
   const W = 1000, svg = d3.select(el);
   const proj = d3.geoEqualEarth().fitWidth(W - 12, { type: "Sphere" }), t = proj.translate();   // the map's full width, 6 px margins
@@ -20,12 +22,14 @@ window.drawWorld = (el, opts = {}) => fetch("assets/world-50m.json").then(r => r
   const land = svg.append("g").selectAll("path").data(topojson.feature(WORLD, WORLD.objects.countries).features).join("path")
     .attr("class", "wm-land");
   const fitBy = new Map((opts.fitted || []).map(c => [c.name, c]));
-  const started = new Set(opts.started || []), planned = new Set(opts.planned || []);
-  land.classed("wm-some", d => started.has(d.properties.name)).classed("wm-none", d => planned.has(d.properties.name));
-  land.filter(d => fitBy.has(d.properties.name)).classed("wm-fit", true).attr("tabindex", 0).attr("role", "button")
+  const started = new Set(opts.started || []), quality = opts.quality || {};
+  const openFit = c => c.open ? c.open() : opts.onFit && opts.onFit(c);
+  land.each(function (d) { const n = d.properties.name;
+    this.setAttribute("class", "wm-land" + (fitBy.has(n) ? " wm-fit" : started.has(n) ? " wm-some" : quality[n] ? " wm-q" + quality[n] : "")); });
+  land.filter(d => fitBy.has(d.properties.name)).attr("tabindex", 0).attr("role", "button")
     .attr("aria-label", d => "Show " + fitBy.get(d.properties.name).title)
-    .on("click", (e, d) => opts.onFit && opts.onFit(fitBy.get(d.properties.name)))
-    .on("keydown", (e, d) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); opts.onFit && opts.onFit(fitBy.get(d.properties.name)); } });
+    .on("click", (e, d) => openFit(fitBy.get(d.properties.name)))
+    .on("keydown", (e, d) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFit(fitBy.get(d.properties.name)); } });
   // GeoJSON (RFC 7946) winds outer rings anticlockwise; d3's spherical paths want them clockwise
   const rewind = g => ({ ...g, coordinates: g.type === "Polygon" ? g.coordinates.map(r => r.slice().reverse())
     : g.coordinates.map(p => p.map(r => r.slice().reverse())) });
@@ -52,7 +56,26 @@ window.drawWorld = (el, opts = {}) => fetch("assets/world-50m.json").then(r => r
         .on("pointerleave", () => { tip.hidden = true; });
     }
   })));
-  placed.then(() => edge.raise());
+  // K = 4 bloc layers of the fitted countries: greys of rising opacity, b = 1 (the largest bloc) lightest
+  const K4_ALPHA = [0.2, 0.38, 0.56, 0.74];
+  const k4done = Promise.all((opts.fitted || []).filter(c => c.k4).map(c => fetch(c.k4).then(r => r.ok ? r.json() : null).then(fc => {
+    if (!fc) return;
+    const g = svg.append("g").attr("class", "wm-k4").attr("data-country", c.key);
+    g.append("title").text(c.title);
+    g.selectAll("path").data(fc.features.map(f => ({ ...f, geometry: rewind(f.geometry) }))).join("path").attr("d", path)
+      .attr("fill-opacity", f => K4_ALPHA[(f.properties.b || 1) - 1]);
+    land.filter(d => d.properties.name === c.name).classed("wm-has-k4", true);
+    placeGroups.push(g);
+    g.on("click", () => openFit(c));
+    if (opts.tip) {
+      const tip = opts.tip, box = el.parentElement;
+      g.on("pointermove", e => { if (svg.classed("dragging")) return; const f = e.target.__data__, r = box.getBoundingClientRect();
+        tip.textContent = `${c.title}: bloc ${f.properties.b} of 4 (K = 4), ${Math.round(100 * f.properties.share)}% of units`;
+        tip.hidden = false; tip.style.left = (e.clientX - r.left) + "px"; tip.style.top = (e.clientY - r.top) + "px"; })
+        .on("pointerleave", () => { tip.hidden = true; });
+    }
+  }).catch(() => {})));
+  Promise.all([placed, k4done]).then(() => edge.raise());
   // moving the centre: drag to move the map's centre point (longitude and latitude, the projection's rotation); a drag of
   // more than 3 px is not a click (d3.drag swallows it). Zoom: wheel or pinch about the pointer, double-click, the
   // +/- buttons or keys; the projection is re-scaled about the map's centre, so line widths stay fine at any zoom.
@@ -98,8 +121,9 @@ window.drawWorld = (el, opts = {}) => fetch("assets/world-50m.json").then(r => r
     land.on("pointermove", (e, d) => {
       if (svg.classed("dragging")) return;
       const r = box.getBoundingClientRect(), n = d.properties.name, fc = fitBy.get(n);
-      tip.textContent = fc ? `${fc.title}: ${fc.k} blocs` : started.has(n) ? `${n}: under way, no bloc maps yet`
-        : planned.has(n) ? `${n}: planned` : n;
+      const Q = ["", "poor", "limited", "good", "excellent"];
+      tip.textContent = fc ? `${fc.title}: blocs fitted` : started.has(n) ? `${n}: work under way, no blocs yet`
+        : quality[n] ? `${n}: election records ${Q[quality[n]]}` : n;
       tip.hidden = false; tip.style.left = (e.clientX - r.left) + "px"; tip.style.top = (e.clientY - r.top) + "px";
     }).on("pointerleave", () => { tip.hidden = true; });
   }

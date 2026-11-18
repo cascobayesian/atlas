@@ -120,17 +120,25 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .world svg { display: block; width: 100%; height: auto; }
 .wm-sphere { fill: #a9d0e6; } .wm-grat { fill: none; stroke: #d6e9f3; stroke-width: .7; }
 .wm-land { fill: #fbfbf7; stroke: #7d8a8f; stroke-width: .45; stroke-linejoin: round; }
-.world .wm-land:hover { fill: #f0c95a; }
-.wm-land.wm-fit { fill: #b8a46c; cursor: pointer; outline: none; }
-.world .wm-land.wm-fit:hover, .wm-land.wm-fit:focus-visible { fill: #cdb97f; }
-.wm-land.wm-fit.active { fill: #cdb97f; stroke: #1b2f3a; stroke-width: .9; }
+.world .wm-land:hover { fill: #e3e6e8; }
+/* blocs fitted: the K = 4 blocs in translucent grey over white land */
+.wm-land.wm-fit { fill: #fbfbf7; cursor: pointer; outline: none; }
+.wm-land.wm-fit:not(.wm-has-k4) { fill: #8a9096; }
+.wm-k4 { cursor: pointer; } .wm-k4 path { fill: #2b3036; stroke: none; }
+.wm-k4:hover path { filter: brightness(1.4); }
+/* work under way: solid grey */
+.wm-land.wm-some { fill: #9ba1a6; } .world .wm-land.wm-some:hover { fill: #b0b5b9; }
+/* record quality, poor -> excellent (a four-step teal-green ramp, distinct from the greys and the sea) */
+.wm-land.wm-q1 { fill: #f3e9c6; } .wm-land.wm-q2 { fill: #d5df9f; } .wm-land.wm-q3 { fill: #8fc48c; } .wm-land.wm-q4 { fill: #3f9a74; }
+.world .wm-land.wm-q1:hover, .world .wm-land.wm-q2:hover, .world .wm-land.wm-q3:hover, .world .wm-land.wm-q4:hover { filter: brightness(1.08); }
+.wm-key i.k4 { background: linear-gradient(90deg, rgba(43,48,54,.2) 0 25%, rgba(43,48,54,.38) 25% 50%, rgba(43,48,54,.56) 50% 75%, rgba(43,48,54,.74) 75%); background-color: #fbfbf7; width: 2.2rem; }
+.wm-key i.some { background: #9ba1a6; }
+.wm-key i.q1 { background: #f3e9c6; } .wm-key i.q2 { background: #d5df9f; } .wm-key i.q3 { background: #8fc48c; } .wm-key i.q4 { background: #3f9a74; }
+.wm-key .q { display: inline-flex; gap: 0; } .wm-key .q i { border-radius: 0; } .wm-key .q i + i { border-left: 0; }
 .wm-key { display: flex; align-items: center; gap: .45rem; font-size: .85rem; color: var(--slate); margin: .4rem 0 0; }
 .wm-key { flex-wrap: wrap; column-gap: 1.1rem; }
 .wm-key span { display: inline-flex; align-items: center; gap: .4rem; }
 .wm-key i { width: .9rem; height: .9rem; border-radius: 2px; background: #b8a46c; border: 1px solid #7d8a8f; flex: none; }
-.wm-key i.some { background: #a9d39e; } .wm-key i.none { background: #4b5157; }
-.wm-land.wm-some { fill: #a9d39e; } .world .wm-land.wm-some:hover { fill: #bfe0b5; }
-.wm-land.wm-none { fill: #4b5157; } .world .wm-land.wm-none:hover { fill: #646b72; }
 .wm-turn { cursor: grab; touch-action: pan-y; } .wm-turn.dragging, .wm-turn.dragging * { cursor: grabbing; }
 .wm-turn:focus { outline: none; }
 .wm-country { margin: 1.4rem 0 2rem; padding-top: 1rem; border-top: 1px solid var(--rule); }

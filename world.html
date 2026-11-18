@@ -26,10 +26,10 @@
 </header>
 <main class="wrap">
 <h1 class="title">World</h1>
-<p class="us-lede">Voting blocs beyond the United States. Click Canada to explore its blocs, or a gold country for its bloc map.</p>
+<p class="us-lede">Voting blocs beyond the United States. Click a country drawn in grey blocs to explore it.</p>
 <div class="world"><svg id="world" role="img" aria-label="World map in the Equal Earth projection with country outlines"></svg><div class="wm-tip" id="wm-tip" hidden></div></div>
-<p class="wm-key"><span><i></i>Blocs fitted: click for the bloc map and PCA figure</span><span><i class="some"></i>Under way: data assembled, no bloc maps yet</span><span><i class="none"></i>Planned</span><span>Drag to move the centre; scroll, pinch or double-click to zoom.</span></p>
-<p class="us-cap">Canada: fifteen blocs of polling divisions from the 2015, 2019, 2021 and 2025 federal elections (a Dirichlet-multinomial mixture of party vote counts, all four elections aligned to the 2025 polling divisions), in a Canadian color scheme after ColorBrewer&rsquo;s Paired: blues Conservative, reds Liberal, oranges NDP, teals Bloc Qu&eacute;b&eacute;cois, greens Green-leaning and progressive. Equal Earth projection (&Scaron;avri&ccaron;, Patterson &amp; Jenny, 2018): every country drawn at its true relative size; graticule every 15&deg;. Boundaries: Natural Earth 1:50m.</p>
+<p class="wm-key"><span><i class="k4"></i>Blocs fitted: the K = 4 blocs; click for more</span><span><i class="some"></i>Work under way</span><span>Election records: <span class="q"><i class="q1"></i><i class="q2"></i><i class="q3"></i><i class="q4"></i></span> poor to excellent</span><span>Drag to move the centre; scroll, pinch or double-click to zoom.</span></p>
+<p class="us-cap">Countries with a fitted mixture (a Dirichlet-multinomial mixture of party vote counts, or for Switzerland a beta-binomial mixture of referendum votes) are drawn as their four-bloc (K = 4) solution, the largest bloc palest; click one for its bloc map at the chosen K and its PCA figure, or for Canada its full interactive panels. Grey: data gathered or maps made, no fit yet. The green scale grades the sub-national election records available, from our regional surveys of election data. Equal Earth projection (&Scaron;avri&ccaron;, Patterson &amp; Jenny, 2018): every country drawn at its true relative size; graticule every 15&deg;. Boundaries: Natural Earth 1:50m.</p>
 <section class="wm-country" id="wm-country" hidden aria-live="polite"></section>
 <div id="ap-mount"></div>
 </main>
@@ -50,29 +50,29 @@
 // Countries with a finished fit but no interactive panels yet: the bloc map at the chosen K and a PCA figure if one exists.
 // name = Natural Earth name; figures in assets/world/, copied from Teaching/Country.Politics/Countries/<country>/.
 const FITTED = [
-  { name: "Bosnia and Herz.", key: "bosnia", title: "Bosnia and Herzegovina", k: 8, model: "Dirichlet-multinomial mixture",
+  { name: "Bosnia and Herz.", key: "bosnia", title: "Bosnia and Herzegovina", k: 8, k4: "assets/world_k4/bosnia.json", model: "Dirichlet-multinomial mixture",
     data: "142 municipalities, House of Representatives elections 2010–2026, votes by party family",
     why: "K = 8 has the lowest BIC of K = 5–10", pca: true },
-  { name: "Bulgaria", key: "bulgaria", title: "Bulgaria", k: 10, model: "Dirichlet-multinomial mixture",
+  { name: "Bulgaria", key: "bulgaria", title: "Bulgaria", k: 10, k4: "assets/world_k4/bulgaria.json", model: "Dirichlet-multinomial mixture",
     data: "265 municipalities, 11 parliamentary elections 2013–2026",
     why: "K = 10 has the best BIC of K = 2–10 and passes the 3% rule (BIC still falling)", pca: false },
-  { name: "Colombia", key: "colombia", title: "Colombia", k: 19, model: "Dirichlet-multinomial mixture",
+  { name: "Colombia", key: "colombia", title: "Colombia", k: 19, k4: "assets/world_k4/colombia.json", model: "Dirichlet-multinomial mixture",
     data: "municipalities, Senate national-constituency votes 2018–2026",
     why: "K = 19, the fit carried through to profiles and PCA (BIC still falling at K = 30)", pca: true },
-  { name: "Croatia", key: "croatia", title: "Croatia", k: 10, model: "Dirichlet-multinomial mixture",
+  { name: "Croatia", key: "croatia", title: "Croatia", k: 10, k4: "assets/world_k4/croatia.json", model: "Dirichlet-multinomial mixture",
     data: "556 municipalities, Sabor elections 2007–2024", why: "K = 10, the national fit", pca: true },
-  { name: "Hungary", key: "hungary", title: "Hungary", k: 15, model: "Dirichlet-multinomial mixture",
+  { name: "Hungary", key: "hungary", title: "Hungary", k: 15, k4: "assets/world_k4/hungary.json", model: "Dirichlet-multinomial mixture",
     data: "3,177 settlements, parliamentary elections 2014–2026",
     why: "K = 15, the largest fitted (BIC still falling at K = 15)", pca: true },
-  { name: "India", key: "india", title: "India", k: 16, model: "Dirichlet-multinomial mixture",
+  { name: "India", key: "india", title: "India", k: 16, k4: "assets/world_k4/india.json", model: "Dirichlet-multinomial mixture",
     data: "assembly-constituency segments, Lok Sabha general elections 2009–2024",
     why: "K = 16 has the lowest BIC of K = 2–16", pca: false },
-  { name: "Israel", key: "israel", title: "Israel", k: 12, model: "Dirichlet-multinomial mixture",
+  { name: "Israel", key: "israel", title: "Israel", k: 12, k4: "assets/world_k4/israel.json", model: "Dirichlet-multinomial mixture",
     data: "2,873 statistical areas (2011), five Knesset elections April 2019–2022",
     why: "K = 12 by the 3% rule (draft fit)", pca: true },
-  { name: "Netherlands", key: "netherlands", title: "Netherlands", k: 15, model: "Dirichlet-multinomial mixture",
+  { name: "Netherlands", key: "netherlands", title: "Netherlands", k: 15, k4: "assets/world_k4/netherlands.json", model: "Dirichlet-multinomial mixture",
     data: "342 municipalities, Tweede Kamer elections 2010–2025", why: "K = 15", pca: true },
-  { name: "Switzerland", key: "switzerland", title: "Switzerland", k: 10, model: "beta-binomial mixture",
+  { name: "Switzerland", key: "switzerland", title: "Switzerland", k: 10, k4: "assets/world_k4/switzerland.json", model: "beta-binomial mixture",
     data: "communes, federal referendums 2010–2024", why: "K = 10 by the 3% rule (best BIC at K = 15)", pca: true }
 ];
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -88,12 +88,13 @@ function showCountry(c, scroll = true) {
   try { const u = new URL(location.href); u.searchParams.set("country", c.key); history.replaceState(null, "", u); } catch (e) {}
   if (scroll) box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
-  places: [{ key: "canada", title: "Canada", url: "assets/world_canada.json" }], fitted: FITTED, onFit: showCountry,
-  // from the folders in Teaching/Country.Politics/Countries: started = data or maps but no bloc fit; planned = empty folder
+fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})).then(QUALITY => drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
+  fitted: FITTED.concat([{ name: "Canada", key: "canada", title: "Canada", k4: "assets/world_k4/canada.json",
+    open: () => window.atlasOpen ? window.atlasOpen("canada") : (location.search = "?place=canada") }]), onFit: showCountry,
+  // from the folders in Teaching/Country.Politics/Countries: data pulled or maps made, but no bloc fit
   started: ["Botswana", "France", "Ghana", "Romania"],
-  planned: ["Brazil", "Czechia", "Mexico", "Slovakia", "Slovenia", "South Africa", "Turkey"] })
-  .then(() => { const k = new URLSearchParams(location.search).get("country"), c = FITTED.find(f => f.key === k); if (c) showCountry(c, false); });
+  // grades 1-4 from Teaching/Country.Politics/Election.Data.Surveys/record_quality_by_country.csv
+  quality: QUALITY }).then(() => { const k = new URLSearchParams(location.search).get("country"), c = FITTED.find(f => f.key === k); if (c) showCountry(c, false); }));
 </script>
 </body>
 </html>
