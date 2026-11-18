@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>World · Atlas of Voting Blocs</title>
-<meta name="description" content="The Atlas of Voting Blocs beyond the United States: Canada&rsquo;s fifteen federal voting blocs, 2015–2025.">
+<meta name="description" content="The Atlas of Voting Blocs around the world: countries with voting blocs, work under way, and the quality of election records elsewhere.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
@@ -26,12 +26,52 @@
 </header>
 <main class="wrap">
 <h1 class="title">World</h1>
-<p class="us-lede">Voting blocs beyond the United States. Click a country drawn in grey blocs to explore it.</p>
-<div class="world"><svg id="world" role="img" aria-label="World map in the Equal Earth projection with country outlines"></svg><div class="wm-tip" id="wm-tip" hidden></div></div>
-<p class="wm-key"><span><i class="k4"></i>Blocs fitted: the K = 4 blocs; click for more</span><span><i class="some"></i>Work under way</span><span>Election records: <span class="q"><i class="q1"></i><i class="q2"></i><i class="q3"></i><i class="q4"></i></span> poor to excellent</span><span>Drag to move the centre; scroll, pinch or double-click to zoom.</span></p>
-<p class="us-cap">Countries with a fitted mixture (a Dirichlet-multinomial mixture of party vote counts, or for Switzerland a beta-binomial mixture of referendum votes) are drawn as their four-bloc (K = 4) solution, the largest bloc palest; click one for its bloc map at the chosen K and its PCA figure, or for Canada its full interactive panels. Grey: data gathered or maps made, no fit yet. The green scale grades the sub-national election records available, from our regional surveys of election data. Equal Earth projection (&Scaron;avri&ccaron;, Patterson &amp; Jenny, 2018): every country drawn at its true relative size; graticule every 15&deg;. Boundaries: Natural Earth 1:50m.</p>
+<p class="us-lede">Voting blocs around the world: where we have found them, where the work is under way, and where the election records would let us look.</p>
+<div class="wm-stage">
+  <div class="world"><svg id="world" role="img" aria-label="Globe coloured by the state of the voting-bloc work in each country"></svg><div class="wm-tip" id="wm-tip" hidden></div></div>
+  <aside class="wm-legend" aria-label="How the globe is coloured">
+    <h2>Reading the globe</h2>
+    <h3>Voting blocs found</h3>
+    <ul>
+      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4), the biggest bloc palest. Click for its full bloc map.</small></span></li>
+      <li><span class="sw us"></span><span>US states in the atlas <span class="n" id="n-us"></span><small>Click the United States for its states and cities.</small></span></li>
+      <li><span class="sw some"></span><span>Work under way <span class="n" id="n-some"></span><small>Returns gathered or maps made; no blocs yet.</small></span></li>
+    </ul>
+    <h3>Election records available</h3>
+    <ul>
+      <li><span class="sw q4"></span><span>Excellent: ready to go <span class="n" id="n-q4"></span></span></li>
+      <li><span class="sw q3"></span><span>Good <span class="n" id="n-q3"></span></span></li>
+      <li><span class="sw q2"></span><span>Limited <span class="n" id="n-q2"></span></span></li>
+      <li><span class="sw q1"></span><span>Poor: not usable <span class="n" id="n-q1"></span></span></li>
+      <li><span class="sw none"></span><span>Not surveyed</span></li>
+    </ul>
+    <p class="hint">Drag to turn the globe. Zoom with the buttons, a double-click, a pinch, or Ctrl/&#x2318; and the scroll wheel; &#x21ba; resets it.</p>
+  </aside>
+</div>
 <section class="wm-country" id="wm-country" hidden aria-live="polite"></section>
 <div id="ap-mount"></div>
+
+<div class="wm-stats" id="wm-stats"></div>
+
+<section class="wm-section" aria-labelledby="h-done">
+  <h2 id="h-done">Countries with voting blocs</h2>
+  <p>Each country&rsquo;s blocs come from the same model as the US atlas: a mixture model of how small areas (polling divisions, municipalities, communes, settlements) voted across several elections, with the number of blocs, K, chosen from the fits. Most use a Dirichlet-multinomial mixture of party vote counts; Switzerland, which votes on referendums, uses the beta-binomial mixture of yes and no votes. Pick a country for its bloc map at the chosen K and, where there is one, the principal-coordinates view of its areas.</p>
+  <div class="wm-cards" id="wm-cards"></div>
+</section>
+
+<section class="wm-section" aria-labelledby="h-prog">
+  <h2 id="h-prog">Under way</h2>
+  <p>Countries where returns have been gathered, aligned to common boundaries or mapped, but no blocs have been fitted yet.</p>
+  <ul class="wm-prog" id="wm-prog"></ul>
+</section>
+
+<section class="wm-section" aria-labelledby="h-rec">
+  <h2 id="h-rec">Where the records would let us look</h2>
+  <p>Finding voting blocs needs results for small areas, over several elections, in a form a computer can read, with boundaries to map them. Our regional surveys of election data (Africa, Asia, Europe, the Americas, Western Asia and the Caribbean) graded each country&rsquo;s records from A to F; the globe shows those grades in four steps.</p>
+  <div class="wm-grades" id="wm-grades"></div>
+</section>
+
+<p class="us-cap">Orthographic projection: the globe as seen from space, half of it at a time. Boundaries: Natural Earth 1:50m (countries) and the US Census Bureau via us-atlas (states). Record grades from the regional surveys in Teaching/Country.Politics/Election.Data.Surveys, mapped A&nbsp;&rarr;&nbsp;excellent, B&nbsp;&rarr;&nbsp;good, C&nbsp;&rarr;&nbsp;limited, D and F&nbsp;&rarr;&nbsp;poor.</p>
 </main>
 <footer class="site-foot">
   <div class="wrap"><a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
@@ -88,13 +128,66 @@ function showCountry(c, scroll = true) {
   try { const u = new URL(location.href); u.searchParams.set("country", c.key); history.replaceState(null, "", u); } catch (e) {}
   if (scroll) box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})).then(QUALITY => drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
-  fitted: FITTED.concat([{ name: "Canada", key: "canada", title: "Canada", k4: "assets/world_k4/canada.json",
-    open: () => window.atlasOpen ? window.atlasOpen("canada") : (location.search = "?place=canada") }]), onFit: showCountry,
-  // from the folders in Teaching/Country.Politics/Countries: data pulled or maps made, but no bloc fit
-  started: ["Botswana", "France", "Ghana", "Romania"],
-  // grades 1-4 from Teaching/Country.Politics/Election.Data.Surveys/record_quality_by_country.csv
-  quality: QUALITY }).then(() => { const k = new URLSearchParams(location.search).get("country"), c = FITTED.find(f => f.key === k); if (c) showCountry(c, false); }));
+// US states with statewide blocs in the atlas (data/places.json); cities and counties elsewhere are on the US page
+const US_STATES = ["California", "Washington", "Utah", "Colorado", "Massachusetts", "Maine", "New Mexico", "Florida", "Louisiana",
+  "Alabama", "Michigan", "Ohio", "Maryland", "Georgia", "Wisconsin", "North Carolina"];
+// from the folders in Teaching/Country.Politics/Countries: data pulled or maps made, but no bloc fit
+const STARTED = [
+  { name: "Botswana", note: "parliamentary results by constituency, with current and historical constituency maps" },
+  { name: "France", note: "2022 presidential results by commune, 2024 legislative maps, Paris polling stations" },
+  { name: "Ghana", note: "parliamentary results by constituency, with constituency maps" },
+  { name: "Romania", note: "election returns gathered and a crosswalk to common boundaries under way" }
+];
+const CANADA = { name: "Canada", key: "canada", title: "Canada", k: 15, k4: "assets/world_k4/canada.json",
+  data: "70,644 polling divisions, federal elections 2015–2025; full interactive panels",
+  open: () => window.atlasOpen ? window.atlasOpen("canada") : (location.search = "?place=canada") };
+const openUS = () => { location.href = "us.html"; };
+const GRADES = [
+  { g: 4, name: "Excellent: ready to go", text: "Polling-station or municipal results for many elections, machine-readable, with boundaries." },
+  { g: 3, name: "Good", text: "Fine-grained or constituency results with gaps: fewer elections, missing boundaries or awkward formats." },
+  { g: 2, name: "Limited", text: "Coarse units, few elections, or results only in scanned documents." },
+  { g: 1, name: "Poor: not usable", text: "National totals only, or records too scattered or unreliable to use." }
+];
+const QCOL = { 4: "var(--wm-q4)", 3: "var(--wm-q3)", 2: "var(--wm-q2)", 1: "var(--wm-q1)" };
+const shortName = n => ({ "United States of America": "United States", "Bosnia and Herz.": "Bosnia and Herzegovina", "Dem. Rep. Congo": "DR Congo",
+  "Central African Rep.": "Central African Republic", "Dominican Rep.": "Dominican Republic", "S. Sudan": "South Sudan" })[n] || n;
+const openCard = c => { if (window.worldFlyTo) window.worldFlyTo(c.name); c.open ? c.open() : showCountry(c); };
+
+function fillPage(Q) {
+  const fittedNames = new Set(FITTED.map(c => c.name).concat("Canada")), startedNames = new Set(STARTED.map(c => c.name));
+  const graded = Object.entries(Q).filter(([n]) => !fittedNames.has(n) && !startedNames.has(n) && n !== "United States of America");
+  const byG = g => graded.filter(([, v]) => v === g).map(([n]) => n).sort();
+  const set = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
+  set("n-fit", `(${FITTED.length + 1})`); set("n-us", `(${US_STATES.length})`); set("n-some", `(${STARTED.length})`);
+  [1, 2, 3, 4].forEach(g => set("n-q" + g, `(${byG(g).length})`));
+  document.getElementById("wm-stats").innerHTML = [
+    [FITTED.length + 2, "countries with voting blocs, counting the United States", "var(--wm-pink)"],
+    [US_STATES.length, "US states with statewide blocs", "var(--wm-pink)"],
+    [STARTED.length, "countries under way", "var(--wm-grey)"],
+    [byG(4).length + byG(3).length, "more countries with good or excellent records", "var(--wm-q4)"]
+  ].map(([n, t, c]) => `<div class="wm-stat" style="--c:${c}"><b>${n}</b><span>${esc(t)}</span></div>`).join("");
+  const cards = [{ key: "us", name: "United States of America", title: "United States", k: null, data: `${US_STATES.length} states and 22 cities and counties, from ballot measures and races`, img: "assets/us_map.png", open: openUS },
+    { ...CANADA, img: "assets/world/canada_map.png", pos: "left top" }]
+    .concat(FITTED.map(c => ({ ...c, img: `assets/world/${c.key}_map.png` })));
+  const host = document.getElementById("wm-cards");
+  cards.forEach(c => { const b = document.createElement("button"); b.type = "button"; b.className = "wm-card";
+    b.innerHTML = `<div class="pic"><img src="${c.img}" alt="" loading="lazy"${c.pos ? ` style="object-position:${c.pos}"` : ""}></div>` +
+      `<div class="txt"><h3>${esc(c.title)}${c.k ? `<span class="k">K = ${c.k}</span>` : ""}</h3><p>${esc(c.data)}</p></div>`;
+    b.addEventListener("click", () => openCard(c)); host.appendChild(b); });
+  document.getElementById("wm-prog").innerHTML = STARTED.map(c => `<li><b>${esc(c.name)}</b>: ${esc(c.note)}</li>`).join("");
+  document.getElementById("wm-grades").innerHTML = GRADES.map(G => { const L = byG(G.g);
+    return `<div class="wm-grade" style="--c:${QCOL[G.g]}"><h3>${esc(G.name)} <span class="n">(${L.length})</span></h3><p>${esc(G.text)}</p>` +
+      `<div class="who">${L.map(n => esc(shortName(n))).join(", ")}</div></div>`; }).join("");
+}
+
+fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})).then(QUALITY => {
+  fillPage(QUALITY);
+  return drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
+    fitted: FITTED.concat([CANADA]), onFit: showCountry, started: STARTED.map(c => c.name),
+    us: { states: US_STATES, open: openUS },
+    // grades 1-4 from Teaching/Country.Politics/Election.Data.Surveys/record_quality_by_country.csv
+    quality: QUALITY });
+}).then(() => { const k = new URLSearchParams(location.search).get("country"), c = FITTED.find(f => f.key === k); if (c) showCountry(c, false); });
 </script>
 </body>
 </html>
