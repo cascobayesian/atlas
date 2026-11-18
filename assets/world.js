@@ -1,6 +1,6 @@
 // The world in the Equal Earth projection (Šavrič, Patterson & Jenny, 2018), as first drawn on 6 November:
 // light land on blue water, Natural Earth 1:50m country outlines (assets/world-50m.json, via world-atlas), a 15° graticule.
-// Drag sideways (or use the arrow keys on the map) to turn the globe about its axis.
+// Drag to move the centre point; wheel, pinch, double-click or the on-map buttons to zoom (arrow keys and +/- too).
 //   drawWorld(svgElement, { hover: true, tip, places: [{ key, title, url }], fitted: [{ name, key, title, k }], onFit,
 //                           started: [name], planned: [name] }) -> Promise
 // places: countries with interactive panels, drawn over the land in their blocs' colours (a GeoJSON of dissolved blocs
@@ -53,16 +53,46 @@ window.drawWorld = (el, opts = {}) => fetch("assets/world-50m.json").then(r => r
     }
   })));
   placed.then(() => edge.raise());
-  // turning: drag sideways to change the central meridian; a drag of more than 3 px is not a click (d3.drag swallows it)
-  let frame = 0;
-  const turn = dl => { const r = proj.rotate(); proj.rotate([((r[0] + dl + 540) % 360) - 180, 0]);
-    if (!frame) frame = requestAnimationFrame(() => { frame = 0; redraw(); }); };
-  svg.classed("wm-turn", true).call(d3.drag().clickDistance(3)
+  // moving the centre: drag to move the map's centre point (longitude and latitude, the projection's rotation); a drag of
+  // more than 3 px is not a click (d3.drag swallows it). Zoom: wheel or pinch about the pointer, double-click, the
+  // +/- buttons or keys; the projection is re-scaled about the map's centre, so line widths stay fine at any zoom.
+  const S0 = proj.scale(), KMAX = 16; let k = 1, frame = 0;
+  const draw = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; redraw(); }); };
+  const setCentre = (lam, phi) => { proj.rotate([((lam + 540) % 360) - 180, Math.max(-90, Math.min(90, phi))]); draw(); };
+  const turn = (dl, dp) => { const r = proj.rotate(); setCentre(r[0] + dl, r[1] + dp); };
+  const px = () => W / el.getBoundingClientRect().width;                       // viewBox units per screen pixel
+  const zoomTo = (k1, at) => {                                                 // at: viewBox point to hold still, or the centre
+    k1 = Math.max(1, Math.min(KMAX, k1)); const p0 = at && proj.invert(at);
+    k = k1; proj.scale(S0 * k);
+    if (p0) { const p1 = proj.invert(at); if (p1 && isFinite(p1[0])) turn(p1[0] - p0[0], p1[1] - p0[1]); }
+    if (k === 1) setCentre(proj.rotate()[0], 0);                               // fully out: back to an upright world
+    draw(); };
+  const ptr = e => { const r = el.getBoundingClientRect(); return [(e.clientX - r.left) * px(), (e.clientY - r.top) * px()]; };
+  svg.classed("wm-turn", true).call(d3.drag().clickDistance(3).filter(e => !e.button && !(e.touches && e.touches.length > 1))
     .on("start", () => { svg.classed("dragging", true); if (opts.tip) opts.tip.hidden = true; })
-    .on("drag", e => { const k = W / el.getBoundingClientRect().width; turn(e.dx * k * 0.36); })
+    .on("drag", e => { const d = 0.36 * px() / k; turn(e.dx * d, -e.dy * d); })
     .on("end", () => svg.classed("dragging", false)));
+  el.addEventListener("wheel", e => { e.preventDefault(); zoomTo(k * Math.pow(2, -e.deltaY * (e.deltaMode ? 0.05 : 0.002)), ptr(e)); },
+    { passive: false });
+  svg.on("dblclick.zoom", e => { e.preventDefault(); zoomTo(k * (e.shiftKey ? 0.5 : 2), ptr(e)); });
+  let pinch = null;                                                            // two-finger pinch on touch screens
+  el.addEventListener("touchstart", e => { if (e.touches.length === 2) { const [a, b] = e.touches;
+    pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), k }; } }, { passive: true });
+  el.addEventListener("touchmove", e => { if (pinch && e.touches.length === 2) { e.preventDefault(); const [a, b] = e.touches;
+    zoomTo(pinch.k * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinch.d,
+      ptr({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 })); } }, { passive: false });
+  el.addEventListener("touchend", e => { if (e.touches.length < 2) pinch = null; });
   svg.attr("tabindex", 0).on("keydown.turn", e => { if (e.target !== el) return;
-    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); turn(e.key === "ArrowLeft" ? 10 : -10); } });
+    const st = 10 / k, keys = { ArrowLeft: [st, 0], ArrowRight: [-st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] };
+    if (keys[e.key]) { e.preventDefault(); turn(...keys[e.key]); }
+    else if (e.key === "+" || e.key === "=") { e.preventDefault(); zoomTo(k * 1.5); }
+    else if (e.key === "-" || e.key === "_") { e.preventDefault(); zoomTo(k / 1.5); }
+    else if (e.key === "0") { e.preventDefault(); reset(); } });
+  const reset = () => { k = 1; proj.scale(S0); setCentre(0, 0); };
+  // on-map controls: zoom in, zoom out, reset
+  const ctl = d3.select(el.parentElement).append("div").attr("class", "wm-ctl");
+  [["+", "Zoom in", () => zoomTo(k * 1.5)], ["−", "Zoom out", () => zoomTo(k / 1.5)], ["↺", "Reset the view", reset]]
+    .forEach(([t, l, f]) => ctl.append("button").attr("type", "button").attr("aria-label", l).attr("title", l).text(t).on("click", f));
   if (opts.hover) {
     const tip = opts.tip, box = el.parentElement;
     land.on("pointermove", (e, d) => {
