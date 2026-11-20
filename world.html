@@ -33,7 +33,7 @@
     <h2>Reading the globe</h2>
     <h3>Voting blocs found</h3>
     <ul>
-      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Romania K = 5), the biggest bloc palest. Click for its full bloc map.</small></span></li>
+      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Romania and Slovakia K = 5), the biggest bloc palest. Click for its full bloc map.</small></span></li>
       <li><span class="sw us"></span><span>US states in the atlas <span class="n" id="n-us"></span><small>Click the United States for its states and cities.</small></span></li>
       <li><span class="sw some"></span><span>Work under way <span class="n" id="n-some"></span><small>Returns gathered or maps made; no blocs yet.</small></span></li>
     </ul>
@@ -122,6 +122,13 @@ const FITTED = [
       ["census_k10.png", "Census profile of the K = 10 blocs: ethnicity, religion, age, education, birthplace, emigration and housing (2021 and 2011 censuses), bloc means weighted by electorate."],
       ["census_k5.png", "Census profile of the K = 5 blocs."],
       ["heatmap.png", "Chamber of Deputies list vote shares, 2016, 2020 and 2024, one row per commune or town."]] },
+  { name: "Slovakia", key: "slovakia", title: "Slovakia", k: 10, k4: "assets/world_k4/slovakia.json", kShade: 5, model: "Dirichlet-multinomial mixture",
+    data: "4,137 stable units (polling districts, pooled districts and municipalities), National Council elections 2016, 2020 and 2023",
+    why: "K = 10, against K = 5 (only these two fitted, three starts each; BIC 928,858 and 956,392); the globe shades the K = 5 blocs",
+    figs: [
+      ["map.png", "Bloc map, K = 10, drawn on municipalities: a municipality split into several units takes the bloc of most of its 2023 voters (black outline where its units fall in more than one bloc). Insets: Bratislava and Košice city districts."],
+      ["pca.gif", "Rotating principal components of the units' 2016–2023 vote shares, coloured by the K = 10 blocs; dot area proportional to 2023 voters."],
+      ["heatmap.png", "Party vote shares in each election (columns), one row per unit, grouped by K = 10 bloc."]] },
   { name: "Switzerland", key: "switzerland", title: "Switzerland", k: 10, k4: "assets/world_k4/switzerland.json", model: "beta-binomial mixture",
     data: "communes, federal referendums 2010–2024", why: "K = 10 by the 3% rule (best BIC at K = 15)", pca: true }
 ];
@@ -161,7 +168,6 @@ const STARTED = [
   { name: "Mexico", note: "work begun" },
   { name: "Poland", note: "polling-district crosswalks for national and local elections 2018–2025" },
   { name: "Serbia", note: "National Assembly elections 2000–2026 aligned to the 2026 polling stations" },
-  { name: "Slovakia", note: "work begun" },
   { name: "Slovenia", note: "polling stations matched to the 212 current municipalities, 2002–2026" }
 ];
 const CANADA = { name: "Canada", key: "canada", title: "Canada", k: 15, k4: "assets/world_k4/canada.json",
