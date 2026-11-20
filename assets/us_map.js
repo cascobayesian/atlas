@@ -13,7 +13,8 @@
   // open a place, remembering where we are
   const open = key => {
     store(KEY, String(Math.round(scrollY)));
-    const u = new URL(location.href); u.searchParams.set("place", key); u.hash = ""; location.href = u.href;
+    // one location at a time: a figure country open on the World page (?country=) closes when a place opens
+    const u = new URL(location.href); u.searchParams.delete("country"); u.searchParams.set("place", key); u.hash = ""; location.href = u.href;
   };
   window.atlasOpen = open;                       // the place picker in atlas.js uses it too
 

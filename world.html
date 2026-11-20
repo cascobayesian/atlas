@@ -126,7 +126,13 @@ const FITTED = [
     data: "communes, federal referendums 2010–2024", why: "K = 10 by the 3% rule (best BIC at K = 15)", pca: true }
 ];
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+// one location at a time: opening a country closes the panels of a place opened before it (e.g. Canada's ?place=)
+function closePlace() {
+  ["ap-head", "ap", "ap-subpanel", "ap-tip"].forEach(id => { const e = document.getElementById(id); if (e) e.hidden = true; });
+  const dlg = document.getElementById("ap-big"); if (dlg && dlg.open) dlg.close();
+}
 function showCountry(c, scroll = true) {
+  closePlace();
   const box = document.getElementById("wm-country");
   document.querySelectorAll(".wm-land.wm-fit").forEach(p => p.classList.toggle("active", p.__data__.properties.name === c.name));
   const head = `<h2>${esc(c.title)}</h2><p>${esc(c.k)} voting blocs from a ${esc(c.model)} of ${esc(c.data)}; ${esc(c.why)}.</p>`;
@@ -139,7 +145,7 @@ function showCountry(c, scroll = true) {
     (c.pca ? `<figure><img src="assets/world/${c.key}_pca.png" alt="${esc(c.title)}: units on their first principal coordinates, coloured by bloc" loading="lazy">` +
       `<figcaption>Principal coordinates of the units' vote shares, coloured by bloc.</figcaption></figure>` : "");
   box.hidden = false;
-  try { const u = new URL(location.href); u.searchParams.set("country", c.key); history.replaceState(null, "", u); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.delete("place"); u.searchParams.set("country", c.key); history.replaceState(null, "", u); } catch (e) {}
   if (scroll) box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 // US states with statewide blocs in the atlas (data/places.json); cities and counties elsewhere are on the US page
@@ -200,7 +206,8 @@ fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})).then(QU
     us: { states: US_STATES, open: openUS },
     // grades 1-4 from Teaching/Country.Politics/Election.Data.Surveys/record_quality_by_country.csv
     quality: QUALITY });
-}).then(() => { const k = new URLSearchParams(location.search).get("country"), c = FITTED.find(f => f.key === k); if (c) showCountry(c, false); });
+}).then(() => { const q = new URLSearchParams(location.search), c = FITTED.find(f => f.key === q.get("country"));
+  if (c && !q.get("place")) showCountry(c, false); });   // an old link with both: the place's panels win
 </script>
 </body>
 </html>
