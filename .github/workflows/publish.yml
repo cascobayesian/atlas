@@ -1,5 +1,5 @@
 # Publish the atlas to GitHub Pages: the pages and code from this repo, plus the data bundle
-# (atlas-data.tar.gz on the "data" release, uploaded by scripts/publish_data.sh). The data stays out of git,
+# (atlas-data.tar.gz, in parts, on the "data" release, uploaded by scripts/publish_data.sh). The data stays out of git,
 # so re-exports replace the bundle instead of adding to the history.
 name: Publish
 on:
@@ -25,7 +25,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download data --pattern atlas-data.tar.gz --dir /tmp
+          # scripts/publish_data.sh uploads the bundle as atlas-data.<stamp>.part-aa, -ab, ... and then a marker
+          # atlas-data.<stamp>.complete; use the newest complete set (older layouts: unstamped parts, or one whole file)
+          gh release download data --pattern 'atlas-data*' --dir /tmp/bundle
+          cd /tmp/bundle
+          stamp=$(ls *.complete 2>/dev/null | sed 's/\.complete$//' | sort | tail -1)
+          if [ -n "$stamp" ]; then cat "$stamp".part-* > /tmp/atlas-data.tar.gz
+          elif ls atlas-data.tar.gz.part-* >/dev/null 2>&1; then cat atlas-data.tar.gz.part-* > /tmp/atlas-data.tar.gz
+          else mv atlas-data.tar.gz /tmp/atlas-data.tar.gz; fi
+          cd "$GITHUB_WORKSPACE"
           mkdir -p data && tar -xzf /tmp/atlas-data.tar.gz -C data
           rm -rf scripts .gitignore README.md
           du -sh .

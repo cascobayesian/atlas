@@ -447,8 +447,10 @@
 
     // ---- subpanels: one at a time, chosen by tab or by what was clicked ----
     // a place can bring a series of rendered GIFs (G.gifs: { base, note, items: [{ k, t, cap }] }, files <base><k>.gif / .png),
-    // e.g. Canada's turning PCA coloured by census shares; it gets its own tab after Demographics
-    if (G.gifs && G.gifs.items && G.gifs.items.length) {
+    // e.g. Canada's turning PCA coloured by census shares; it gets its own tab after Demographics, or with G.gifs.pane = "demog"
+    // it is the Demographics tab (in place of the live panels)
+    const GIFS_IN_DEMOG = !!(G.gifs && G.gifs.items && G.gifs.items.length && G.gifs.pane === "demog");
+    if (G.gifs && G.gifs.items && G.gifs.items.length && !GIFS_IN_DEMOG) {
       const sp = document.getElementById("ap-subpanel");
       const tb = document.createElement("button"); tb.type = "button"; tb.setAttribute("role", "tab"); tb.dataset.tab = "gifs"; tb.textContent = G.gifs.label || "Census GIFs";
       sp.querySelector('[data-tab="demog"]').after(tb);
@@ -460,8 +462,8 @@
     let demogBuilt = false, gifsBuilt = false;
     const BIG = {};
     // the GIF series: one large GIF with its caption, previous / next / play-through, and a list of stills to jump to
-    function buildGifs() {
-      const host = pane("gifs"), S2 = G.gifs, L = S2.items, src = (x, ext) => `${base}${S2.base || "gifs/"}${x.k}.${ext}`;
+    function buildGifs(host) {
+      const S2 = G.gifs, L = S2.items, src = (x, ext) => `${base}${S2.base || "gifs/"}${x.k}.${ext}`;
       host.innerHTML = `<div class="ap-gifs"><figure class="ap-gif-main"><div class="ap-gif-bar">` +
         `<button type="button" class="ap-gif-nav" data-d="-1" aria-label="Previous GIF">&lsaquo;</button>` +
         `<span class="ap-gif-count" aria-live="polite"></span>` +
@@ -472,9 +474,11 @@
         (S2.note ? `<p class="ap-note">${S2.note}</p>` : "");
       const img = host.querySelector(".ap-gif-img"), cap = host.querySelector("figcaption"), cnt = host.querySelector(".ap-gif-count");
       const btns = [...host.querySelectorAll(".ap-gif-list button")], play = host.querySelector(".ap-gif-play");
-      let cur = 0, timer = null;
+      let cur = 0, timer = null, want = null;
+      // the still (small) goes up at once so the picture always matches the caption; the GIF (several MB) replaces it once loaded
       const show = i => { cur = (i + L.length) % L.length; const x = L[cur];
-        img.src = src(x, "gif"); img.alt = `Turning PCA of the ${D.unit}, coloured by ${x.t}`;
+        img.src = src(x, "png"); const g = new Image(); want = g; g.onload = () => { if (want === g) img.src = g.src; }; g.src = src(x, "gif");
+        img.alt = `Turning PCA of the ${D.unit}, coloured by ${x.t}`;
         cap.innerHTML = `<b>${esc(x.t)}.</b> ${esc(x.cap || "")}`; cnt.textContent = `${cur + 1} / ${L.length}`;
         btns.forEach((b, j) => b.setAttribute("aria-current", String(j === cur))); };
       const stop = () => { clearInterval(timer); timer = null; play.setAttribute("aria-pressed", "false"); play.textContent = "Play the series"; };
@@ -491,8 +495,8 @@
       S.tab = t; subp.classList.toggle("open", !!t); subp.querySelector(".ap-sub-close").hidden = !t;   // the tab bar always shows
       tabs.forEach(b => { b.setAttribute("aria-selected", String(b.dataset.tab === t)); b.tabIndex = b.dataset.tab === t ? 0 : -1; });
       subp.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== t);
-      if (t === "demog" && !demogBuilt) { demogBuilt = true; buildDemog(); }
-      if (t === "gifs" && !gifsBuilt) { gifsBuilt = true; buildGifs(); }
+      if (t === "demog" && !demogBuilt) { demogBuilt = true; GIFS_IN_DEMOG ? buildGifs(pane("demog")) : buildDemog(); }
+      if (t === "gifs" && !gifsBuilt) { gifsBuilt = true; buildGifs(pane("gifs")); }
       if (t === "heat" && !heat) { heat = buildHeat(pane("heat").querySelector(".ap-heat-plot")); buildMiniMap(); }
       if (t === "bloc") renderBloc(); if (t === "unit") renderUnit();
       if (t) { const r = subp.getBoundingClientRect(); if (r.top > innerHeight - 120) subp.scrollIntoView({ behavior: "smooth", block: "start" }); }
