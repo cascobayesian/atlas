@@ -446,10 +446,45 @@
     };
 
     // ---- subpanels: one at a time, chosen by tab or by what was clicked ----
+    // a place can bring a series of rendered GIFs (G.gifs: { base, note, items: [{ k, t, cap }] }, files <base><k>.gif / .png),
+    // e.g. Canada's turning PCA coloured by census shares; it gets its own tab after Demographics
+    if (G.gifs && G.gifs.items && G.gifs.items.length) {
+      const sp = document.getElementById("ap-subpanel");
+      const tb = document.createElement("button"); tb.type = "button"; tb.setAttribute("role", "tab"); tb.dataset.tab = "gifs"; tb.textContent = G.gifs.label || "Census GIFs";
+      sp.querySelector('[data-tab="demog"]').after(tb);
+      const pn = document.createElement("div"); pn.dataset.pane = "gifs"; pn.setAttribute("role", "tabpanel"); pn.hidden = true;
+      sp.querySelector('[data-pane="demog"]').after(pn);
+    }
     const subp = document.getElementById("ap-subpanel"), tabs = [...subp.querySelectorAll("[data-tab]")];
     const pane = t => subp.querySelector(`[data-pane="${t}"]`);
-    let demogBuilt = false;
+    let demogBuilt = false, gifsBuilt = false;
     const BIG = {};
+    // the GIF series: one large GIF with its caption, previous / next / play-through, and a list of stills to jump to
+    function buildGifs() {
+      const host = pane("gifs"), S2 = G.gifs, L = S2.items, src = (x, ext) => `${base}${S2.base || "gifs/"}${x.k}.${ext}`;
+      host.innerHTML = `<div class="ap-gifs"><figure class="ap-gif-main"><div class="ap-gif-bar">` +
+        `<button type="button" class="ap-gif-nav" data-d="-1" aria-label="Previous GIF">&lsaquo;</button>` +
+        `<span class="ap-gif-count" aria-live="polite"></span>` +
+        `<button type="button" class="ap-gif-nav" data-d="1" aria-label="Next GIF">&rsaquo;</button>` +
+        `<button type="button" class="ap-gif-play" aria-pressed="false">Play the series</button></div>` +
+        `<img class="ap-gif-img" alt=""><figcaption></figcaption></figure>` +
+        `<ol class="ap-gif-list">${L.map((x, i) => `<li><button type="button" data-i="${i}"><img src="${src(x, "png")}" alt="" loading="lazy"><span>${esc(x.t)}</span></button></li>`).join("")}</ol></div>` +
+        (S2.note ? `<p class="ap-note">${S2.note}</p>` : "");
+      const img = host.querySelector(".ap-gif-img"), cap = host.querySelector("figcaption"), cnt = host.querySelector(".ap-gif-count");
+      const btns = [...host.querySelectorAll(".ap-gif-list button")], play = host.querySelector(".ap-gif-play");
+      let cur = 0, timer = null;
+      const show = i => { cur = (i + L.length) % L.length; const x = L[cur];
+        img.src = src(x, "gif"); img.alt = `Turning PCA of the ${D.unit}, coloured by ${x.t}`;
+        cap.innerHTML = `<b>${esc(x.t)}.</b> ${esc(x.cap || "")}`; cnt.textContent = `${cur + 1} / ${L.length}`;
+        btns.forEach((b, j) => b.setAttribute("aria-current", String(j === cur))); };
+      const stop = () => { clearInterval(timer); timer = null; play.setAttribute("aria-pressed", "false"); play.textContent = "Play the series"; };
+      host.querySelectorAll(".ap-gif-nav").forEach(b => b.addEventListener("click", () => { stop(); show(cur + +b.dataset.d); }));
+      btns.forEach(b => b.addEventListener("click", () => { stop(); show(+b.dataset.i); }));
+      play.addEventListener("click", () => { if (timer) return stop();
+        play.setAttribute("aria-pressed", "true"); play.textContent = "Pause"; timer = setInterval(() => show(cur + 1), S2.ms || 6000); });
+      host.addEventListener("keydown", e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); stop(); show(cur + (e.key === "ArrowRight" ? 1 : -1)); } });
+      show(0);
+    }
     const ENLARGE = (k, t) => `<button type="button" class="ap-enlarge" data-target="${k}" aria-label="Enlarge the ${esc(t)} plot" title="Enlarge">` +
       `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5l-5 5M6.5 13.5h-4v-4M2.5 13.5l5-5"/></svg></button>`;
     function openTab(t) {
@@ -457,6 +492,7 @@
       tabs.forEach(b => { b.setAttribute("aria-selected", String(b.dataset.tab === t)); b.tabIndex = b.dataset.tab === t ? 0 : -1; });
       subp.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== t);
       if (t === "demog" && !demogBuilt) { demogBuilt = true; buildDemog(); }
+      if (t === "gifs" && !gifsBuilt) { gifsBuilt = true; buildGifs(); }
       if (t === "heat" && !heat) { heat = buildHeat(pane("heat").querySelector(".ap-heat-plot")); buildMiniMap(); }
       if (t === "bloc") renderBloc(); if (t === "unit") renderUnit();
       if (t) { const r = subp.getBoundingClientRect(); if (r.top > innerHeight - 120) subp.scrollIntoView({ behavior: "smooth", block: "start" }); }

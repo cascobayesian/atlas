@@ -124,3 +124,22 @@
 .ap-top { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .ap-pick { font-size: .8rem; color: #555; display: flex; align-items: center; gap: .4rem; }
 .ap-pick select { font: inherit; font-size: .85rem; padding: .25rem .5rem; border: 1px solid #bbb; border-radius: 4px; background: #fff; color: #222; }
+
+/* a place's GIF series (G.gifs, e.g. Canada's census GIFs): the current GIF beside a list of stills */
+.ap-gifs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 17rem); gap: 1.25rem; align-items: start; }
+.ap-gif-main { margin: 0; max-width: 46rem; }
+.ap-gif-img { display: block; width: 100%; height: auto; border: 1px solid #ddd; background: #fcfcfb; aspect-ratio: 720 / 790; }
+.ap-gif-main figcaption { font-size: .82rem; color: #555; margin-top: .4rem; }
+.ap-gif-bar { display: flex; align-items: center; gap: .4rem; margin-bottom: .5rem; }
+.ap-gif-nav { border: 1px solid #ccc; background: #fff; border-radius: 999px; width: 2rem; height: 2rem; font-size: 1.2rem; line-height: 1; cursor: pointer; color: #222; }
+.ap-gif-nav:hover, .ap-gif-play:hover { border-color: #222; }
+.ap-gif-count { font-size: .8rem; color: #555; min-width: 3.2rem; text-align: center; font-variant-numeric: tabular-nums; }
+.ap-gif-play { margin-left: auto; border: 1px solid #ccc; background: #fff; border-radius: 999px; padding: .28rem .8rem; font-size: .8rem; color: #333; cursor: pointer; }
+.ap-gif-play[aria-pressed=true] { background: #222; border-color: #222; color: #fff; }
+.ap-gif-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.ap-gif-list button { display: block; width: 100%; padding: .25rem; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; text-align: left; }
+.ap-gif-list button:hover { border-color: #888; }
+.ap-gif-list button[aria-current=true] { border-color: #222; box-shadow: 0 0 0 1px #222; }
+.ap-gif-list img { display: block; width: 100%; height: auto; }
+.ap-gif-list span { display: block; font-size: .72rem; color: #333; margin-top: .2rem; line-height: 1.2; }
+@media (max-width: 760px) { .ap-gifs { grid-template-columns: 1fr; } .ap-gif-list { grid-template-columns: repeat(3, 1fr); } }
