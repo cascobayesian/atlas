@@ -33,7 +33,7 @@
     <h2>Reading the globe</h2>
     <h3>Voting blocs found</h3>
     <ul>
-      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4), the biggest bloc palest. Click for its full bloc map.</small></span></li>
+      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Romania K = 5), the biggest bloc palest. Click for its full bloc map.</small></span></li>
       <li><span class="sw us"></span><span>US states in the atlas <span class="n" id="n-us"></span><small>Click the United States for its states and cities.</small></span></li>
       <li><span class="sw some"></span><span>Work under way <span class="n" id="n-some"></span><small>Returns gathered or maps made; no blocs yet.</small></span></li>
     </ul>
@@ -112,6 +112,16 @@ const FITTED = [
     why: "K = 12 by the 3% rule (draft fit)", pca: true },
   { name: "Netherlands", key: "netherlands", title: "Netherlands", k: 15, k4: "assets/world_k4/netherlands.json", model: "Dirichlet-multinomial mixture",
     data: "342 municipalities, Tweede Kamer elections 2010–2025", why: "K = 15", pca: true },
+  { name: "Romania", key: "romania", title: "Romania", k: 10, k4: "assets/world_k4/romania.json", kShade: 5, model: "Dirichlet-multinomial mixture",
+    data: "3,186 communes and towns (Bucharest by sector), Chamber of Deputies elections 2016, 2020 and 2024",
+    why: "K = 10, against K = 5 (only these two fitted; BIC 620,768 and 631,301); the globe shades the K = 5 blocs",
+    figs: [
+      ["map.png", "Bloc map, K = 10. Bucharest's sectors are drawn as schematic wedges in the inset."],
+      ["map_k5.png", "Bloc map, K = 5."],
+      ["pca.gif", "Rotating principal coordinates (Jensen-Shannon distance) of the communes and towns, coloured by the K = 5 and K = 10 blocs."],
+      ["census_k10.png", "Census profile of the K = 10 blocs: ethnicity, religion, age, education, birthplace, emigration and housing (2021 and 2011 censuses), bloc means weighted by electorate."],
+      ["census_k5.png", "Census profile of the K = 5 blocs."],
+      ["heatmap.png", "Chamber of Deputies list vote shares, 2016, 2020 and 2024, one row per commune or town."]] },
   { name: "Switzerland", key: "switzerland", title: "Switzerland", k: 10, k4: "assets/world_k4/switzerland.json", model: "beta-binomial mixture",
     data: "communes, federal referendums 2010–2024", why: "K = 10 by the 3% rule (best BIC at K = 15)", pca: true }
 ];
@@ -119,7 +129,11 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 function showCountry(c, scroll = true) {
   const box = document.getElementById("wm-country");
   document.querySelectorAll(".wm-land.wm-fit").forEach(p => p.classList.toggle("active", p.__data__.properties.name === c.name));
-  box.innerHTML = `<h2>${esc(c.title)}</h2><p>${esc(c.k)} voting blocs from a ${esc(c.model)} of ${esc(c.data)}; ${esc(c.why)}.</p>` +
+  const head = `<h2>${esc(c.title)}</h2><p>${esc(c.k)} voting blocs from a ${esc(c.model)} of ${esc(c.data)}; ${esc(c.why)}.</p>`;
+  // a country with its own list of figures: [file in assets/world/ after "<key>_", caption]
+  if (c.figs) box.innerHTML = head + c.figs.map(([f, cap]) => `<figure><img src="assets/world/${c.key}_${f}" alt="${esc(c.title)}: ${esc(cap)}" loading="lazy">` +
+    `<figcaption>${esc(cap)}</figcaption></figure>`).join("");
+  else box.innerHTML = head +
     `<figure><img src="assets/world/${c.key}_map.png" alt="Map of ${esc(c.title)}'s ${c.k} voting blocs" loading="lazy">` +
     `<figcaption>Bloc map, K = ${c.k}.</figcaption></figure>` +
     (c.pca ? `<figure><img src="assets/world/${c.key}_pca.png" alt="${esc(c.title)}: units on their first principal coordinates, coloured by bloc" loading="lazy">` +
@@ -135,8 +149,7 @@ const US_STATES = ["California", "Washington", "Utah", "Colorado", "Massachusett
 const STARTED = [
   { name: "Botswana", note: "parliamentary results by constituency, with current and historical constituency maps" },
   { name: "France", note: "2022 presidential results by commune, 2024 legislative maps, Paris polling stations" },
-  { name: "Ghana", note: "parliamentary results by constituency, with constituency maps" },
-  { name: "Romania", note: "election returns gathered and a crosswalk to common boundaries under way" }
+  { name: "Ghana", note: "parliamentary results by constituency, with constituency maps" }
 ];
 const CANADA = { name: "Canada", key: "canada", title: "Canada", k: 15, k4: "assets/world_k4/canada.json",
   data: "70,644 polling divisions, federal elections 2015–2025; full interactive panels",

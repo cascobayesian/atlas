@@ -5,7 +5,8 @@
 //                           quality: { name: grade }, us: { states: [name], open } }) -> Promise
 // Colouring, matched on the Natural Earth name:
 //   fitted: a finished BBMM or DMM fit, drawn as its K = 4 blocs in translucent slate pink (k4: a GeoJSON of dissolved
-//     blocs with properties b = 1-4, largest first, n, share; assets/world_k4/<key>.json); click or Enter calls c.open()
+//     blocs with properties b = 1-4, largest first, n, share; assets/world_k4/<key>.json; kShade: the number of blocs in
+//     that file when it is not 4, e.g. Romania's K = 5); click or Enter calls c.open()
 //     if given (Canada opens its interactive panels) or else opts.onFit(c) (the bloc map and PCA figure).
 //   us: the United States, its states with atlas blocs (us.states, us-atlas names) in slate pink; click opens us.open().
 //   started: work begun (data pulled, maps made) but no fit yet: solid grey.
@@ -58,18 +59,18 @@ window.drawWorld = (el, opts = {}) => Promise.all([
       .on("pointerleave", hideTip);
     layers.push(g);
   }
-  // K = 4 bloc layers of the fitted countries: slate pink of rising opacity, b = 1 (the largest bloc) palest
-  const K4_ALPHA = [0.3, 0.5, 0.7, 0.9];
+  // K = 4 bloc layers of the fitted countries: slate pink of rising opacity from 0.3 to 0.9, b = 1 (the largest bloc) palest
+  const alpha = (b, n) => 0.3 + 0.6 * ((b || 1) - 1) / Math.max(1, n - 1);
   const k4done = Promise.all((opts.fitted || []).filter(c => c.k4).map(c => fetch(c.k4).then(r => r.ok ? r.json() : null).then(fc => {
     if (!fc) return;
     const g = svg.insert("g", ".wm-edge").attr("class", "wm-k4").attr("data-country", c.key);
     g.selectAll("path").data(fc.features.map(f => ({ ...f, geometry: rewind(f.geometry) }))).join("path").attr("d", path)
-      .attr("fill-opacity", f => K4_ALPHA[(f.properties.b || 1) - 1]);
+      .attr("fill-opacity", f => alpha(f.properties.b, c.kShade || 4));
     land.filter(d => d.properties.name === c.name).classed("wm-has-k4", true);
     layers.push(g);
     g.on("click", () => openFit(c))
       .on("pointermove", e => { const f = e.target.__data__;
-        showTip(e, `${c.title}: bloc ${f.properties.b} of 4, ${Math.round(100 * f.properties.share)}% of units`); })
+        showTip(e, `${c.title}: bloc ${f.properties.b} of ${c.kShade || 4}, ${Math.round(100 * f.properties.share)}% of units`); })
       .on("pointerleave", hideTip);
   }).catch(() => {})));
   const redraw = () => { sphere.attr("d", path); grat.attr("d", path); land.attr("d", path); edge.attr("d", path);
