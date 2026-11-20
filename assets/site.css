@@ -112,6 +112,7 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .city-grid figure.active figcaption { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 @media (min-width: 1101px) { .city-grid figure:nth-child(17) { grid-column-start: 2; } }
 .city-head { font-size: 1.35rem; margin: 2rem 0 0; }
+.city-sub { font-size: .95rem; color: var(--slate); margin: .2rem 0 0; }
 @media (max-width: 1100px) { .city-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 600px) { .city-grid { grid-template-columns: repeat(2, 1fr); } }
 
