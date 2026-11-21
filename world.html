@@ -33,7 +33,7 @@
     <h2>Reading the globe</h2>
     <h3>Voting blocs found</h3>
     <ul>
-      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Romania and Slovakia K = 5), the biggest bloc palest. Click for its full bloc map.</small></span></li>
+      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Austria, Romania and Slovakia K = 5; Austria is Vienna only), the biggest bloc palest. Click for its full bloc map.</small></span></li>
       <li><span class="sw us"></span><span>US states in the atlas <span class="n" id="n-us"></span><small>Click the United States for its states and cities.</small></span></li>
       <li><span class="sw some"></span><span>Work under way <span class="n" id="n-some"></span><small>Returns gathered or maps made; no blocs yet.</small></span></li>
     </ul>
@@ -90,6 +90,13 @@
 // Countries with a finished fit but no interactive panels yet: the bloc map at the chosen K and a PCA figure if one exists.
 // name = Natural Earth name; figures in assets/world/, copied from Teaching/Country.Politics/Countries/<country>/.
 const FITTED = [
+  { name: "Austria", key: "austria", title: "Austria (Vienna)", k: 10, k4: "assets/world_k4/austria.json", kShade: 5, model: "Dirichlet-multinomial mixture",
+    data: "Vienna only: 1,504 polling districts (2025 Gemeinderat map), Gemeinderat elections 2015, 2020, 2025 and Nationalrat elections 2013, 2017, 2019, 2024 in one joint fit",
+    why: "K = 10, from joint fits at K = 5, 10 and 15 (three starts each; BIC lowest at K = 15, whose smallest bloc has 6 districts); the globe shades the K = 5 blocs, so only Vienna is coloured",
+    figs: [
+      ["map.png", "Bloc map, K = 10. Legend: bloc, polling districts, and the fitted shares of its top two parties in the 2025 Gemeinderat and 2024 Nationalrat elections."],
+      ["pca.gif", "Rotating principal coordinates (Jensen-Shannon distance) of the polling districts, Gemeinderat elections on the left and Nationalrat elections on the right, both coloured by the joint K = 10 blocs."],
+      ["heatmap.png", "Party vote shares in each election, one row per polling district, grouped by K = 10 bloc."]] },
   { name: "Bosnia and Herz.", key: "bosnia", title: "Bosnia and Herzegovina", k: 8, k4: "assets/world_k4/bosnia.json", model: "Dirichlet-multinomial mixture",
     data: "142 municipalities, House of Representatives elections 2010–2026, votes by party family",
     why: "K = 8 has the lowest BIC of K = 5–10", pca: true },
@@ -160,7 +167,6 @@ const US_STATES = ["California", "Washington", "Utah", "Colorado", "Massachusett
   "Alabama", "Michigan", "Ohio", "Maryland", "Georgia", "Wisconsin", "North Carolina"];
 // from the folders in Teaching/Country.Politics/Countries: data pulled or maps made, but no bloc fit
 const STARTED = [
-  { name: "Austria", note: "National Council results by municipality 2008–2024, and Vienna polling districts 1995–2025" },
   { name: "Botswana", note: "parliamentary results by constituency, with current and historical constituency maps" },
   { name: "France", note: "2022 presidential results by commune, 2024 legislative maps, Paris polling stations" },
   { name: "Ghana", note: "parliamentary results by constituency, with constituency maps" },
