@@ -49,6 +49,7 @@
   const J = f => fetch(base + f).then(r => { if (!r.ok) throw new Error(f + " " + r.status); return r.json(); });
   Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json")]).then(([D, G, PF, HJ]) => {
     const U = D.units, N = U.id.length, B = Object.fromEntries(D.blocs.map(b => [b.b, b]));
+    const POPW = D.popword || "residents";   // what pop counts (Vienna: eligible voters)
     const unitWord = D.unit1 || D.unit.replace(/s$/, ""), UnitWord = unitWord[0].toUpperCase() + unitWord.slice(1);
     document.getElementById("ap-sub").textContent = `${N.toLocaleString()} ${D.unit}, ${D.what || D.n_q + " ballot questions and races"}, ${D.blocs.length} voting blocs.`;
     document.querySelector('[data-tab="unit"]').textContent = UnitWord + " profile";
@@ -68,7 +69,7 @@
     const unitTip = (u, extra) => {
       const b = B[U.b[u]];
       return `<b>${esc(U.name[u])}</b><div class="ap-trow">${swatch(b, "sm")}${esc(b.name)}</div>` +
-        (G.pop[u] != null ? `<div class="ap-tnum">${G.pop[u].toLocaleString()} residents</div>` : "") +
+        (G.pop[u] != null ? `<div class="ap-tnum">${G.pop[u].toLocaleString()} ${POPW}</div>` : "") +
         (U.p[u] != null && U.measure !== "none" ? `<div class="ap-tnum">${U.measure === "stability" ? "In this bloc in" : "Bloc probability"} <b>${pct(U.p[u])}</b>${U.measure === "stability" ? " of samples" : ""}</div>` : "") + (extra || "");
     };
     // partisanship: the presidential race the bloc list reports (G.pres_label, e.g. "Biden 2020"), per unit, 0-100
@@ -597,7 +598,7 @@
       if (host.dataset.b === String(b)) return; host.dataset.b = b;
       const p = PF.blocs[b], all = PF.place, bl = B[b];
       host.innerHTML = `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${esc(bl.name)}</h3><p>${bl.n.toLocaleString()} ${D.unit} &middot; ${bl.vote} ${Math.round(100 * bl.dem)}% &middot; ` +
-        `${p.pop.toLocaleString("en-US")} residents (${pct(p.pop / all.pop)} of ${placeLab})</p></div></header>` +
+        `${p.pop.toLocaleString("en-US")} ${POPW} (${pct(p.pop / all.pop)} of ${placeLab})</p></div></header>` +
         `<div class="bp-grid">${TOPICS.map(T => `<section><h4>${T.t}</h4>` +
           (T.k === "income" ? `<p class="bp-stat">Median <b>${money(p.median_income)}</b> <span>(${placeLab} ${money(all.median_income)})</span></p>` : "") +
           bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
@@ -619,7 +620,7 @@
         (U.measure === "stability" ? `In this bloc in <b>${pct(U.p[i])}</b> of the model&rsquo;s posterior samples` : `<b>${pct(U.p[i])}</b> probability of belonging to this bloc` +
           (G.alt[i] != null && G.alt_p[i] >= 0.01 ? `; next most likely bloc ${G.alt[i]} (${pct(G.alt_p[i])})` : ""));
       const meter = U.p[i] == null ? "" : `<span class="uc-meter" title="Assignment certainty"><span data-sbg="${bl.b}" style="width:${Math.round(100 * U.p[i])}%;background:${bl.color}"></span></span>`;
-      return `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(pop || 0).toLocaleString("en-US")} residents</p>` +
+      return `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(pop || 0).toLocaleString("en-US")} ${POPW}</p>` +
         `<p class="uc-cert">${meter}${cert}</p></div></header>` +
         (!hasPop ? `<p class="bp-note">${PF.topics ? `No votes are recorded in this ${unitWord}.` : `No residents are recorded in this ${unitWord} (2020 Census), so it has no demographic summary.`}</p>` :
         `<div class="bp-grid uc">${TOPICS.map(T => { const uv = Object.fromEntries(T.cats.map(c => [c[0], val(T, c) || 0])), mi = G.median_income[i];
