@@ -1,7 +1,9 @@
 // The night globe on the front page (index.html): the atlas on a dark orthographic globe, coloured as the editorial flat map
 // (drafts/world_presentation_maps.R, map B): each fitted country in its own hue, its blocs (assets/world_k4/<key>.json,
 // b = 1 the largest) from deep (smallest) to pale (largest); countries without a fit translucent grey. A toggle colours
-// the countries without a fit by the quality of their election records (assets/world_quality.json, grades 1-4).
+// the countries without a fit by the quality of their election records (assets/world_quality.json, grades 1-4); countries
+// with work under way (STARTED) light grey. The globe turns slowly (again a few seconds after it is let go); drag to turn,
+// zoom with the on-map buttons, Ctrl/Cmd-wheel, a pinch or a double-click.
 // Country lists from assets/world_countries.js (FITTED, PANELS, US_STATES, STARTED, GRADES). Click a fitted country to
 // open its panel on world.html (?country=<key>; Canada and Germany ?place=<key>), the United States to open us.html.
 (() => {
@@ -30,7 +32,7 @@
   const halo = defs.append("radialGradient").attr("id", "ng-halo");
   halo.append("stop").attr("offset", "86%").attr("stop-color", "#3b7fb3").attr("stop-opacity", 0.35);
   halo.append("stop").attr("offset", "100%").attr("stop-color", "#3b7fb3").attr("stop-opacity", 0);
-  svg.append("circle").attr("cx", W / 2).attr("cy", W / 2).attr("r", R0 * 1.09).attr("fill", "url(#ng-halo)").attr("class", "ng-halo");
+  const haloC = svg.append("circle").attr("cx", W / 2).attr("cy", W / 2).attr("r", R0 * 1.09).attr("fill", "url(#ng-halo)").attr("class", "ng-halo");
   const sphere = svg.append("path").datum({ type: "Sphere" }).attr("fill", "url(#ng-sea)");
   const grat = svg.append("path").datum(d3.geoGraticule().step([15, 15])()).attr("class", "ng-grat");
   const layers = [];
@@ -57,9 +59,11 @@
       const n = d.properties.name;
       if (fitBy.has(n)) return blocColour(n, 1, 4);            // under the bloc layer: the palest step
       if (n === US_NAME) return "rgba(196,205,214,.16)";
+      if (started.has(n)) return "#c9d0d6";                     // work under way: light grey
       if (showQuality && QUALITY[n]) return QCOL[QUALITY[n]];
       return "rgba(196,205,214,.16)";
-    }).attr("fill-opacity", d => (showQuality && !fitBy.has(d.properties.name) && d.properties.name !== US_NAME && QUALITY[d.properties.name]) ? 0.55 : 1);
+    }).attr("fill-opacity", d => { const n = d.properties.name;
+      return started.has(n) ? 0.8 : (showQuality && !fitBy.has(n) && n !== US_NAME && QUALITY[n]) ? 0.55 : 1; });
     paintLand();
     // the United States: states with atlas blocs in the US hue
     if (USA) {
@@ -93,34 +97,51 @@
         (QUALITY[n] ? `; records ${Q[QUALITY[n]]}` : "") : QUALITY[n] ? `${n}: election records ${Q[QUALITY[n]]}` : n); })
       .on("pointerleave", hideTip)
       .on("click", (e, d) => { const c = fitBy.get(d.properties.name); if (c) open(c); else if (d.properties.name === US_NAME) location.href = "us.html"; });
-    const redraw = () => { sphere.attr("d", path); grat.attr("d", path); land.attr("d", path); borders.attr("d", path);
+    const redraw = () => { haloC.attr("r", proj.scale() * 1.09); sphere.attr("d", path); grat.attr("d", path); land.attr("d", path); borders.attr("d", path);
       coast.attr("d", path); rim.attr("d", path); layers.forEach(g => g.selectAll("path").attr("d", path)); };
     redraw();
 
-    // turning: slow spin until touched; drag to turn
-    let spin = d3.timer(el => { const r = proj.rotate(); proj.rotate([r[0] + 0.06, r[1]]); redraw(); });
-    const stop = () => { if (spin) { spin.stop(); spin = null; } };
+    // turning: a slow spin (about 1.5 degrees a second) that pauses while the globe is handled and resumes 4 s later
+    const SPEED = 0.025, KMAX = 8; let spin = null, idle = null, last = null;
+    const startSpin = () => { if (spin) return; last = null;
+      spin = d3.timer(t => { const dt = last === null ? 16 : t - last; last = t;
+        const r = proj.rotate(); proj.rotate([r[0] + SPEED * dt / 16, r[1]]); redraw(); }); };
+    const pause = () => { if (spin) { spin.stop(); spin = null; } clearTimeout(idle); idle = setTimeout(startSpin, 4000); };
+    startSpin();
     const px = () => W / svgEl.getBoundingClientRect().width;
-    d3.select(svgEl).call(d3.drag().clickDistance(3)
-      .on("start", () => { stop(); svgEl.classList.add("dragging"); hideTip(); })
-      .on("drag", e => { const r = proj.rotate(), k = 180 / Math.PI / proj.scale() * px();
+    d3.select(svgEl).call(d3.drag().clickDistance(3).filter(e => !e.button && !(e.touches && e.touches.length > 1))
+      .on("start", () => { pause(); svgEl.classList.add("dragging"); hideTip(); })
+      .on("drag", e => { pause(); const r = proj.rotate(), k = 180 / Math.PI / proj.scale() * px();
         proj.rotate([r[0] + e.dx * k, Math.max(-90, Math.min(90, r[1] - e.dy * k))]); redraw(); })
       .on("end", () => svgEl.classList.remove("dragging")));
+    // zoom: re-scale the projection (lines keep their width), keeping the point under the cursor in place
+    const zoomTo = (k1, at) => { pause(); k1 = Math.max(1, Math.min(KMAX, k1));
+      const p0 = at && proj.invert(at); proj.scale(R0 * k1);
+      if (p0) { const p1 = proj.invert(at); if (p1 && isFinite(p1[0])) { const r = proj.rotate();
+        proj.rotate([r[0] + p1[0] - p0[0], Math.max(-90, Math.min(90, r[1] + p1[1] - p0[1]))]); } }
+      redraw(); };
+    const ptr = e => { const r = svgEl.getBoundingClientRect(); return [(e.clientX - r.left) * px(), (e.clientY - r.top) * px()]; };
+    const zk = () => proj.scale() / R0;
+    svgEl.addEventListener("wheel", e => { if (!e.ctrlKey && !e.metaKey) return;      // plain wheel scrolls the page
+      e.preventDefault(); zoomTo(zk() * Math.pow(2, -e.deltaY * (e.deltaMode ? 0.05 : 0.01)), ptr(e)); }, { passive: false });
+    d3.select(svgEl).on("dblclick", e => { e.preventDefault(); zoomTo(zk() * (e.shiftKey ? 0.5 : 2), ptr(e)); });
+    let pinch = null;
+    svgEl.addEventListener("touchstart", e => { if (e.touches.length === 2) { const [a, b] = e.touches;
+      pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), k: zk() }; } }, { passive: true });
+    svgEl.addEventListener("touchmove", e => { if (pinch && e.touches.length === 2) { e.preventDefault(); const [a, b] = e.touches;
+      zoomTo(pinch.k * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinch.d); } }, { passive: false });
+    svgEl.addEventListener("touchend", e => { if (e.touches.length < 2) pinch = null; });
+    document.getElementById("ng-zin").addEventListener("click", () => zoomTo(zk() * 1.6));
+    document.getElementById("ng-zout").addEventListener("click", () => zoomTo(zk() / 1.6));
+    document.getElementById("ng-zreset").addEventListener("click", () => { proj.rotate([-15, -32]); zoomTo(1); });
 
-    // side panel: fitted-country key and the record-quality toggle
-    document.getElementById("ng-key").innerHTML = ALL.map(c => { const nb = c.kShade || 4;
-      return `<li><button type="button" data-key="${c.key}"><span class="ng-ramp">${d3.range(nb, 0, -1).map(b =>
-        `<i style="background:${blocColour(c.name, b, nb)}"></i>`).join("")}</span><span>${esc(c.title)}</span><small>K = ${c.k}</small></button></li>`; }).join("") +
-      `<li><button type="button" data-us="1"><span class="ng-ramp"><i style="background:${blocColour(US_NAME, 2, 4)}"></i></span><span>United States</span><small>${US_STATES.length} states</small></button></li>`;
-    document.getElementById("ng-key").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
-      if (b.dataset.us) location.href = "us.html"; else open(ALL.find(c => c.key === b.dataset.key)); });
+    // side panel: the record-quality toggle
     const counts = [1, 2, 3, 4].map(g => Object.entries(QUALITY).filter(([n, v]) => v === g && !fitBy.has(n) && n !== US_NAME).length);
     document.getElementById("ng-qkey").innerHTML = GRADES.map(G =>
       `<li><i style="background:${QCOL[G.g]}"></i><span><b>${esc(G.name)}</b> (${counts[G.g - 1]})<small>${esc(G.text)}</small></span></li>`).join("");
     const qbtn = document.getElementById("ng-qbtn"), qkey = document.getElementById("ng-qwrap");
     qbtn.addEventListener("click", () => { showQuality = !showQuality; qbtn.setAttribute("aria-pressed", showQuality);
       qbtn.textContent = showQuality ? "Hide record quality" : "Show record quality"; qkey.hidden = !showQuality; paintLand(); });
-    document.getElementById("ng-n").textContent = `${ALL.length} countries and ${US_STATES.length} US states`;
   });
 
   // the three ways to read the atlas (placeholders until those views exist)

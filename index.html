@@ -47,16 +47,21 @@ aside p { font-size: .85rem; color: var(--ng-muted); margin: 0 0 .7rem; line-hei
 .ng-qbtn:hover, .ng-qbtn:focus-visible { border-color: var(--ng-accent); outline: none; }
 .ng-qbtn[aria-pressed="true"] { background: #2a2414; border-color: var(--ng-accent); }
 ul { list-style: none; margin: 0; padding: 0; }
-#ng-key li button { display: grid; grid-template-columns: 3.4rem 1fr auto; gap: .5rem; align-items: center; width: 100%; background: none;
-                    border: 0; color: var(--ng-ink); font: inherit; font-size: .86rem; padding: .18rem .2rem; border-radius: 4px; cursor: pointer; text-align: left; }
-#ng-key li button:hover, #ng-key li button:focus-visible { background: #16222f; outline: none; }
-#ng-key small { color: var(--ng-muted); font-size: .75rem; }
 .ng-ramp { display: flex; height: .8rem; border-radius: 2px; overflow: hidden; } .ng-ramp i { flex: 1; }
 #ng-qkey li { display: grid; grid-template-columns: 1.1rem 1fr; gap: .55rem; margin: 0 0 .5rem; font-size: .84rem; }
 #ng-qkey i { height: .9rem; border-radius: 2px; margin-top: .15rem; opacity: .85; }
 #ng-qkey small { display: block; color: var(--ng-muted); font-size: .76rem; line-height: 1.35; }
 .ng-grey { display: grid; grid-template-columns: 1.1rem 1fr; gap: .55rem; font-size: .84rem; color: var(--ng-muted); margin: .4rem 0 .2rem; }
 .ng-grey i { height: .9rem; border-radius: 2px; background: rgba(196,205,214,.22); border: 1px solid rgba(225,233,240,.3); }
+.ng-grey i.wip { background: #c9d0d6; border-color: #c9d0d6; opacity: .8; }
+.ng-cities { display: inline-flex; align-items: center; gap: .5rem; margin: .5rem 0 1.2rem; padding: .6rem 1.2rem; border-radius: 999px;
+             background: var(--ng-accent); color: #14110a; font-weight: 600; text-decoration: none; font-size: .95rem; transition: filter .15s, transform .15s; }
+.ng-cities:hover, .ng-cities:focus-visible { filter: brightness(1.08); transform: translateY(-1px); outline: none; }
+.ng-ctl { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; }
+.ng-ctl button { width: 32px; height: 32px; padding: 0; border: 1px solid #4a5d6e; border-radius: 6px; background: #0d1520cc; color: var(--ng-ink);
+                 font-size: 18px; line-height: 1; cursor: pointer; }
+.ng-ctl button:hover, .ng-ctl button:focus-visible { border-color: var(--ng-accent); color: var(--ng-accent); outline: none; }
+.ng-hint { color: var(--ng-muted); font-size: .78rem; text-align: center; margin: .3rem 0 0; }
 .ng-views { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1.6rem 0 .4rem; }
 @media (max-width: 720px) { .ng-views { grid-template-columns: 1fr; } }
 .ng-view { text-align: left; background: var(--ng-panel); color: var(--ng-ink); border: 1px solid var(--ng-line); border-radius: 8px;
@@ -78,12 +83,14 @@ footer { color: var(--ng-muted); font-size: .8rem; margin-top: 1.4rem; }
 </header>
 <main>
 <h1>The Atlas of Voting Blocs</h1>
-<p class="lede">Each fitted country in its own colour, its blocs from deep (smallest) to pale (largest); <span id="ng-n">the fitted countries</span>. Drag to turn the globe; click a country to open its blocs. The <a href="us.html">United States</a>, <a href="cities.html">cities</a> and the detailed <a href="world.html">world page</a> are in the menu above.</p>
+<a class="ng-cities" href="cities.html">Explore the cities &rarr;</a>
 <div class="ng-stage">
-  <div class="ng-globe"><svg id="ng-globe" role="img" aria-label="Night globe: fitted countries coloured by their voting blocs, others translucent grey"></svg><div class="ng-tip" id="ng-tip" hidden></div></div>
+  <div class="ng-globe"><svg id="ng-globe" role="img" aria-label="Night globe: fitted countries coloured by their voting blocs, countries with work under way light grey, others translucent grey"></svg><div class="ng-tip" id="ng-tip" hidden></div>
+    <div class="ng-ctl"><button type="button" id="ng-zin" aria-label="Zoom in">+</button><button type="button" id="ng-zout" aria-label="Zoom out">&minus;</button><button type="button" id="ng-zreset" aria-label="Reset the view">&#8634;</button></div>
+    <p class="ng-hint">Drag to turn &middot; Ctrl/Cmd-scroll, pinch or double-click to zoom &middot; click a coloured country for its blocs</p></div>
   <aside aria-label="Key">
-    <h2>Countries with blocs</h2>
-    <ul id="ng-key"></ul>
+    <h2>Key</h2>
+    <div class="ng-grey"><i class="wip"></i><span>Work under way</span></div>
     <div class="ng-grey"><i></i><span>Not yet fitted</span></div>
     <h2 style="margin-top:1rem">Where the model has not run</h2>
     <p>How good are the election records in the countries without a fit?</p>
@@ -100,7 +107,6 @@ footer { color: var(--ng-muted); font-size: .8rem; margin-top: 1.4rem; }
 <footer>
   <p class="ng-refs">Code, datasets and examples: <a href="https://github.com/cascobayesian/atlas">cascobayesian/atlas</a>; the beta-binomial mixture model code, <a href="https://github.com/cascobayesian/Elections.BBMM">Elections.BBMM</a>; the data and analyses behind the atlas, <a href="https://github.com/cascobayesian/Local.Politics">Local.Politics</a> (GitHub).</p>
   <p class="ng-refs"><b>Citation.</b> The method itself: John D. O&rsquo;Brien (2026), &ldquo;<a href="https://doi.org/10.1017/psrm.2025.10050">A Bayesian mixture model captures temporal and spatial structure of voting blocs within longitudinal referendum data</a>,&rdquo; <i>Political Science Research and Methods</i>, 1&ndash;22. The analysis of local politics: Aaron Kaufman and John D. O&rsquo;Brien, &ldquo;The Structure of Local Politics,&rdquo; available on request.</p>
-  <p class="ng-refs"><a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot; Country outlines: Natural Earth 1:50m (world-atlas). US states: us-atlas. Record quality: regional surveys of sub-national election records.</p>
 </footer>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
