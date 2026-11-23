@@ -46,11 +46,13 @@ window.drawWorld = (el, opts = {}) => Promise.all([
   const showTip = (e, text) => { if (!tip || svg.classed("dragging")) return; const r = box.getBoundingClientRect();
     tip.textContent = text; tip.hidden = false; tip.style.left = (e.clientX - r.left) + "px"; tip.style.top = (e.clientY - r.top) + "px"; };
   const hideTip = () => { if (tip) tip.hidden = true; };
+  // borders between countries, drawn above the bloc and US layers (which would otherwise cover the land outlines)
+  const borders = svg.append("path").datum(topojson.mesh(WORLD, WORLD.objects.countries, (a, b) => a !== b)).attr("class", "wm-borders");
   const edge = svg.append("path").datum({ type: "Sphere" }).attr("class", "wm-edge");
   // the United States: its states, the ones in the atlas in slate pink
   if (USA && opts.us) {
     const done = new Set(opts.us.states || []);
-    const g = svg.insert("g", ".wm-edge").attr("class", "wm-us").attr("tabindex", 0).attr("role", "button").attr("aria-label", "Show the United States");
+    const g = svg.insert("g", ".wm-borders").attr("class", "wm-us").attr("tabindex", 0).attr("role", "button").attr("aria-label", "Show the United States");
     g.selectAll("path").data(topojson.feature(USA, USA.objects.states).features).join("path")
       .attr("class", d => done.has(d.properties.name) ? "done" : null);
     g.on("click", () => opts.us.open && opts.us.open()).on("keydown", keyGo(() => opts.us.open && opts.us.open()))
@@ -63,7 +65,7 @@ window.drawWorld = (el, opts = {}) => Promise.all([
   const alpha = (b, n) => 0.3 + 0.6 * ((b || 1) - 1) / Math.max(1, n - 1);
   const k4done = Promise.all((opts.fitted || []).filter(c => c.k4).map(c => fetch(c.k4).then(r => r.ok ? r.json() : null).then(fc => {
     if (!fc) return;
-    const g = svg.insert("g", ".wm-edge").attr("class", "wm-k4").attr("data-country", c.key);
+    const g = svg.insert("g", ".wm-borders").attr("class", "wm-k4").attr("data-country", c.key);
     g.selectAll("path").data(fc.features.map(f => ({ ...f, geometry: rewind(f.geometry) }))).join("path").attr("d", path)
       .attr("fill-opacity", f => alpha(f.properties.b, c.kShade || 4));
     land.filter(d => d.properties.name === c.name).classed("wm-has-k4", true);
@@ -73,7 +75,7 @@ window.drawWorld = (el, opts = {}) => Promise.all([
         showTip(e, `${c.title}: bloc ${f.properties.b} of ${c.kShade || 4}, ${Math.round(100 * f.properties.share)}% of units`); })
       .on("pointerleave", hideTip);
   }).catch(() => {})));
-  const redraw = () => { sphere.attr("d", path); grat.attr("d", path); land.attr("d", path); edge.attr("d", path);
+  const redraw = () => { sphere.attr("d", path); grat.attr("d", path); land.attr("d", path); borders.attr("d", path); edge.attr("d", path);
     layers.forEach(g => g.selectAll("path").attr("d", path)); };
   redraw();
   if (opts.hover) {

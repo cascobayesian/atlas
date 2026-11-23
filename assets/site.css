@@ -125,6 +125,7 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .wm-sphere { stroke: none; } .wm-grat { fill: none; stroke: rgba(255,255,255,.45); stroke-width: .6; }
 .wm-edge { fill: none; stroke: #1b2f3a; stroke-width: 1.1; pointer-events: none; }
 .wm-land { fill: var(--wm-none); stroke: #5e6a70; stroke-width: .35; stroke-linejoin: round; }
+.wm-borders { fill: none; stroke: #2a3236; stroke-width: .8; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
 .world .wm-land:hover { filter: brightness(.94); }
 .wm-land.wm-q1 { fill: var(--wm-q1); } .wm-land.wm-q2 { fill: var(--wm-q2); } .wm-land.wm-q3 { fill: var(--wm-q3); } .wm-land.wm-q4 { fill: var(--wm-q4); }
 .wm-land.wm-some { fill: var(--wm-grey); }
