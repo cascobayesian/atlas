@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Country · Atlas of Voting Blocs</title>
+<meta name="description" content="A country's voting blocs in the Atlas of Voting Blocs: rotating PCA, the blocs, the bloc map and the heatmap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Serif:ital,wght@0,600;1,400&display=swap">
+<link rel="stylesheet" href="assets/atlas_heatmap.css?v=2">
+<style>
+:root { --ng-bg: #05090f; --ng-panel: #0d1520; --ng-line: #23313f; --ng-ink: #eef1f4; --ng-muted: #94a6b6; --ng-accent: #e9c46a; --ng-paper: #f5f3ee; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ng-bg); color: var(--ng-ink); font-family: "IBM Plex Sans", system-ui, sans-serif; }
+a { color: var(--ng-accent); }
+.ng-head { display: flex; gap: 1.4rem; align-items: baseline; flex-wrap: wrap; padding: 1rem 16px .2rem; max-width: 1240px; margin: 0 auto; }
+.ng-head .name { font-family: "IBM Plex Sans Condensed", sans-serif; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ng-ink); text-decoration: none; }
+.ng-head nav a { color: var(--ng-muted); text-decoration: none; margin-right: 1rem; font-size: .92rem; }
+.ng-head nav a:hover { color: var(--ng-ink); }
+.ng-head .home { margin-left: auto; color: var(--ng-muted); text-decoration: none; font-size: .85rem; }
+main { max-width: 1240px; margin: 0 auto; padding: 0 16px 3rem; }
+.back { display: inline-block; margin: .9rem 0 0; color: var(--ng-muted); text-decoration: none; font-size: .9rem; }
+.back:hover { color: var(--ng-accent); }
+h1 { font-family: "IBM Plex Serif", serif; font-weight: 600; font-size: clamp(1.9rem, 4vw, 2.9rem); margin: .3rem 0 .3rem; }
+.sub { color: var(--ng-ink); margin: 0 0 .3rem; max-width: 70rem; line-height: 1.45; }
+.why { color: var(--ng-muted); margin: 0 0 1.2rem; max-width: 70rem; font-size: .88rem; line-height: 1.45; }
+.panels-btn { display: inline-flex; gap: .5rem; align-items: center; margin: 0 0 1.2rem; padding: .6rem 1.2rem; border-radius: 999px;
+              background: var(--ng-accent); color: #14110a; font-weight: 600; text-decoration: none; }
+.row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 1000px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+.tile { display: flex; flex-direction: column; text-align: left; background: var(--ng-panel); color: var(--ng-ink); border: 1px solid var(--ng-line);
+        border-radius: 10px; padding: .8rem; font: inherit; cursor: pointer; min-height: 22rem; transition: border-color .15s, transform .15s; }
+.tile:hover, .tile:focus-visible { border-color: var(--ng-accent); outline: none; transform: translateY(-2px); }
+.tile[aria-expanded="true"] { border-color: var(--ng-accent); background: #141a14; }
+.tile[disabled] { cursor: default; opacity: .55; transform: none; border-color: var(--ng-line); }
+.tile h2 { font-family: "IBM Plex Sans Condensed", sans-serif; font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 .55rem;
+           display: flex; justify-content: space-between; align-items: baseline; }
+.tile h2 small { text-transform: none; letter-spacing: 0; color: var(--ng-muted); font-weight: 400; font-size: .78rem; }
+.pic { flex: 1; display: flex; align-items: center; justify-content: center; background: var(--ng-paper); border-radius: 6px; overflow: hidden; min-height: 17rem; }
+.pic img { width: 100%; height: 17rem; object-fit: contain; display: block; }
+.pic.dark { background: #0a1018; }
+.none { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--ng-muted); font-size: .9rem; text-align: center; padding: 1rem;
+        border: 1px dashed var(--ng-line); border-radius: 6px; }
+.blist { flex: 1; overflow-y: auto; max-height: 17.5rem; margin: 0; padding: 0; list-style: none; }
+.blist li { display: grid; grid-template-columns: 1.7rem 1fr; gap: .5rem; align-items: start; padding: .3rem 0; border-bottom: 1px solid #18232f; font-size: .82rem; }
+.badge { width: 1.6rem; height: 1.6rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700;
+         border: 1px solid rgba(255,255,255,.25); }
+.blist .nm { font-weight: 600; } .blist .tp { color: var(--ng-muted); display: block; font-size: .76rem; }
+.open-tag { margin-top: .5rem; color: var(--ng-muted); font-size: .78rem; }
+.tile:hover .open-tag { color: var(--ng-accent); }
+.detail { margin-top: 1.2rem; background: var(--ng-panel); border: 1px solid var(--ng-accent); border-radius: 10px; padding: 1rem 1.1rem 1.2rem; }
+.detail h3 { margin: 0 0 .7rem; font-family: "IBM Plex Sans Condensed", sans-serif; font-size: 1.2rem; display: flex; justify-content: space-between; }
+.detail h3 button { background: none; border: 1px solid #4a5d6e; color: var(--ng-ink); border-radius: 6px; cursor: pointer; font: inherit; font-size: .85rem; padding: .2rem .6rem; }
+.detail figure { margin: 0 0 1.4rem; }
+.detail figure .frame { background: var(--ng-paper); border-radius: 8px; padding: .5rem; }
+.detail figure img { width: 100%; height: auto; display: block; }
+.detail figcaption { color: var(--ng-muted); font-size: .88rem; line-height: 1.45; margin-top: .45rem; max-width: 75rem; }
+.detail .heatbox { background: #fff; color: #111; border-radius: 8px; padding: .6rem; }
+.btable-wrap { overflow-x: auto; }
+table.btable { border-collapse: collapse; font-size: .84rem; min-width: 100%; }
+.btable th, .btable td { padding: .35rem .6rem; border-bottom: 1px solid #1d2a37; text-align: left; vertical-align: top; }
+.btable th { color: var(--ng-muted); font-weight: 500; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; position: sticky; top: 0; background: var(--ng-panel); }
+.btable td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.btable td.top { white-space: nowrap; color: #cfd8e0; }
+.btable td.top b { color: var(--ng-ink); font-weight: 600; }
+.note { color: var(--ng-muted); font-size: .82rem; margin: .6rem 0 0; }
+.err { color: #f08a8a; }
+</style>
+</head>
+<body>
+<header class="ng-head">
+  <a class="name" href="./">Atlas of Voting Blocs</a>
+  <nav aria-label="Sections"><a href="us.html">United States</a><a href="cities.html">Cities</a><a href="world.html">World</a></nav>
+  <a class="home" href="https://cascobayesian.github.io/">Jack O&rsquo;Brien &middot; Bowdoin College</a>
+</header>
+<main>
+<a class="back" href="./">&larr; Back to the globe</a>
+<h1 id="c-title">&nbsp;</h1>
+<p class="sub" id="c-sub"></p>
+<p class="why" id="c-why"></p>
+<div id="c-panels"></div>
+<div class="row" id="c-row" aria-label="The country's voting blocs"></div>
+<section class="detail" id="c-detail" hidden aria-live="polite"></section>
+</main>
+<script src="assets/world_heat.js?v=2"></script>
+<script src="assets/country.js?v=1"></script>
+</body>
+</html>

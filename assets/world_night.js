@@ -2,10 +2,11 @@
 // (drafts/world_presentation_maps.R, map B): each fitted country in its own hue, its blocs (assets/world_k4/<key>.json,
 // b = 1 the largest) from deep (smallest) to pale (largest); countries without a fit translucent grey. A toggle colours
 // the countries without a fit by the quality of their election records (assets/world_quality.json, grades 1-4); countries
-// with work under way (STARTED) light grey. The globe turns slowly (again a few seconds after it is let go); drag to turn,
-// zoom with the on-map buttons, Ctrl/Cmd-wheel, a pinch or a double-click.
+// with work under way (STARTED) light grey; US states with atlas blocs one pink over the grey states of us-atlas.
+// The globe turns slowly only in its base view: a drag, a zoom or a click stops it, the reset button restores the base
+// view and the turning. Zoom with the on-map buttons, Ctrl/Cmd-wheel, a pinch or a double-click.
 // Country lists from assets/world_countries.js (FITTED, PANELS, US_STATES, STARTED, GRADES). Click a fitted country to
-// open its panel on world.html (?country=<key>; Canada and Germany ?place=<key>), the United States to open us.html.
+// open its page (country.html?c=<key>), the United States to open us.html.
 (() => {
   const ALL = FITTED.concat(PANELS).slice().sort((a, b) => a.title.localeCompare(b.title));
   const US_NAME = "United States of America";
@@ -16,6 +17,7 @@
     "India": 120, "Japan": 0, "Colombia": 300, "Canada": 50, [US_NAME]: 330 };
   const HUE = new Map(ALL.map((c, i) => [c.name, HUE_FIX[c.name] ?? (20 + i * 137.508) % 360]));
   HUE.set(US_NAME, HUE_FIX[US_NAME]);
+  const US_PINK = "#e58cb5";                             // every US state with atlas blocs
   const blocColour = (name, b, nb) => {                  // b = 1 largest -> palest; nb blocs
     const t = nb > 1 ? (b - 1) / (nb - 1) : 0;           // 0 largest .. 1 smallest
     return d3.hcl(HUE.get(name), 22 + 48 * t, 90 - 48 * t).formatHex();
@@ -42,7 +44,9 @@
   const showTip = (e, t) => { if (svgEl.classList.contains("dragging")) return; const r = box.getBoundingClientRect();
     tip.textContent = t; tip.hidden = false; tip.style.left = (e.clientX - r.left) + "px"; tip.style.top = (e.clientY - r.top) + "px"; };
   const hideTip = () => { tip.hidden = true; };
-  const open = c => { if (c.open) { location.href = `world.html?place=${c.key}`; return; } location.href = `world.html?country=${c.key}`; };
+  let stopSpin = () => {};
+  const open = c => { stopSpin(); location.href = `country.html?c=${c.key}`; };
+  const openUS = () => { stopSpin(); location.href = "us.html"; };
   const Q = ["", "poor: not usable", "limited", "good", "excellent: ready to go"];
 
   Promise.all([
@@ -70,9 +74,10 @@
       const done = new Set(US_STATES);
       const g = svg.append("g").attr("class", "ng-us");
       g.selectAll("path").data(topojson.feature(USA, USA.objects.states).features).join("path")
-        .attr("fill", d => done.has(d.properties.name) ? blocColour(US_NAME, 2, 4) : "rgba(196,205,214,.10)")
+        .attr("fill", d => done.has(d.properties.name) ? US_PINK : "rgba(196,205,214,.30)")
+        .attr("stroke", "rgba(5,9,15,.55)").attr("stroke-width", 0.35)
         .on("pointermove", (e, d) => showTip(e, `${d.properties.name}: ${done.has(d.properties.name) ? "voting blocs in the atlas" : "not yet"}`))
-        .on("pointerleave", hideTip).on("click", () => { location.href = "us.html"; });
+        .on("pointerleave", hideTip).on("click", openUS);
       layers.push(g);
     }
     // fitted countries: their blocs
@@ -96,17 +101,19 @@
       showTip(e, c ? `${c.title}: K = ${c.k}` : n === US_NAME ? "United States" : started.has(n) ? `${n}: work under way` +
         (QUALITY[n] ? `; records ${Q[QUALITY[n]]}` : "") : QUALITY[n] ? `${n}: election records ${Q[QUALITY[n]]}` : n); })
       .on("pointerleave", hideTip)
-      .on("click", (e, d) => { const c = fitBy.get(d.properties.name); if (c) open(c); else if (d.properties.name === US_NAME) location.href = "us.html"; });
+      .on("click", (e, d) => { const c = fitBy.get(d.properties.name); if (c) open(c); else if (d.properties.name === US_NAME) openUS(); });
     const redraw = () => { haloC.attr("r", proj.scale() * 1.09); sphere.attr("d", path); grat.attr("d", path); land.attr("d", path); borders.attr("d", path);
       coast.attr("d", path); rim.attr("d", path); layers.forEach(g => g.selectAll("path").attr("d", path)); };
     redraw();
 
-    // turning: a slow spin (about 1.5 degrees a second) that pauses while the globe is handled and resumes 4 s later
-    const SPEED = 0.025, KMAX = 8; let spin = null, idle = null, last = null;
+    // turning: a slow spin (about 2.3 degrees a second) only in the base view; a drag, zoom or click stops it for good,
+    // until the reset button restores the base view
+    const SPEED = 0.0375, KMAX = 8, BASE = [-15, -32]; let spin = null, last = null;
     const startSpin = () => { if (spin) return; last = null;
       spin = d3.timer(t => { const dt = last === null ? 16 : t - last; last = t;
         const r = proj.rotate(); proj.rotate([r[0] + SPEED * dt / 16, r[1]]); redraw(); }); };
-    const pause = () => { if (spin) { spin.stop(); spin = null; } clearTimeout(idle); idle = setTimeout(startSpin, 4000); };
+    const pause = () => { if (spin) { spin.stop(); spin = null; } };
+    stopSpin = pause;
     startSpin();
     const px = () => W / svgEl.getBoundingClientRect().width;
     d3.select(svgEl).call(d3.drag().clickDistance(3).filter(e => !e.button && !(e.touches && e.touches.length > 1))
@@ -133,7 +140,7 @@
     svgEl.addEventListener("touchend", e => { if (e.touches.length < 2) pinch = null; });
     document.getElementById("ng-zin").addEventListener("click", () => zoomTo(zk() * 1.6));
     document.getElementById("ng-zout").addEventListener("click", () => zoomTo(zk() / 1.6));
-    document.getElementById("ng-zreset").addEventListener("click", () => { proj.rotate([-15, -32]); zoomTo(1); });
+    document.getElementById("ng-zreset").addEventListener("click", () => { proj.rotate(BASE); proj.scale(R0); redraw(); startSpin(); });
 
     // side panel: the record-quality toggle
     const counts = [1, 2, 3, 4].map(g => Object.entries(QUALITY).filter(([n, v]) => v === g && !fitBy.has(n) && n !== US_NAME).length);
