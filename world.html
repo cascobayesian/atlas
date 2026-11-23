@@ -33,7 +33,7 @@
     <h2>Reading the globe</h2>
     <h3>Voting blocs found</h3>
     <ul>
-      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Austria, Romania and Slovakia K = 5; Austria is Vienna only), the biggest bloc palest. Click for its full bloc map.</small></span></li>
+      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Austria, Germany, Romania and Slovakia K = 5; Austria is Vienna only), the biggest bloc palest. Click for its full bloc map.</small></span></li>
       <li><span class="sw us"></span><span>US states in the atlas <span class="n" id="n-us"></span><small>Click the United States for its states and cities.</small></span></li>
       <li><span class="sw some"></span><span>Work under way <span class="n" id="n-some"></span><small>Returns gathered or maps made; no blocs yet.</small></span></li>
     </ul>
@@ -170,7 +170,6 @@ const STARTED = [
   { name: "Botswana", note: "parliamentary results by constituency, with current and historical constituency maps" },
   { name: "France", note: "2022 presidential results by commune, 2024 legislative maps, Paris polling stations" },
   { name: "Ghana", note: "parliamentary results by constituency, with constituency maps" },
-  { name: "Germany", note: "Bundestag polling-district results 2017, 2021 and 2025 realigned to the 2025 municipalities" },
   { name: "Mexico", note: "work begun" },
   { name: "Poland", note: "polling-district crosswalks for national and local elections 2018–2025" },
   { name: "Serbia", note: "National Assembly elections 2000–2026 aligned to the 2026 polling stations" },
@@ -179,6 +178,11 @@ const STARTED = [
 const CANADA = { name: "Canada", key: "canada", title: "Canada", k: 15, k4: "assets/world_k4/canada.json",
   data: "70,644 polling divisions, federal elections 2015–2025; full interactive panels",
   open: () => window.atlasOpen ? window.atlasOpen("canada") : (location.search = "?place=canada") };
+// Germany: full interactive panels (Germany/realign_2025/model/atlas_export_de.R); the globe shades its K = 5 blocs
+const GERMANY = { name: "Germany", key: "germany", title: "Germany", k: 10, k4: "assets/world_k4/germany.json", kShade: 5,
+  data: "10,754 municipalities, Bundestag elections 2017–2025; full interactive panels",
+  open: () => window.atlasOpen ? window.atlasOpen("germany") : (location.search = "?place=germany") };
+const PANELS = [CANADA, GERMANY];   // countries with the full interactive panels
 const openUS = () => { location.href = "us.html"; };
 const GRADES = [
   { g: 4, name: "Excellent: ready to go", text: "Polling-station or municipal results for many elections, machine-readable, with boundaries." },
@@ -192,20 +196,20 @@ const shortName = n => ({ "United States of America": "United States", "Bosnia a
 const openCard = c => { if (window.worldFlyTo) window.worldFlyTo(c.name); c.open ? c.open() : showCountry(c); };
 
 function fillPage(Q) {
-  const fittedNames = new Set(FITTED.map(c => c.name).concat("Canada")), startedNames = new Set(STARTED.map(c => c.name));
+  const fittedNames = new Set(FITTED.map(c => c.name).concat(PANELS.map(c => c.name))), startedNames = new Set(STARTED.map(c => c.name));
   const graded = Object.entries(Q).filter(([n]) => !fittedNames.has(n) && !startedNames.has(n) && n !== "United States of America");
   const byG = g => graded.filter(([, v]) => v === g).map(([n]) => n).sort();
   const set = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
-  set("n-fit", `(${FITTED.length + 1})`); set("n-us", `(${US_STATES.length})`); set("n-some", `(${STARTED.length})`);
+  set("n-fit", `(${FITTED.length + PANELS.length})`); set("n-us", `(${US_STATES.length})`); set("n-some", `(${STARTED.length})`);
   [1, 2, 3, 4].forEach(g => set("n-q" + g, `(${byG(g).length})`));
   document.getElementById("wm-stats").innerHTML = [
-    [FITTED.length + 2, "countries with voting blocs, counting the United States", "var(--wm-pink)"],
+    [FITTED.length + PANELS.length + 1, "countries with voting blocs, counting the United States", "var(--wm-pink)"],
     [US_STATES.length, "US states with statewide blocs", "var(--wm-pink)"],
     [STARTED.length, "countries under way", "var(--wm-grey)"],
     [byG(4).length + byG(3).length, "more countries with good or excellent records", "var(--wm-q4)"]
   ].map(([n, t, c]) => `<div class="wm-stat" style="--c:${c}"><b>${n}</b><span>${esc(t)}</span></div>`).join("");
   const cards = [{ key: "us", name: "United States of America", title: "United States", k: null, data: `${US_STATES.length} states and 22 cities and counties, from ballot measures and races`, img: "assets/us_map.png", open: openUS },
-    { ...CANADA, img: "assets/world/canada_map.png", pos: "left top" }]
+    { ...CANADA, img: "assets/world/canada_map.png", pos: "left top" }, { ...GERMANY, img: "assets/world/germany_map.png" }]
     .concat(FITTED.map(c => ({ ...c, img: `assets/world/${c.key}_map.png` })));
   const host = document.getElementById("wm-cards");
   cards.forEach(c => { const b = document.createElement("button"); b.type = "button"; b.className = "wm-card";
@@ -221,7 +225,7 @@ function fillPage(Q) {
 fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})).then(QUALITY => {
   fillPage(QUALITY);
   return drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
-    fitted: FITTED.concat([CANADA]), onFit: showCountry, started: STARTED.map(c => c.name),
+    fitted: FITTED.concat(PANELS), onFit: showCountry, started: STARTED.map(c => c.name),
     us: { states: US_STATES, open: openUS },
     // grades 1-4 from Teaching/Country.Politics/Election.Data.Surveys/record_quality_by_country.csv
     quality: QUALITY });
