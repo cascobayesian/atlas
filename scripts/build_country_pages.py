@@ -47,8 +47,8 @@ CONFIG = {
     "serbia":   dict(json="Serbia/data/atlas_blocs_serbia.json", unit="polling stations", heat="Serbia/maps/parliament_2020_2026_dmm_K10_heatmap.png"),
     "slovakia": dict(blocs="Slovakia/model/fits/nrsr/blocs_K10.csv", profiles="Slovakia/model/fits/nrsr/bloc_profiles_K10.csv", unit="units"),
     "switzerland": dict(unit="communes", heat="Switzerland/bbmm/maps/swiss_referendum_heatmap_K10.png", heat_cap="Referendum yes shares by commune, grouped by the K = 10 blocs."),
-    "canada":   dict(panels=True, unit="polling divisions"),
-    "germany":  dict(panels=True, unit="municipalities"),
+    "canada":   dict(panels=True, bundle=True, unit="polling divisions"),
+    "germany":  dict(panels=True, bundle=True, unit="municipalities"),
 }
 PRETTY = {"Other": "Other", "pirati": "Piráti", "kscm": "KSČM", "cssd": "ČSSD", "kdu": "KDU-ČSL", "kducsl": "KDU-ČSL", "top09": "TOP 09",
           "spolu": "Spolu", "stan": "STAN", "prisaha": "Přísaha", "motoriste": "Motoristé", "stacilo": "Stačilo!", "zeleni": "Zelení",
@@ -138,6 +138,46 @@ def bloc_list(key, cfg):
     return dict(elections=els, blocs=blocs, source=cfg["profiles"])
 
 
+SEQ = ["#f7fbff", "#c6dbef", "#6baed6", "#2171b5", "#08306b"]       # the US atlas's vote-share ramp (assets/atlas.js)
+
+
+def bundle(key):
+    """A country with the full interactive panels (data/<key>/): its PCA and demographic GIFs, its named blocs, and its
+    heatmap converted to the World heatmap format (assets/world_heat.js) at assets/countries/<key>_heat.json."""
+    D = os.path.join(REPO, "data", key)
+    if not os.path.isdir(D):
+        return {}
+    d = json.load(open(os.path.join(D, "data.json"), encoding="utf-8"))
+    h = json.load(open(os.path.join(D, "heat.json"), encoding="utf-8"))
+    g = json.load(open(os.path.join(D, "gifs", "gifs.json"), encoding="utf-8"))
+    items = g["items"]
+    kgif = next(i for i in items if re.fullmatch(r"k\d+", i["k"]))
+    out = dict(pca=dict(src=f"data/{key}/gifs/{kgif['k']}.gif", cap=f"{kgif['t']}: {kgif['cap']} {g.get('note', '')}".strip()),
+               demog_list=[dict(src=f"data/{key}/gifs/{i['k']}.gif", title=i["t"], cap=i["cap"]) for i in items if i is not kgif],
+               demog_note=g.get("note", ""))
+    nby = {b["b"]: b for b in d["blocs"]}
+    q = [dict(l=c["l"], h=c.get("w") or c["l"].split(", ", 1)[-1], e=c["l"].split(", ", 1)[0]) for c in h["q"]]
+    tot = sum(b["n"] for b in d["blocs"])
+    els = list(OrderedDict.fromkeys(c["e"] for c in q))
+    blocs = []
+    for hb in h["blocs"]:
+        b = nby.get(hb["b"], {})
+        top = {e: [[c["l"].split(", ", 1)[-1], round(hb["a"][j] / 100, 4)] for j, c in sorted(
+            [(j, c) for j, c in enumerate(q) if c["e"] == e], key=lambda t: -hb["a"][t[0]])[:4]] for e in els}
+        blocs.append(dict(b=hb["b"], colour=hb.get("c") or b.get("color"), name=hb.get("nm") or b.get("name"), n=b.get("n"),
+                          share=round(b["n"] / tot, 4) if b.get("n") else None, top=top))
+    out["blocs"] = dict(elections=els, blocs=blocs, source=f"data/{key}/heat.json, data.json")
+    mx = float(h.get("max") or 100)
+    wh = dict(place=h.get("place", key.title()), unit=d.get("unit", "unit").rstrip("s"), rn=h["rn"], rb=h["rb"], v=h["v"], nc=h["nc"], q=q,
+              blocs=[dict(b=x["b"], c=x["colour"], nm=x["name"], n=x["n"] or 0, a=hb["a"]) for x, hb in zip(blocs, h["blocs"])],
+              all=h["all"], min=h["min"], stops=[[round(mx * i / (len(SEQ) - 1), 2), c] for i, c in enumerate(SEQ)],
+              key=f"Vote share: white 0%, dark blue {mx:g}% or more")
+    json.dump(wh, open(os.path.join(OUT, f"{key}_heat.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    out["heat"] = dict(json=f"assets/countries/{key}_heat.json",
+                       cap=f"Vote shares in each federal election (columns: party by election), {len(h['rn']):,} sampled {d.get('unit', 'units')} (rows), grouped by bloc. Hover for a row's share; click to pin it.")
+    return out
+
+
 def fig(key, f):
     return f"assets/world/{key}_{f}" if os.path.exists(os.path.join(WORLD, f"{key}_{f}")) else None
 
@@ -185,11 +225,14 @@ def main():
             page["blocs"] = bloc_list(key, cfg)
         except Exception as e:                       # a malformed table should not stop the other countries
             print(f"  {key}: bloc list failed: {e}", file=sys.stderr); page["blocs"] = None
+        if cfg.get("bundle"):
+            for k2, v2 in bundle(key).items():
+                page[k2] = v2
         json.dump(page, open(os.path.join(OUT, f"{key}.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-        nb = len(page["blocs"]["blocs"]) if page["blocs"] else 0
+        nb = len(page["blocs"]["blocs"]) if page.get("blocs") else 0
         index.append(key)
         print(f"{key:12s} pca={'y' if page['pca'] else '-'} demog={'y' if page['demog'] else '-'} map={'y' if page['map'] else '-'} "
-              f"heat={'y' if heat else '-'} blocs={nb} (K = {c['k']}) more={len(page['more_maps'])}")
+              f"heat={'y' if page['heat'] else '-'} blocs={nb} (K = {c['k']}) more={len(page['more_maps'])} demog_list={len(page.get('demog_list', []))}")
     print(f"wrote {len(index)} pages to {OUT}")
 
 

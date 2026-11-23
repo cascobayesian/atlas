@@ -24,7 +24,7 @@
 
     // ---- the four tiles
     const tiles = [
-      { id: "pca", title: "Rotating PCA", sub: C.demog ? "+ demographics" : "", ok: !!C.pca,
+      { id: "pca", title: "Rotating PCA", sub: C.demog_list ? `+ ${C.demog_list.length} demographic views` : C.demog ? "+ demographics" : "", ok: !!C.pca,
         body: () => `<div class="pic dark"><img src="${C.pca.src}" alt="${esc(C.title)}: rotating principal components coloured by bloc" loading="lazy"></div>` },
       { id: "blocs", title: "Blocs", sub: B ? `${B.blocs.length} blocs` : "", ok: !!B,
         body: () => `<ul class="blist">${B.blocs.map(b => `<li>${badge(b)}<span><span class="nm">${esc(cap(b.name) || "Bloc " + b.b)}</span>` +
@@ -43,7 +43,10 @@
     // ---- the expanded view below the row: one at a time
     const fig = (f, dark) => `<figure><div class="frame"${dark ? ' style="background:#0a1018"' : ""}><img src="${f.src}" alt="${esc(f.cap)}" loading="lazy"></div><figcaption>${esc(f.cap)}</figcaption></figure>`;
     const detail = {
-      pca: () => fig(C.pca, true) + (C.demog ? `<h3 style="margin-top:.4rem">Demographics</h3>` + fig(C.demog) : ""),
+      pca: () => fig(C.pca, true) + (C.demog ? `<h3 style="margin-top:.4rem">Demographics</h3>` + fig(C.demog) : "") +
+        (C.demog_list ? `<h3 style="margin-top:.4rem">Demographics</h3><p class="note" style="margin:-.3rem 0 .8rem">${esc(C.demog_note)}</p>` +
+          `<div class="gal">${C.demog_list.map(f => `<figure><div class="frame" style="background:#0a1018"><img src="${f.src}" alt="${esc(f.title)}" loading="lazy"></div>` +
+            `<figcaption><b style="color:#eef1f4">${esc(f.title)}.</b> ${esc(f.cap)}</figcaption></figure>`).join("")}</div>` : ""),
       blocs: () => `<div class="btable-wrap"><table class="btable"><thead><tr><th>Bloc</th><th>Name</th><th class="num">${esc(C.unit)}</th><th class="num">Share</th>` +
         B.elections.map(e => `<th>${esc(elLabel(e))}: top lists</th>`).join("") + `</tr></thead><tbody>` +
         B.blocs.map(b => `<tr><td>${badge(b)}</td><td>${esc(cap(b.name) || "—")}</td><td class="num">${b.n != null ? Number(b.n).toLocaleString() : ""}</td><td class="num">${pct(b.share)}</td>` +

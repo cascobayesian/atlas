@@ -65,6 +65,8 @@ table.btable { border-collapse: collapse; font-size: .84rem; min-width: 100%; }
 .btable td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .btable td.top { white-space: nowrap; color: #cfd8e0; }
 .btable td.top b { color: var(--ng-ink); font-weight: 600; }
+.gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: 1rem; }
+.gal figure { margin: 0; }
 .note { color: var(--ng-muted); font-size: .82rem; margin: .6rem 0 0; }
 .err { color: #f08a8a; }
 </style>
@@ -85,6 +87,6 @@ table.btable { border-collapse: collapse; font-size: .84rem; min-width: 100%; }
 <section class="detail" id="c-detail" hidden aria-live="polite"></section>
 </main>
 <script src="assets/world_heat.js?v=2"></script>
-<script src="assets/country.js?v=1"></script>
+<script src="assets/country.js?v=2"></script>
 </body>
 </html>
