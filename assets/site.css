@@ -194,3 +194,18 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .wm-grade .who { font-size: .8rem; color: var(--ink); }
 .wm-prog { columns: 2 16rem; font-size: .92rem; padding-left: 1.1rem; }
 .wm-prog li { margin: 0 0 .35rem; break-inside: avoid; }
+
+/* a figure that opens a second figure in a dialog (world.html figs: [file, caption, { open, cap }]) */
+.wm-open { display: block; position: relative; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.wm-open:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.wm-open-tag { position: absolute; right: .6rem; bottom: .6rem; padding: .25rem .55rem; font-size: .8rem; font-weight: 600;
+  color: #fff; background: rgba(11, 11, 11, .72); border-radius: 4px; pointer-events: none; }
+.wm-open:hover .wm-open-tag { background: rgba(11, 11, 11, .9); }
+.wm-big { width: min(96vw, 1800px); max-height: 94vh; padding: .8rem 1rem 1rem; border: 1px solid var(--rule); border-radius: 6px; background: #fff; }
+.wm-big::backdrop { background: rgba(0, 0, 0, .55); }
+.wm-big-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+.wm-big-head h2 { font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif; font-size: 1.2rem; margin: 0; }
+.wm-big-close { font-size: 1.6rem; line-height: 1; padding: 0 .4rem; border: 0; background: none; cursor: pointer; color: var(--ink); }
+.wm-big figure { margin: 0; }
+.wm-big img { display: block; width: 100%; height: auto; }
+.wm-big figcaption { font-size: .85rem; color: var(--slate); margin-top: .4rem; }
