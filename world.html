@@ -33,7 +33,7 @@
     <h2>Reading the globe</h2>
     <h3>Voting blocs found</h3>
     <ul>
-      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Austria, Germany, Romania and Slovakia K = 5; Austria is Vienna only), the biggest bloc palest. Click for its full bloc map.</small></span></li>
+      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Austria, Germany, Poland, Romania and Slovakia K = 5; Austria is Vienna only), the biggest bloc palest. Click for its full bloc map.</small></span></li>
       <li><span class="sw us"></span><span>US states in the atlas <span class="n" id="n-us"></span><small>Click the United States for its states and cities.</small></span></li>
       <li><span class="sw some"></span><span>Work under way <span class="n" id="n-some"></span><small>Returns gathered or maps made; no blocs yet.</small></span></li>
     </ul>
@@ -86,6 +86,7 @@
 <script src="assets/high_contrast.js"></script>
 <script src="assets/atlas.js"></script>
 <script src="assets/world.js"></script>
+<script src="assets/world_heat.js"></script>
 <script>
 // Countries with a finished fit but no interactive panels yet: the bloc map at the chosen K and a PCA figure if one exists.
 // name = Natural Earth name; figures in assets/world/, copied from Teaching/Country.Politics/Countries/<country>/.
@@ -119,6 +120,13 @@ const FITTED = [
     why: "K = 12 by the 3% rule (draft fit)", pca: true },
   { name: "Netherlands", key: "netherlands", title: "Netherlands", k: 15, k4: "assets/world_k4/netherlands.json", model: "Dirichlet-multinomial mixture",
     data: "342 municipalities, Tweede Kamer elections 2010–2025", why: "K = 15", pca: true },
+  { name: "Poland", key: "poland", title: "Poland", k: 10, k4: "assets/world_k4/poland.json", kShade: 5, model: "Dirichlet-multinomial mixture",
+    data: "29,790 polling districts (2025 map; earlier districts carried onto it by an address-point crosswalk), Sejm elections 2019 and 2023, votes for PiS, KO, Lewica, PSL / Trzecia Droga and Other (Konfederacja, German Minority and minor lists)",
+    why: "K = 10, against K = 5 (only these two fitted, five starts each; BIC 2,082,589 and 2,116,238); all five K = 5 starts reach the same partition, but only one of five K = 10 starts reaches the best fit, so the smaller K = 10 blocs are provisional; the globe shades the K = 5 blocs, each gmina taking the bloc of most of its 2023 voters",
+    figs: [
+      ["map.png", "Bloc map, K = 10, drawn on the 2025 polling districts (each 250 m cell takes the district of its nearest address point). Legend: mean 2023 shares of each bloc and its number of districts. Blocs numbered by 2023 PiS share, lowest first."],
+      ["pca.gif", "Rotating principal coordinates (Jensen-Shannon distance) of the districts' 2019 and 2023 vote shares, coloured by the K = 10 blocs; dot area proportional to 2025 residents. Landmark classical scaling (3,000 random landmarks)."],
+      ["heat.json", "List vote shares in 2019 and 2023 (columns), one row per polling district, grouped by K = 10 bloc and ordered by 2023 PiS share. Hover for a district's share, click to pin it; hover the bloc bar for the bloc's averages."]] },
   { name: "Romania", key: "romania", title: "Romania", k: 10, k4: "assets/world_k4/romania.json", kShade: 5, model: "Dirichlet-multinomial mixture",
     data: "3,186 communes and towns (Bucharest by sector), Chamber of Deputies elections 2016, 2020 and 2024",
     why: "K = 10, against K = 5 (only these two fitted; BIC 620,768 and 631,301); the globe shades the K = 5 blocs",
@@ -151,8 +159,11 @@ function showCountry(c, scroll = true) {
   document.querySelectorAll(".wm-land.wm-fit").forEach(p => p.classList.toggle("active", p.__data__.properties.name === c.name));
   const head = `<h2>${esc(c.title)}</h2><p>${esc(c.k)} voting blocs from a ${esc(c.model)} of ${esc(c.data)}; ${esc(c.why)}.</p>`;
   // a country with its own list of figures: [file in assets/world/ after "<key>_", caption]
-  if (c.figs) box.innerHTML = head + c.figs.map(([f, cap]) => `<figure><img src="assets/world/${c.key}_${f}" alt="${esc(c.title)}: ${esc(cap)}" loading="lazy">` +
+  // a figure named "heat.json" is drawn as the clickable heatmap (assets/world_heat.js)
+  if (c.figs) box.innerHTML = head + c.figs.map(([f, cap]) => (f === "heat.json" ? `<figure><div class="wm-heat" data-src="assets/world/${c.key}_${f}"></div>` :
+    `<figure><img src="assets/world/${c.key}_${f}" alt="${esc(c.title)}: ${esc(cap)}" loading="lazy">`) +
     `<figcaption>${esc(cap)}</figcaption></figure>`).join("");
+  if (c.figs && window.worldHeat) box.querySelectorAll(".wm-heat").forEach(h => window.worldHeat(h, h.dataset.src));
   else box.innerHTML = head +
     `<figure><img src="assets/world/${c.key}_map.png" alt="Map of ${esc(c.title)}'s ${c.k} voting blocs" loading="lazy">` +
     `<figcaption>Bloc map, K = ${c.k}.</figcaption></figure>` +
@@ -171,7 +182,6 @@ const STARTED = [
   { name: "France", note: "2022 presidential results by commune, 2024 legislative maps, Paris polling stations" },
   { name: "Ghana", note: "parliamentary results by constituency, with constituency maps" },
   { name: "Mexico", note: "work begun" },
-  { name: "Poland", note: "polling-district crosswalks for national and local elections 2018–2025" },
   { name: "Serbia", note: "National Assembly elections 2000–2026 aligned to the 2026 polling stations" },
   { name: "Slovenia", note: "polling stations matched to the 212 current municipalities, 2002–2026" }
 ];
