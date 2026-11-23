@@ -33,7 +33,7 @@
     <h2>Reading the globe</h2>
     <h3>Voting blocs found</h3>
     <ul>
-      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Austria, Germany, Poland, Romania and Slovakia K = 5), the biggest bloc palest. Click for its full bloc map.</small></span></li>
+      <li><span class="sw k4"></span><span>Blocs fitted <span class="n" id="n-fit"></span><small>Each country drawn as its four-bloc solution (K = 4; Austria, Czechia, Germany, Poland, Romania and Slovakia K = 5), the biggest bloc palest. Click for its full bloc map.</small></span></li>
       <li><span class="sw us"></span><span>US states in the atlas <span class="n" id="n-us"></span><small>Click the United States for its states and cities.</small></span></li>
       <li><span class="sw some"></span><span>Work under way <span class="n" id="n-some"></span><small>Returns gathered or maps made; no blocs yet.</small></span></li>
     </ul>
@@ -110,6 +110,13 @@ const FITTED = [
     why: "K = 19, the fit carried through to profiles and PCA (BIC still falling at K = 30)", pca: true },
   { name: "Croatia", key: "croatia", title: "Croatia", k: 10, k4: "assets/world_k4/croatia.json", model: "Dirichlet-multinomial mixture",
     data: "556 municipalities, Sabor elections 2007–2024", why: "K = 10, the national fit", pca: true },
+  { name: "Czechia", key: "czechia", title: "Czechia", k: 10, k4: "assets/world_k4/czechia.json", kShade: 5, model: "Dirichlet-multinomial mixture",
+    data: "14,711 polling districts (2025 map; 2017 and 2021 districts carried onto it by an address-point crosswalk), Chamber of Deputies elections 2017, 2021 and 2025, parties with at least 1% plus Other (the two smallest folded into Other)",
+    why: "K = 10, against K = 5 (only these two fitted; BIC 2,210,027 and 2,239,587); 4 of 8 K = 10 starts and 5 of 6 K = 5 starts reach the same best fit; the globe shades the K = 5 blocs, each municipality (city district in the statutory cities) taking the bloc of most of its 2025 voters",
+    figs: [
+      ["map.png", "Bloc map, K = 10, drawn on the 2025 polling districts, with Prague, Brno and Ostrava insets. Legend: bloc, polling districts and mean 2025 ANO and SPOLU shares. Blocs numbered by 2025 ANO share, highest first; the names are drafts."],
+      ["pca.gif", "Rotating principal components (Hellinger-transformed shares) of the districts' 2017, 2021 and 2025 vote shares, coloured by the K = 10 blocs. PC1 (37%) runs from SPOLU, ODS and TOP 09 to ANO."],
+      ["demog.gif", "Demographics: the same turning PCA in six panels, coloured by the K = 10 blocs and by five 2021 census measures in sextiles (dark = high): university degree, unemployment, Roman Catholic, Moravian nationality and moving in within the past year. The census publishes these by municipality and city district, so districts in one municipality share a value. Education follows PC1 (r = −0.72); Catholicism (r = 0.70) and Moravian identity (0.49) follow PC2."]] },
   { name: "Hungary", key: "hungary", title: "Hungary", k: 15, k4: "assets/world_k4/hungary.json", model: "Dirichlet-multinomial mixture",
     data: "3,177 settlements, parliamentary elections 2014–2026",
     why: "K = 15, the largest fitted (BIC still falling at K = 15)", pca: true },
@@ -180,7 +187,6 @@ const US_STATES = ["California", "Washington", "Utah", "Colorado", "Massachusett
 // from the folders in Teaching/Country.Politics/Countries: data pulled or maps made, but no bloc fit
 const STARTED = [
   { name: "Botswana", note: "parliamentary results by constituency, with current and historical constituency maps" },
-  { name: "Czechia", note: "work begun" },
   { name: "France", note: "2022 presidential results by commune, 2024 legislative maps, Paris polling stations" },
   { name: "Ghana", note: "parliamentary results by constituency, with constituency maps" },
   { name: "Mexico", note: "work begun" },
