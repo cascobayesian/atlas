@@ -132,7 +132,7 @@ def canada():
              h="Immigrants (first generation), all residents", tip="first-generation immigrants"),
         dict(k="ba", t="Bachelor&rsquo;s degree", kind="ramp", topic="education", cats=["ba", "grad"], max=60, stops=RB_RAMP,
              h="Bachelor&rsquo;s degree or higher, residents 15+", tip="with a bachelor&rsquo;s or higher"),
-        dict(k="industry", t="Industry", kind="mix", topic="industry", colors=["#A6611A", "#F2C200", "#1F78B4", "#33A02C", "#C86B98"], largest=True,
+        dict(k="industry", t="Industry", kind="mix", topic="industry", colors=["#A6611A", "#F2C200", "#1F78B4", "#33A02C", "#C86B98"], largest=True, skip=["public"], h="Largest industry besides education, health &amp; public administration",
              note="Industry of the labour force (2021 Census): each point takes the colour of the industry most over-represented there against Canada, blended where two stand out about equally."),
     ]
     note = ("Votes from Elections Canada&rsquo;s poll-by-poll results, moved onto the 28 April 2025 polling divisions with 2021-census block weights; "

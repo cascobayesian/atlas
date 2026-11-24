@@ -129,14 +129,14 @@
           const cc = p.colors || T.cats.map(c => c[2]);   // a panel can mix its own, brighter colours
           const rgb = cc.map(c => [1, 3, 5].map(o => parseInt(c.slice(o, o + 2), 16)));
           G.col[p.k] = U.id.map((_, i) => { if (sh[T.cats[0][0]][i] == null) return "#bdbdbd";
-            if (p.largest) { let j = 0; T.cats.forEach((c, q) => { if ((sh[c[0]][i] || 0) > (sh[T.cats[j][0]][i] || 0)) j = q; }); return cc[j]; }
+            if (p.largest) { let j = -1; T.cats.forEach((c, q) => { if (!(p.skip || []).includes(c[0]) && (j < 0 || (sh[c[0]][i] || 0) > (sh[T.cats[j][0]][i] || 0))) j = q; }); return cc[j]; }
             const a = [0, 0, 0]; let w = 0; T.cats.forEach((c, j) => { let x = sh[c[0]][i] || 0;
               if (p.relative) x = Math.pow(x / 100 / Math.max(PF.place[p.topic][c[0]], 1e-3), p.relative);   // against the country: what stands out
               w += x; rgb[j].forEach((v, q) => a[q] += x * v); });
             return w ? "#" + a.map(x => Math.round(x / w).toString(16).padStart(2, "0")).join("") : "#bdbdbd"; });
           demogTip[p.k] = i => sh[T.cats[0][0]][i] == null ? "" : `<div class="ap-tnum">${T.cats.map(c => [c[1], sh[c[0]][i]]).filter(([, x]) => x >= 1)
             .sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, x]) => `${l} ${x}%`).join(" &middot; ")}</div>`;
-          return { k: p.k, t: p.t, key: `<h4>${p.t}</h4><ul class="ap-race">${T.cats.map((c, j) => `<li><span style="background:${cc[j]}"></span>${c[1]}</li>`).join("")}</ul>` };
+          return { k: p.k, t: p.t, key: `<h4>${p.h || p.t}</h4><ul class="ap-race">${T.cats.map((c, j) => (p.skip || []).includes(c[0]) ? "" : `<li><span style="background:${cc[j]}"></span>${c[1]}</li>`).join("")}</ul>` };
         }
         // ramp: the sum of some of the topic's shares, on one scale from 0 to p.max
         const v = U.id.map((_, i) => sh[p.cats[0]][i] == null ? null : p.cats.reduce((s, c) => s + (sh[c][i] || 0), 0));
