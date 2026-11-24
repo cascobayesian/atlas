@@ -58,6 +58,10 @@
   const OVER = root.dataset.over ? fetch(root.dataset.over).then(r => r.ok ? r.json() : null).catch(() => null) : null;
   Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json"), CENSUS, OVER]).then(([D, G, PF, HJ, CEN, OV]) => {
     const U = D.units, N = U.id.length, B = Object.fromEntries(D.blocs.map(b => [b.b, b]));
+    if (!OV && root.dataset.over) OV = { topics: [], panels: [], shares: {}, place: {}, blocs: {}, note: "", none: true };
+    if (OV && !OV.vote && PF.topics && PF.topics.length) OV.vote = PF.topics[PF.topics.length - 1].k;
+    // "No information yet": the card for a part of the template a country does not have yet
+    const NOINFO = (what = "") => `<div class="ap-noinfo"><p><b>No information yet</b>${what ? `<span>${what}</span>` : ""}</p></div>`;
     const POPW = D.popword || "residents";   // what pop counts (Vienna: eligible voters)
     const unitWord = D.unit1 || D.unit.replace(/s$/, ""), UnitWord = unitWord[0].toUpperCase() + unitWord.slice(1);
     document.getElementById("ap-sub").textContent = `${N.toLocaleString()} ${D.unit}, ${D.what || D.n_q + " ballot questions and races"}, ${D.blocs.length} voting blocs.`;
@@ -102,12 +106,13 @@
     if (OV) {
       const grad = stops => `linear-gradient(90deg, ${stops.map((c, i) => `${c} ${Math.round(100 * i / (stops.length - 1))}%`).join(", ")})`;
       const at = (stops, t) => { t = Math.max(0, Math.min(1, t)) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(t)); return d3i(stops[i], stops[i + 1], t - i); };
+      PF.note0 = typeof PF.note === "string" ? PF.note : "";
       const vote = (PF.topics || []).find(T => T.k === OV.vote);
       PF.votes = (PF.topics || []).filter(T => /^v\d{4}$/.test(T.k));   // every election, for the heatmap's unit readout
       PF.topics = OV.topics.concat(vote ? [vote] : []);
       G.shares = Object.assign(G.shares || {}, OV.shares);
       Object.assign(PF.place, OV.place); Object.entries(OV.blocs).forEach(([b, x]) => Object.assign(PF.blocs[b], x));
-      PF.note = who => `${OV.note} ${who}.`;
+      PF.note = who => OV.note ? `${OV.note} ${who}.` : (PF.note0 || "");
       const old = Object.fromEntries((G.panels || []).map(p => [p.k, p]));
       const placeShare = (T, cats) => cats.reduce((s, c) => s + (PF.place[T][c] || 0), 0);
       G.col = G.col || {}; G.val = G.val || {}; G.tipfmt = G.tipfmt || {};
@@ -458,7 +463,8 @@
       });
       return map;
     };
-    archive.getHeader().then(h => {
+    if (D.nomap) document.getElementById("ap-map").innerHTML = NOINFO(`No ${unitWord} boundaries in the atlas yet.`);
+    else archive.getHeader().then(h => {
       header = h;
       const map = liveMap("ap-map", h, u => unitTip(u), selectUnit, null,
         COUNTRY ? { fade: false, only: () => { const f = focusBloc(); return f != null ? f : S.sel != null ? U.b[S.sel] : null; } } : {});
@@ -720,6 +726,7 @@
     }
     function buildDemog() {
       const lg = G.legend, host = pane("demog");
+      if (OV && !G.panels.length) { host.innerHTML = NOINFO(`Demographic measures for these ${D.unit} are not in the atlas yet.`); return; }
       const fmt = x => Math.round(x).toLocaleString("en-US"), fmtD = d => d >= 1000 ? fmt(d / 1000) + "k" : fmt(d);
       const grad = stops => `linear-gradient(90deg, ${stops.map((c, i) => `${c} ${Math.round(100 * i / (stops.length - 1))}%`).join(", ")})`;
       const K = G.panels ? G.panels.map(x => ({ ...x })) : [
@@ -806,13 +813,17 @@
           bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
           `<ul class="bp-key">${T.cats.map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${pct(p[T.k][c[0]])}</b> <i>${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>`).join("")}</div>` +
         `<p class="bp-note">Bold: the bloc; gray: ${placeLab} overall. ${note("the bloc&rsquo;s " + D.unit)}</p>`;
+      noCensusCard(host);
     }
     function renderUnit() {
       const host = pane("unit"), i = S.sel;
       if (i == null) { delete host.dataset.u; host.innerHTML = `<p class="ap-hint">Click a ${unitWord} on the map or a row of the heatmap for its profile.</p>`; return; }
       if (host.dataset.u === String(i)) return; host.dataset.u = i;
-      host.innerHTML = unitHTML(i);
+      host.innerHTML = unitHTML(i); noCensusCard(host);
     }
+    // a country without census measures: the profiles keep their vote topic, with a card where the demographics would be
+    function noCensusCard(host) { if (!OV || OV.topics.length) return; const g = host.querySelector(".bp-grid");
+      if (g && !g.querySelector(".ap-noinfo")) g.insertAdjacentHTML("beforeend", `<section><h4>Demographics</h4>${NOINFO(`Census measures for these ${D.unit} are not in the atlas yet.`)}</section>`); }
     function unitBrief(i) {
       const b = U.b[i], p = PF.blocs[b], all = PF.place, bl = B[b], who = esc(U.name[i]), pop = G.pop[i];
       const T = TOPICS[TOPICS.length - 1], val = c => { const v = G.shares[T.k][c[0]][i]; return v == null ? 0 : v / 100; };

@@ -62,3 +62,10 @@ body.light .back:hover { color: var(--accent, #1f5f7a); }
 .ap-heat-years span { position: absolute; top: 0; text-align: center; font-size: .78rem; font-weight: 700; color: #222; border-left: 1px solid #333; border-right: 1px solid #333; border-top: 1px solid #333; height: .9rem; line-height: .9rem; box-sizing: border-box; }
 .ap-heat-parties { top: 1.2rem; height: 1.2rem; }
 .ap-heat-parties span { position: absolute; top: 0; height: 100%; box-sizing: border-box; border-right: 1px solid #fff; font-size: .58rem; font-weight: 600; line-height: 1.2rem; text-align: center; overflow: hidden; white-space: nowrap; }
+/* "No information yet": a blank card where a country lacks a part of the template */
+.ap-noinfo { display: flex; align-items: center; justify-content: center; min-height: 9rem; height: 100%; border: 1px dashed #c9d0d6; border-radius: 6px;
+  background: #f7f8f9; color: #5d6a76; text-align: center; padding: 1rem; box-sizing: border-box; }
+.ap-noinfo p { margin: 0; font-size: .9rem; line-height: 1.4; }
+.ap-noinfo b { display: block; color: #3a4550; font-weight: 600; }
+.ap-noinfo span { display: block; font-size: .8rem; margin-top: .25rem; }
+#ap-map > .ap-noinfo { min-height: 100%; }

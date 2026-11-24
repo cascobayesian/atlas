@@ -30,20 +30,16 @@ CONFIG = {
     "croatia":  dict(blocs="Croatia/model/vote_fits_national/blocs_K10.csv", profiles="Croatia/model/vote_fits_national/bloc_profiles_K10.csv",
                      colours="Croatia/model/vote_fits_national/bloc_colours_K10.csv", unit="municipalities",
                      heat="Croatia/maps/heatmap_parliament_2007-2024.png"),
-    "czechia":  dict(blocs="Czechia/realign_2025/model/dmm_2017_2025/blocs_K10.csv", profiles="Czechia/realign_2025/model/dmm_2017_2025/bloc_profiles_K10.csv",
-                     names="Czechia/realign_2025/model/dmm_2017_2025/bloc_names_K10.csv", unit="polling districts",
-                     long=dict(cat="party", share="mean_share"),
-                     heat="Czechia/realign_2025/figures/cz_heatmap_party_by_bloc_K10.png"),
+    "czechia":  dict(panels=True, bundle=True, unit="polling districts"),
     "hungary":  dict(blocs="Hungary/model/fits_2014-2026/blocs_K15.csv", profiles="Hungary/model/fits_2014-2026/bloc_profiles_K15.csv",
                      unit="settlements", heat="Hungary/maps/heatmap_parliament_1990-2026.png"),
     "india":    dict(unit="assembly-constituency segments", heat="India/LSAC/model/maps/heatmap_ls_national_K16_clustered.png"),
     "israel":   dict(blocs="Israel/realign_2011/model/fits_2019_2022/blocs_K12.csv", profiles="Israel/realign_2011/model/fits_2019_2022/bloc_profiles_K12.csv",
                      unit="statistical areas"),
-    "japan":    dict(blocs="Japan/model/vote_fits_pr/blocs_K11.csv", profiles="Japan/model/vote_fits_pr/bloc_profiles_K11.csv",
-                     unit="municipalities and wards", heat="Japan/figures/japan_pr_2012_2026_heatmap.png"),
-    "netherlands": dict(unit="municipalities"),
+    "japan":    dict(panels=True, bundle=True, unit="municipalities"),
+    "netherlands": dict(panels=True, bundle=True, unit="municipalities"),
     "poland":   dict(heatjson=True, unit="polling districts"),
-    "romania":  dict(blocs="Romania/model/fits/blocs_K10.csv", profiles="Romania/model/fits/bloc_profiles_K10.csv", unit="communes and towns"),
+    "romania":  dict(panels=True, bundle=True, unit="communes and towns"),
     "serbia":   dict(json="Serbia/data/atlas_blocs_serbia.json", unit="polling stations", heat="Serbia/maps/parliament_2020_2026_dmm_K10_heatmap.png"),
     "slovakia": dict(blocs="Slovakia/model/fits/nrsr/blocs_K10.csv", profiles="Slovakia/model/fits/nrsr/bloc_profiles_K10.csv", unit="units"),
     "switzerland": dict(unit="communes", heat="Switzerland/bbmm/maps/swiss_referendum_heatmap_K10.png", heat_cap="Referendum yes shares by commune, grouped by the K = 10 blocs."),
@@ -149,12 +145,15 @@ def bundle(key):
         return {}
     d = json.load(open(os.path.join(D, "data.json"), encoding="utf-8"))
     h = json.load(open(os.path.join(D, "heat.json"), encoding="utf-8"))
-    g = json.load(open(os.path.join(D, "gifs", "gifs.json"), encoding="utf-8"))
-    items = g["items"]
-    kgif = next(i for i in items if re.fullmatch(r"k\d+", i["k"]))
-    out = dict(pca=dict(src=f"data/{key}/gifs/{kgif['k']}.gif", cap=f"{kgif['t']}: {kgif['cap']} {g.get('note', '')}".strip()),
-               demog_list=[dict(src=f"data/{key}/gifs/{i['k']}.gif", title=i["t"], cap=i["cap"]) for i in items if i is not kgif],
-               demog_note=g.get("note", ""))
+    gf = os.path.join(D, "gifs", "gifs.json")                   # the rendered GIF series is optional (the live panel needs none)
+    out = {}
+    if os.path.exists(gf):
+        g = json.load(open(gf, encoding="utf-8"))
+        items = g["items"]
+        kgif = next(i for i in items if re.fullmatch(r"k\d+", i["k"]))
+        out = dict(pca=dict(src=f"data/{key}/gifs/{kgif['k']}.gif", cap=f"{kgif['t']}: {kgif['cap']} {g.get('note', '')}".strip()),
+                   demog_list=[dict(src=f"data/{key}/gifs/{i['k']}.gif", title=i["t"], cap=i["cap"]) for i in items if i is not kgif],
+                   demog_note=g.get("note", ""))
     nby = {b["b"]: b for b in d["blocs"]}
     q = [dict(l=c["l"], h=c.get("w") or c["l"].split(", ", 1)[-1], e=c["l"].split(", ", 1)[0]) for c in h["q"]]
     tot = sum(b["n"] for b in d["blocs"])
