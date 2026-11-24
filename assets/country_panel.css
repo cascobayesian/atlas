@@ -51,3 +51,14 @@ body.light .back:hover { color: var(--accent, #1f5f7a); }
 /* the heatmap's picked unit: its votes in the last three elections against its bloc and the country */
 .ap-heat-votes { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid #e3e3e3; }
 .ap-heat-votes .bp-grid { margin-top: .6rem; }
+/* heatmap axes (country pages): the units up the side; above the columns, each election's year and its parties' colours */
+.ap-heat-axes { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: .3rem; }
+.ap-heat-y { display: flex; align-items: center; justify-content: center; }
+.ap-heat-y span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #555; white-space: nowrap; }
+.ap-heat-col { min-width: 0; }
+.ap-heat-head { position: relative; height: 2.5rem; margin-bottom: 3px; }
+.ap-heat-years, .ap-heat-parties { position: absolute; left: 0; right: 0; }
+.ap-heat-years { top: 0; height: 1.15rem; }
+.ap-heat-years span { position: absolute; top: 0; text-align: center; font-size: .78rem; font-weight: 700; color: #222; border-left: 1px solid #333; border-right: 1px solid #333; border-top: 1px solid #333; height: .9rem; line-height: .9rem; box-sizing: border-box; }
+.ap-heat-parties { top: 1.2rem; height: 1.2rem; }
+.ap-heat-parties span { position: absolute; top: 0; height: 100%; box-sizing: border-box; border-right: 1px solid #fff; font-size: .58rem; font-weight: 600; line-height: 1.2rem; text-align: center; overflow: hidden; white-space: nowrap; }

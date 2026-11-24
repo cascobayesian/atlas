@@ -498,10 +498,27 @@
       const wrap = document.createElement("div"); wrap.className = "atlas-heat-stage";
       const baseC = document.createElement("canvas"), over = document.createElement("canvas"); over.className = "atlas-heat-over";
       const htip = document.createElement("div"); htip.className = "atlas-heat-tip"; htip.hidden = true;
-      wrap.append(baseC, over, htip); host.append(wrap);
+      wrap.append(baseC, over, htip);
+      // country pages: the units named up the side, and above the columns each election's year and its parties in their colours
+      const YR = HJ.q.map(q => (String(q.l).match(/^(\d{4}),\s*/) || [])[1] || null), PTY = HJ.q.map(q => String(q.l).replace(/^\d{4},\s*/, ""));
+      const AXES = !!(OV && YR.every(y => y));
+      let head = null, sizeBox = host, groups = [];
+      if (AXES) {
+        const pc = {}; (PF.votes || []).forEach(T => T.cats.forEach(c => { pc[c[1].replace(/&rsquo;/g, "’")] = c[2]; }));
+        const OTHER = ["#8c8c8c", "#b07aa1", "#9c755f", "#76b7b2", "#edc948"]; let oi = 0;
+        const colOf = l => pc[l] || (pc[l] = OTHER[oi++ % OTHER.length]);
+        YR.forEach((y, c) => { if (!groups.length || groups[groups.length - 1].y !== y) groups.push({ y, c0: c, n: 0 }); groups[groups.length - 1].n++; });
+        const ncol = HJ.q.length, at = c => `${(100 * c / ncol).toFixed(3)}%`;
+        host.classList.add("ap-heat-axes");
+        host.insertAdjacentHTML("beforeend", `<div class="ap-heat-y"><span>${esc(D.unit[0].toUpperCase() + D.unit.slice(1))}, grouped by bloc</span></div>` +
+          `<div class="ap-heat-col"><div class="ap-heat-head"><div class="ap-heat-years">${groups.map(g => `<span style="left:${at(g.c0)};width:${at(g.n)}">${g.y}</span>`).join("")}</div>` +
+          `<div class="ap-heat-parties">${HJ.q.map((q, c) => { const col = colOf(PTY[c]);
+            return `<span style="left:${at(c)};width:${at(1)};background:${col};color:${ink(col)}" title="${esc(q.l)}">${esc(q.w || PTY[c].slice(0, 3))}</span>`; }).join("")}</div></div></div>`);
+        sizeBox = host.querySelector(".ap-heat-col"); head = sizeBox.querySelector(".ap-heat-head"); sizeBox.append(wrap);
+      } else host.append(wrap);
       let Lh = null, gs = null, pinned = null, inside = null;
       const layout = () => {
-        const W = host.clientWidth, H = Math.round(Math.max(340, Math.min(700, W * 0.5))), dpr = devicePixelRatio || 1;
+        const W = sizeBox.clientWidth, H = Math.round(Math.max(340, Math.min(700, W * 0.5))), dpr = devicePixelRatio || 1;
         for (const c of [baseC, over]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); c.style.width = W + "px"; c.style.height = H + "px"; }
         gs = layoutGroups(H, GAP); Lh = { W, H, hw: W - BAR - BAR_GAP, dpr };
         const ctx = baseC.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); ctx.imageSmoothingEnabled = false;
@@ -509,6 +526,11 @@
         for (const g of gs) { ctx.drawImage(cells, 0, g.r0, nc, g.n, 0, g.y, Lh.hw, g.h); const b = BLOC_C[g.b];
           ctx.fillStyle = b.c; ctx.fillRect(Lh.hw + BAR_GAP, g.y, BAR, g.h);
           if (g.h >= 13) { ctx.fillStyle = ink(b.c); ctx.fillText(String(b.b), Lh.hw + BAR_GAP + BAR / 2, g.y + g.h / 2 + 0.5); } }
+        if (AXES) {                                  // a clear break between elections: a white gap with a dark rule
+          groups.slice(1).forEach(g => { const x = Math.round(Lh.hw * g.c0 / nc);
+            ctx.fillStyle = "#fff"; ctx.fillRect(x - 2, 0, 4, H); ctx.fillStyle = "#333"; ctx.fillRect(x - 0.5, 0, 1, H); });
+          head.style.width = Lh.hw + "px";
+        }
         draw();
       };
       recolorFns.push(() => layout());
