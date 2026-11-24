@@ -46,7 +46,10 @@
   const hideTip = () => { tip.hidden = true; };
   let stopSpin = () => {};
   const open = c => { stopSpin(); location.href = `country.html?c=${c.key}`; };
-  const openUS = () => { stopSpin(); location.href = "us.html"; };
+  // US states count as countries: a state with atlas blocs opens its own page (country.html?c=<state key>, data/places.json)
+  let STATE_KEY = {};
+  fetch("data/places.json").then(r => r.ok ? r.json() : []).then(l => { STATE_KEY = Object.fromEntries(l.map(p => [p.title, p.key])); }).catch(() => {});
+  const openState = n => { const k = STATE_KEY[n]; if (!k) return; stopSpin(); location.href = `country.html?c=${k}`; };
   const Q = ["", "poor: not usable", "limited", "good", "excellent: ready to go"];
 
   Promise.all([
@@ -74,10 +77,12 @@
       const done = new Set(US_STATES);
       const g = svg.append("g").attr("class", "ng-us");
       g.selectAll("path").data(topojson.feature(USA, USA.objects.states).features).join("path")
-        .attr("fill", d => done.has(d.properties.name) ? US_PINK : "rgba(196,205,214,.30)")
+        .attr("fill", d => done.has(d.properties.name) ? US_PINK : "#c9d0d6")           // the rest: work under way, as countries
+        .attr("fill-opacity", d => done.has(d.properties.name) ? 1 : 0.8)
         .attr("stroke", "rgba(5,9,15,.55)").attr("stroke-width", 0.35)
-        .on("pointermove", (e, d) => showTip(e, `${d.properties.name}: ${done.has(d.properties.name) ? "voting blocs in the atlas" : "not yet"}`))
-        .on("pointerleave", hideTip).on("click", openUS);
+        .style("cursor", d => done.has(d.properties.name) ? "pointer" : "default")
+        .on("pointermove", (e, d) => showTip(e, `${d.properties.name}: ${done.has(d.properties.name) ? "voting blocs in the atlas" : "work under way"}`))
+        .on("pointerleave", hideTip).on("click", (e, d) => { if (done.has(d.properties.name)) openState(d.properties.name); });
       layers.push(g);
     }
     // fitted countries: their blocs
@@ -101,7 +106,7 @@
       showTip(e, c ? `${c.title}: K = ${c.k}` : n === US_NAME ? "United States" : started.has(n) ? `${n}: work under way` +
         (QUALITY[n] ? `; records ${Q[QUALITY[n]]}` : "") : QUALITY[n] ? `${n}: election records ${Q[QUALITY[n]]}` : n); })
       .on("pointerleave", hideTip)
-      .on("click", (e, d) => { const c = fitBy.get(d.properties.name); if (c) open(c); else if (d.properties.name === US_NAME) openUS(); });
+      .on("click", (e, d) => { const c = fitBy.get(d.properties.name); if (c) open(c);  });
     const redraw = () => { haloC.attr("r", proj.scale() * 1.09); sphere.attr("d", path); grat.attr("d", path); land.attr("d", path); borders.attr("d", path);
       coast.attr("d", path); rim.attr("d", path); layers.forEach(g => g.selectAll("path").attr("d", path)); };
     redraw();

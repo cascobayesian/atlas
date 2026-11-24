@@ -46,7 +46,7 @@
   const subs = [], on = f => subs.push(f), update = () => subs.forEach(f => f());
 
   // the place picker: every exported place (data/places.json)
-  if (COUNTRY || root.dataset.over) { const pk = root.querySelector(".ap-pick"); if (pk) pk.hidden = true; }
+  if (COUNTRY || root.dataset.over || root.dataset.state) { const pk = root.querySelector(".ap-pick"); if (pk) pk.hidden = true; }
   else fetch(DATA + "places.json").then(r => r.ok ? r.json() : []).then(list => {
     const sel = document.getElementById("ap-place"); if (!sel || !list.length) return;
     const cur = base.match(/([a-z_]+)\/$/)[1];
@@ -66,7 +66,7 @@
     const unitWord = D.unit1 || D.unit.replace(/s$/, ""), UnitWord = unitWord[0].toUpperCase() + unitWord.slice(1);
     document.getElementById("ap-sub").textContent = `${N.toLocaleString()} ${D.unit}, ${D.what || D.n_q + " ballot questions and races"}, ${D.blocs.length} voting blocs.`;
     document.querySelector('[data-tab="unit"]').textContent = UnitWord + " profile";
-    document.title = D.title + (D.what ? " · Atlas of Voting Blocs" : " · Atlas of US Voting Blocs");
+    document.title = D.title + (D.what || root.dataset.state ? " · Atlas of Voting Blocs" : " · Atlas of US Voting Blocs");
     document.getElementById("ap-name").textContent = D.title;
     requestAnimationFrame(() => root.classList.add("ap-enter"));   // the panels are built: fade them in (assets/site.css)
     root.querySelectorAll("[data-words]").forEach(el => { el.innerHTML = el.innerHTML.replace(/\bdivisions\b/g, D.unit).replace(/\bdivision\b/g, unitWord)

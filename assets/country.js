@@ -22,21 +22,24 @@
     document.title = `${C.title} · Atlas of Voting Blocs`;
     document.body.classList.add("light");
     document.querySelector(".ng-head").outerHTML = `<header class="site-head"><div class="wrap"><a class="site-name" href="./">Atlas of Voting Blocs</a>` +
-      `<nav class="site-nav" aria-label="Sections"><a href="us.html">United States</a><a href="cities.html">Cities</a><a href="world.html">World</a></nav>` +
+      `<nav class="site-nav" aria-label="Sections"><a href="./">Countries</a><a href="cities.html">Cities</a></nav>` +
       `<a class="site-home" href="https://cascobayesian.github.io/">Jack O&rsquo;Brien &middot; Bowdoin College</a></div></header>`;
     const main = document.querySelector("main"); main.className = "wrap";
     ["c-title", "c-sub", "c-why", "c-panels", "c-row", "c-detail"].forEach(id => $(id).hidden = true);
     main.insertAdjacentHTML("beforeend", `<div id="ap-mount"></div>`);
-    const V = "?v=20";
+    const V = "?v=22";
     return Promise.all(["https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css", "assets/bloc_profiles.css" + V, "assets/atlas.css" + V,
       "assets/site.css" + V, "assets/country_panel.css" + V].map(loadCSS))
       .then(() => loadJS("https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"))
       .then(() => loadJS("https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"))
       .then(() => loadJS("assets/panel.js" + V)).then(() => loadJS("assets/high_contrast.js" + V))
-      .then(() => { const ap = $("ap"); ap.dataset.place = C.key; ap.dataset.over = `assets/countries/${C.key}_us.json` + V; return loadJS("assets/atlas.js" + V); });
+      .then(() => { const ap = $("ap"); ap.dataset.place = C.key; if (C.state) ap.dataset.state = "1"; else ap.dataset.over = `assets/countries/${C.key}_us.json` + V; return loadJS("assets/atlas.js" + V); });
   }
 
-  fetch(`assets/countries/${key}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(C => {
+  // a US state (or any place with a data bundle but no country file) opens on its data bundle, with its own census panels
+  const asState = () => fetch(`data/${key}/data.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(D => ({ key, title: D.title, panels: true, state: true }));
+  fetch(`assets/countries/${key}.json`).then(r => r.ok ? r.json() : asState()).then(C => {
     if (C.panels) return panelPage(C);
     document.title = `${C.title} · Atlas of Voting Blocs`;
     $("c-title").textContent = C.title;
