@@ -20,6 +20,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 C = os.path.expanduser("~/Dropbox/Teaching/Country.Politics/Countries")
 OUT = os.path.join(REPO, "assets", "countries")
 NC_RAMP = ["#B2182B", "#E2694F", "#A784B8", "#5E91CC", "#1F4E9C"]                 # us.html density ramp
+RB_RAMP = ["#B2182B", "#D6604D", "#E4A07F", "#8FB8D6", "#4A8CC2", "#1D4F91"]   # red (low) to blue (high), no white middle on the light page
 BA_RAMP = ["#FDE333", "#96D84B", "#00BE7D", "#009B95", "#007094", "#353E7C", "#4B0055"]   # us.html bachelor's ramp
 
 
@@ -127,11 +128,11 @@ def canada():
     panels = [
         dict(k="tongue", t="Mother tongue", kind="mix", topic="tongue", colors=["#1F78B4", "#E31A1C", "#00A9A5", "#FFB000", "#C86B98"],
              note="Colours mix in proportion to each mother tongue&rsquo;s share (2021 Census)."),
-        dict(k="immig", t="Immigrants", kind="ramp", topic="generation", cats=["first"], max=60, stops=["#FEE8C8", "#FDBB84", "#FC8D59", "#E34A33", "#B30000", "#67000D"],
+        dict(k="immig", t="Immigrants", kind="ramp", topic="generation", cats=["first"], max=60, stops=RB_RAMP,
              h="Immigrants (first generation), all residents", tip="first-generation immigrants"),
-        dict(k="ba", t="Bachelor&rsquo;s degree", kind="ramp", topic="education", cats=["ba", "grad"], max=60, stops=BA_RAMP,
+        dict(k="ba", t="Bachelor&rsquo;s degree", kind="ramp", topic="education", cats=["ba", "grad"], max=60, stops=RB_RAMP,
              h="Bachelor&rsquo;s degree or higher, residents 15+", tip="with a bachelor&rsquo;s or higher"),
-        dict(k="industry", t="Industry", kind="mix", topic="industry", colors=["#A6611A", "#F2C200", "#1F78B4", "#33A02C", "#C86B98"], relative=6,
+        dict(k="industry", t="Industry", kind="mix", topic="industry", colors=["#A6611A", "#F2C200", "#1F78B4", "#33A02C", "#C86B98"], largest=True,
              note="Industry of the labour force (2021 Census): each point takes the colour of the industry most over-represented there against Canada, blended where two stand out about equally."),
     ]
     note = ("Votes from Elections Canada&rsquo;s poll-by-poll results, moved onto the 28 April 2025 polling divisions with 2021-census block weights; "
@@ -181,7 +182,7 @@ def germany():
         dict(k="dens", t="Population density", kind="dens", stops=NC_RAMP),
         dict(k="religion", t="Religion", kind="mix", topic="religion",
              note="Colours mix in proportion to Catholics, Protestants and others or none (Zensus 2022)."),
-        dict(k="academic", t="University degree", kind="ramp", topic="academic", cats=["yes"], max=40, stops=BA_RAMP,
+        dict(k="academic", t="University degree", kind="ramp", topic="academic", cats=["yes"], max=40, stops=RB_RAMP,
              h="Employees with a university degree (county level)", tip="of employees with a university degree (county)"),
         dict(k="afd", t="AfD vote", kind="keep"),
     ]

@@ -111,7 +111,7 @@
       const placeShare = (T, cats) => cats.reduce((s, c) => s + (PF.place[T][c] || 0), 0);
       G.col = G.col || {}; G.val = G.val || {}; G.tipfmt = G.tipfmt || {};
       G.panels = OV.panels.map(p => {
-        if (p.kind === "keep") return { ...old[p.k], t: p.t };
+        if (p.kind === "keep") return { ...old[p.k], t: p.t, key: old[p.k].key.replace(/<p>[\s\S]*?<\/p>/g, "") };
         if (p.kind === "dens") {                    // ranked within the country, as the states are
           const v = U.id.map((_, i) => G.pop[i] > 0 && G.dens[i] != null ? G.dens[i] : null);
           const s = v.filter(x => x != null).sort((a, b) => a - b), n = s.length;
@@ -122,29 +122,30 @@
             .reduce((a, x) => (!a.length || rank(x) - rank(a[a.length - 1]) >= 0.14 ? a.concat(x) : a), []);   // no two ticks crowded together
           return { k: p.k, t: p.t, key: `<h4>Residents per km&sup2;</h4><div class="ap-ramp" style="background:${grad(p.stops)}"></div>` +
             `<div class="ap-ticks">${ticks.map(x => `<span style="left:${(100 * rank(x)).toFixed(1)}%">${fmt(x)}</span>`).join("")}</div>` +
-            `<p>Ranked within ${esc(D.title)}, so ticks sit at shares of ${D.unit}; the median has ${Math.round(s[n >> 1]).toLocaleString("en-US")} per km&sup2;.</p>` };
+            "" };
         }
         const T = OV.topics.find(x => x.k === p.topic), sh = G.shares[p.topic];
         if (p.kind === "mix") {                     // colours mixed in proportion to the topic's shares
           const cc = p.colors || T.cats.map(c => c[2]);   // a panel can mix its own, brighter colours
           const rgb = cc.map(c => [1, 3, 5].map(o => parseInt(c.slice(o, o + 2), 16)));
           G.col[p.k] = U.id.map((_, i) => { if (sh[T.cats[0][0]][i] == null) return "#bdbdbd";
+            if (p.largest) { let j = 0; T.cats.forEach((c, q) => { if ((sh[c[0]][i] || 0) > (sh[T.cats[j][0]][i] || 0)) j = q; }); return cc[j]; }
             const a = [0, 0, 0]; let w = 0; T.cats.forEach((c, j) => { let x = sh[c[0]][i] || 0;
               if (p.relative) x = Math.pow(x / 100 / Math.max(PF.place[p.topic][c[0]], 1e-3), p.relative);   // against the country: what stands out
               w += x; rgb[j].forEach((v, q) => a[q] += x * v); });
             return w ? "#" + a.map(x => Math.round(x / w).toString(16).padStart(2, "0")).join("") : "#bdbdbd"; });
           demogTip[p.k] = i => sh[T.cats[0][0]][i] == null ? "" : `<div class="ap-tnum">${T.cats.map(c => [c[1], sh[c[0]][i]]).filter(([, x]) => x >= 1)
             .sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, x]) => `${l} ${x}%`).join(" &middot; ")}</div>`;
-          return { k: p.k, t: p.t, key: `<h4>${p.t}</h4><ul class="ap-race">${T.cats.map((c, j) => `<li><span style="background:${cc[j]}"></span>${c[1]}</li>`).join("")}</ul><p>${p.note}</p>` };
+          return { k: p.k, t: p.t, key: `<h4>${p.t}</h4><ul class="ap-race">${T.cats.map((c, j) => `<li><span style="background:${cc[j]}"></span>${c[1]}</li>`).join("")}</ul>` };
         }
         // ramp: the sum of some of the topic's shares, on one scale from 0 to p.max
         const v = U.id.map((_, i) => sh[p.cats[0]][i] == null ? null : p.cats.reduce((s, c) => s + (sh[c][i] || 0), 0));
         G.col[p.k] = v.map(x => x == null ? "#bdbdbd" : at(p.stops, x / p.max)); G.val[p.k] = v; G.tipfmt[p.k] = `<b>{v}%</b> ${p.tip}`;
         return { k: p.k, t: p.t, key: `<h4>${p.h}</h4><div class="ap-ramp" style="background:${grad(p.stops)}"></div>` +
           `<div class="ap-ticks">${[0, 0.25, 0.5, 0.75, 1].map((f, j) => `<span style="left:${25 * j}%">${Math.round(p.max * f)}%${j === 4 ? "+" : ""}</span>`).join("")}</div>` +
-          `<p>One scale for every ${unitWord}. ${esc(D.title)} overall: ${Math.round(100 * placeShare(p.topic, p.cats))}%. Gray: no data.</p>` };
+          "" };
       });
-      G.gifs = null; G.note = OV.demog_note;
+      G.gifs = null; G.note = "";
     }
 
     // ---- country mode: the census measures (CEN) as live demographic panels, with bloc and country means ----
@@ -246,6 +247,7 @@
 
     function makePCA(box, colorOf, tipExtra, onClick, sub, own) {
       const cam = own || CAM0;                     // this view's camera
+      const BOOST = OV && sub && !own ? 1.7 : 1;   // country pages: larger, solid dots in the demographic panels
       const cv = document.createElement("canvas"); box.prepend(cv);
       const ctx = cv.getContext("2d"), v = { box, cam, dirty: true, sx: new Float32Array(N), sy: new Float32Array(N), sd: new Float32Array(N) };
       addPlay(box, v);
@@ -282,11 +284,11 @@
         for (const i of idx) { proj(P[3 * i], P[3 * i + 1], P[3 * i + 2], tmp); v.sx[i] = tmp[0]; v.sy[i] = tmp[1]; v.sd[i] = tmp[2]; }
         const scope = box.closest("dialog") ? "dlg" : sub ? "sub" : "main", order = idx.slice().sort((a, b) => v.sd[b] - v.sd[a]), fb = focusOf(scope);
         const dot = (i, grow, alpha, stroke) => {
-          const near = Math.min(Math.max((R - v.sd[i]) / (2 * R), 0), 1), r = 3.3 * k * size[i] * (1 + 0.3 * near) * grow;
+          const near = Math.min(Math.max((R - v.sd[i]) / (2 * R), 0), 1), r = 3.3 * k * size[i] * (1 + 0.3 * near) * grow * BOOST;
           ctx.beginPath(); ctx.arc(v.sx[i], v.sy[i], r, 0, 2 * Math.PI); ctx.globalAlpha = alpha; ctx.fillStyle = colorOf(i); ctx.fill();
           if (stroke) { ctx.globalAlpha = 1; ctx.lineWidth = stroke * k; ctx.strokeStyle = "#fff"; ctx.stroke(); }
         };
-        if (fb == null) for (const i of order) dot(i, 1, 0.85, 0.35);
+        if (fb == null) for (const i of order) dot(i, 1, BOOST > 1 ? 1 : 0.85, BOOST > 1 ? 0 : 0.35);
         else {                                       // the bloc in front, larger and full strength; the rest set back
           for (const i of order) if (U.b[i] !== fb) dot(i, 0.9, 0.3, 0);
           for (const i of order) if (U.b[i] === fb) dot(i, 1.45, 1, 0.5);
@@ -691,7 +693,7 @@
       if (!G.panels && !biden.some(v => v != null)) K.splice(K.findIndex(x => x.k === "dem"), 1);   // no presidential returns for this place
       host.innerHTML = `<div class="ap-demog-grid">${K.map(x => `<figure><div class="ap-title">${x.t}${ENLARGE(x.k, x.t)}</div>` +
           `<div data-slot="${x.k}"><div class="ap-pca ap-pca-sm" id="ap-pca-${x.k}"></div></div><figcaption>${x.key}</figcaption></figure>`).join("")}</div>` +
-        (G.note ? `<p class="ap-note">${G.note}</p>` : `<p class="ap-note">The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too. ` +
+        (G.note === "" ? "" : G.note ? `<p class="ap-note">${G.note}</p>` : `<p class="ap-note">The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too. ` +
         `PC1 accounts for ${Math.round(100 * lg.r2_pc1_logdens)}% of the variation in log density, ${Math.round(100 * lg.r2_pc1_white)}% in white share and ` +
         `${Math.round(100 * lg.r2_pc1_ba)}% in bachelor&rsquo;s share across these ${D.unit}. Gray: no residents (no returns for partisanship).</p>`);
       host.querySelector(".ap-demog-grid").style.setProperty("--n", K.length);

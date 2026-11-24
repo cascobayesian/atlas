@@ -27,7 +27,7 @@
     const main = document.querySelector("main"); main.className = "wrap";
     ["c-title", "c-sub", "c-why", "c-panels", "c-row", "c-detail"].forEach(id => $(id).hidden = true);
     main.insertAdjacentHTML("beforeend", `<div id="ap-mount"></div>`);
-    const V = "?v=13";
+    const V = "?v=14";
     return Promise.all(["https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css", "assets/bloc_profiles.css" + V, "assets/atlas.css" + V,
       "assets/site.css" + V, "assets/country_panel.css" + V].map(loadCSS))
       .then(() => loadJS("https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"))
