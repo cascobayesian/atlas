@@ -125,17 +125,19 @@ def canada():
     }
     comp = lambda i: {} if R[i] is None or not pop[i] else {k: composition(R[i], p) for k, p in parts.items()}
     panels = [
-        dict(k="dens", t="Population density", kind="dens", stops=NC_RAMP),
-        dict(k="vismin", t="Visible minority", kind="mix", topic="vismin",
-             note="Visible minority groups and Indigenous identity; colours mix in proportion to each group&rsquo;s share (2021 Census)."),
+        dict(k="tongue", t="Mother tongue", kind="mix", topic="tongue", colors=["#1F78B4", "#E31A1C", "#00A9A5", "#FFB000", "#C86B98"],
+             note="Colours mix in proportion to each mother tongue&rsquo;s share (2021 Census)."),
+        dict(k="immig", t="Immigrants", kind="ramp", topic="generation", cats=["first"], max=60, stops=["#FEE8C8", "#FDBB84", "#FC8D59", "#E34A33", "#B30000", "#67000D"],
+             h="Immigrants (first generation), all residents", tip="first-generation immigrants"),
         dict(k="ba", t="Bachelor&rsquo;s degree", kind="ramp", topic="education", cats=["ba", "grad"], max=60, stops=BA_RAMP,
              h="Bachelor&rsquo;s degree or higher, residents 15+", tip="with a bachelor&rsquo;s or higher"),
-        dict(k="lc", t="Partisanship", kind="keep"),
+        dict(k="industry", t="Industry", kind="mix", topic="industry", colors=["#A6611A", "#F2C200", "#1F78B4", "#33A02C", "#C86B98"], relative=6,
+             note="Industry of the labour force (2021 Census): each point takes the colour of the industry most over-represented there against Canada, blended where two stand out about equally."),
     ]
     note = ("Votes from Elections Canada&rsquo;s poll-by-poll results, moved onto the 28 April 2025 polling divisions with 2021-census block weights; "
             "everything else from the 2021 Census (dissemination areas shared out to blocks by population and summed over")
     build(key, ids, pop, topics, comp, panels, note, "The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too. "
-          "Gray: no census residents (no 2025 votes for partisanship).")
+          "Gray: no census residents.")
 
 
 def germany():

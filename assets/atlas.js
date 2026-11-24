@@ -126,13 +126,16 @@
         }
         const T = OV.topics.find(x => x.k === p.topic), sh = G.shares[p.topic];
         if (p.kind === "mix") {                     // colours mixed in proportion to the topic's shares
-          const rgb = T.cats.map(c => [1, 3, 5].map(o => parseInt(c[2].slice(o, o + 2), 16)));
+          const cc = p.colors || T.cats.map(c => c[2]);   // a panel can mix its own, brighter colours
+          const rgb = cc.map(c => [1, 3, 5].map(o => parseInt(c.slice(o, o + 2), 16)));
           G.col[p.k] = U.id.map((_, i) => { if (sh[T.cats[0][0]][i] == null) return "#bdbdbd";
-            const a = [0, 0, 0]; let w = 0; T.cats.forEach((c, j) => { const x = sh[c[0]][i] || 0; w += x; rgb[j].forEach((v, q) => a[q] += x * v); });
+            const a = [0, 0, 0]; let w = 0; T.cats.forEach((c, j) => { let x = sh[c[0]][i] || 0;
+              if (p.relative) x = Math.pow(x / 100 / Math.max(PF.place[p.topic][c[0]], 1e-3), p.relative);   // against the country: what stands out
+              w += x; rgb[j].forEach((v, q) => a[q] += x * v); });
             return w ? "#" + a.map(x => Math.round(x / w).toString(16).padStart(2, "0")).join("") : "#bdbdbd"; });
           demogTip[p.k] = i => sh[T.cats[0][0]][i] == null ? "" : `<div class="ap-tnum">${T.cats.map(c => [c[1], sh[c[0]][i]]).filter(([, x]) => x >= 1)
             .sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, x]) => `${l} ${x}%`).join(" &middot; ")}</div>`;
-          return { k: p.k, t: p.t, key: `<h4>${p.t}</h4><ul class="ap-race">${T.cats.map(c => `<li><span style="background:${c[2]}"></span>${c[1]}</li>`).join("")}</ul><p>${p.note}</p>` };
+          return { k: p.k, t: p.t, key: `<h4>${p.t}</h4><ul class="ap-race">${T.cats.map((c, j) => `<li><span style="background:${cc[j]}"></span>${c[1]}</li>`).join("")}</ul><p>${p.note}</p>` };
         }
         // ramp: the sum of some of the topic's shares, on one scale from 0 to p.max
         const v = U.id.map((_, i) => sh[p.cats[0]][i] == null ? null : p.cats.reduce((s, c) => s + (sh[c][i] || 0), 0));
