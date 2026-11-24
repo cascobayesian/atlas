@@ -128,7 +128,7 @@
           `<div class="ap-ticks">${[0, 0.25, 0.5, 0.75, 1].map(f => `<span style="left:${100 * f}%">${Math.round(v.max * f)}%${f === 1 ? "+" : ""}</span>`).join("")}</div>` +
           `<p>${esc(v.note)} Red: low, blue: high. ${esc(D.title)}: ${pct(CM[v.k])}. Gray: no census residents.</p>` });
       });
-      G.note = `The same points and the same view as the PCA above, held still: drag any panel to turn them all, or press play to set them turning; hover a bloc in the list to bring it forward. ${esc(CEN.note)}`;
+      G.note = `The same points as the PCA above, each panel starting from the same view and held still: drag a panel to turn it, or press its play button to set it turning, each on its own; hover a bloc in the list to bring it forward. ${esc(CEN.note)}`;
     }
     // census bars: a measure for a unit / bloc / country, on the measure's own scale
     const cbar = (who, v, max, col) => `<div class="ap-srow"><span class="ap-swho">${who}</span><span class="ap-sbar"><span style="width:${v == null ? 0 : Math.max(0, Math.min(100, 100 * v / max))}%;background:${col}"></span></span><span class="ap-sval">${v == null ? "&ndash;" : pct(v)}</span></div>`;
@@ -182,18 +182,22 @@
     const cent = D.blocs.map(b => { const s = [0, 0, 0]; let m = 0;
       for (const i of idx) if (U.b[i] === b.b) { s[0] += P[3 * i]; s[1] += P[3 * i + 1]; s[2] += P[3 * i + 2]; m++; }
       return { b, p: s.map(v => v / Math.max(m, 1)) }; });
-    const cam = { theta: 30, phi: 20, auto: true, t: 0 };
+    const cam = { theta: 30, phi: 20, auto: true, t: 0 }, CAM0 = cam;
     const views = [];
-    const setAuto = a => { cam.auto = a; document.querySelectorAll(".ap-play").forEach(p => {
-      p.innerHTML = a ? "&#10074;&#10074;" : "&#9654;"; p.setAttribute("aria-label", a ? "Pause rotation" : "Resume rotation"); p.title = p.getAttribute("aria-label"); }); };
-    // every PCA gets its own play/pause button; they share the camera, so one press starts or stops them all
-    const addPlay = box => { let p = box.querySelector(".ap-play");
+    // a camera per PCA group: the PCAs share `cam` unless one is given its own (country mode's demographic panels, each
+    // turned and played on its own); a camera that resumes picks up its turn where it stands
+    const setAuto = (a, c = cam) => { c.auto = a; if (a) c.t = (c.theta - 30) / 360;
+      views.forEach(w => { if (w.cam !== c || !w.play) return; const p = w.play;
+        p.innerHTML = a ? "&#10074;&#10074;" : "&#9654;"; p.setAttribute("aria-label", a ? "Pause rotation" : "Resume rotation"); p.title = p.getAttribute("aria-label"); }); };
+    const addPlay = (box, v) => { let p = box.querySelector(".ap-play");
       if (!p) { p = document.createElement("button"); p.type = "button"; p.className = "ap-play"; box.appendChild(p); }
-      p.addEventListener("click", e => { e.stopPropagation(); setAuto(!cam.auto); }); setAuto(cam.auto); };
+      v.play = p; p.addEventListener("click", e => { e.stopPropagation(); setAuto(!v.cam.auto, v.cam); }); };
 
-    function makePCA(box, colorOf, tipExtra, onClick, sub) {
-      const cv = document.createElement("canvas"); box.prepend(cv); addPlay(box);
-      const ctx = cv.getContext("2d"), v = { box, dirty: true, sx: new Float32Array(N), sy: new Float32Array(N), sd: new Float32Array(N) };
+    function makePCA(box, colorOf, tipExtra, onClick, sub, own) {
+      const cam = own || CAM0;                     // this view's camera
+      const cv = document.createElement("canvas"); box.prepend(cv);
+      const ctx = cv.getContext("2d"), v = { box, cam, dirty: true, sx: new Float32Array(N), sy: new Float32Array(N), sd: new Float32Array(N) };
+      addPlay(box, v);
       let W = 0, H = 0, scale = 1, dpr = 1;
       const tmp = [0, 0, 0], tmp2 = [0, 0, 0];
       const proj = (x, y, z, out) => {
@@ -273,8 +277,8 @@
       cv.addEventListener("pointermove", e => {
         if (drag) {
           const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-          if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; setAuto(false); }
-          if (drag.moved) { cam.theta = drag.th - dx * 0.5; cam.phi = Math.max(-5, Math.min(85, drag.ph + dy * 0.4)); views.forEach(w => w.dirty = true); showTip(null); return; }
+          if (Math.abs(dx) + Math.abs(dy) > 3) { if (!drag.moved) setAuto(false, cam); drag.moved = true; }
+          if (drag.moved) { cam.theta = drag.th - dx * 0.5; cam.phi = Math.max(-5, Math.min(85, drag.ph + dy * 0.4)); views.forEach(w => { if (w.cam === cam) w.dirty = true; }); showTip(null); return; }
         }
         const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
         let best = null, bd = 64;
@@ -283,12 +287,15 @@
       });
       cv.addEventListener("pointerup", () => { if (drag && !drag.moved) onClick(S.hover); drag = null; });
       cv.addEventListener("pointerleave", () => { if (!drag) { setHover(null); showTip(null); } });
-      views.push(v); return v;
+      views.push(v); setAuto(cam.auto, cam); return v;
     }
     let last = performance.now();
     const frame = now => {
       const dt = Math.min(now - last, 100); last = now;
-      if (cam.auto && !document.hidden) { cam.t += dt / 8640; cam.theta = 30 + 360 * cam.t; cam.phi = 27 - 19 * Math.cos(4 * Math.PI * cam.t); views.forEach(w => w.dirty = true); }
+      if (!document.hidden) for (const c of new Set(views.map(w => w.cam))) if (c.auto) {
+        c.t += dt / 8640; c.theta = 30 + 360 * c.t;
+        c.phi += (27 - 19 * Math.cos(4 * Math.PI * c.t) - c.phi) * Math.min(1, dt / 400);   // eases onto the bobbing path after a drag
+        views.forEach(w => { if (w.cam === c) w.dirty = true; }); }
       for (const w of views) if (w.dirty && w.box.offsetParent) { w.draw(); w.dirty = false; }
       requestAnimationFrame(frame);
     };
@@ -562,7 +569,6 @@
       tabs.forEach(b => { b.setAttribute("aria-selected", String(b.dataset.tab === t)); b.tabIndex = b.dataset.tab === t ? 0 : -1; });
       subp.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== t);
       if (t === "demog" && !demogBuilt) { demogBuilt = true; GIFS_IN_DEMOG ? buildGifs(pane("demog")) : buildDemog(); }
-      if (t === "demog" && COUNTRY) setAuto(false);   // country mode: the demographic PCAs stay still until play is pressed
       if (t === "gifs" && !gifsBuilt) { gifsBuilt = true; buildGifs(pane("gifs")); }
       if (t === "heat" && !heat) { heat = buildHeat(pane("heat").querySelector(".ap-heat-plot")); buildMiniMap(); }
       if (t === "bloc") renderBloc(); if (t === "unit") renderUnit();
@@ -635,7 +641,9 @@
       host.querySelector(".ap-demog-grid").style.setProperty("--n", K.length);
       // readouts for data-defined panels: G.tipfmt[k] with {v} for the unit's value G.val[k]
       const tipOf = k => demogTip[k] || (G.tipfmt && G.tipfmt[k] ? u => G.val[k][u] != null ? `<div class="ap-tnum">${G.tipfmt[k].replace("{v}", G.val[k][u].toLocaleString("en-US"))}</div>` : "" : null);
-      K.forEach(x => { makePCA(document.getElementById("ap-pca-" + x.k), i => G.col[x.k][i], tipOf(x.k), pcaClick(false), true); BIG[x.k] = { title: x.t, key: x.key }; });
+      // country mode: each panel has its own camera, all starting from the same view and still until its play is pressed
+      K.forEach(x => { makePCA(document.getElementById("ap-pca-" + x.k), i => G.col[x.k][i], tipOf(x.k), pcaClick(false), true,
+        COUNTRY ? { theta: 30, phi: 20, auto: false, t: 0 } : null); BIG[x.k] = { title: x.t, key: x.key }; });
       host.querySelectorAll(".ap-enlarge").forEach(wireEnlarge);
     }
 
