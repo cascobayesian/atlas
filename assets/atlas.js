@@ -46,7 +46,7 @@
   const subs = [], on = f => subs.push(f), update = () => subs.forEach(f => f());
 
   // the place picker: every exported place (data/places.json)
-  if (COUNTRY) { const pk = root.querySelector(".ap-pick"); if (pk) pk.hidden = true; }
+  if (COUNTRY || root.dataset.over) { const pk = root.querySelector(".ap-pick"); if (pk) pk.hidden = true; }
   else fetch(DATA + "places.json").then(r => r.ok ? r.json() : []).then(list => {
     const sel = document.getElementById("ap-place"); if (!sel || !list.length) return;
     const cur = base.match(/([a-z_]+)\/$/)[1];
@@ -55,7 +55,8 @@
   }).catch(() => {});
   const J = f => fetch(base + f).then(r => { if (!r.ok) throw new Error(f + " " + r.status); return r.json(); });
   const CENSUS = COUNTRY && root.dataset.census ? fetch(root.dataset.census).then(r => r.ok ? r.json() : null).catch(() => null) : null;
-  Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json"), CENSUS]).then(([D, G, PF, HJ, CEN]) => {
+  const OVER = root.dataset.over ? fetch(root.dataset.over).then(r => r.ok ? r.json() : null).catch(() => null) : null;
+  Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json"), CENSUS, OVER]).then(([D, G, PF, HJ, CEN, OV]) => {
     const U = D.units, N = U.id.length, B = Object.fromEntries(D.blocs.map(b => [b.b, b]));
     const POPW = D.popword || "residents";   // what pop counts (Vienna: eligible voters)
     const unitWord = D.unit1 || D.unit.replace(/s$/, ""), UnitWord = unitWord[0].toUpperCase() + unitWord.slice(1);
@@ -95,6 +96,53 @@
       ba: u => G.ba[u] != null ? `<div class="ap-tnum"><b>${pct(G.ba[u])}</b> of adults 25+ with a bachelor&rsquo;s</div>` : "",
       race: u => { const r = G.shares.race, k = [["white", "White"], ["black", "Black"], ["hispanic", "Hispanic"], ["asian", "Asian"]];
         return `<div class="ap-tnum">${k.filter(([c]) => r[c][u] != null).map(([c, l]) => `${l} ${r[c][u]}%`).join(" &middot; ")}</div>`; } };
+
+    // ---- a country in the design of the US state panels (OV: assets/countries/<key>_us.json, scripts/build_country_us.py):
+    // census topics for the bloc and unit profiles, then the last election's vote; four demographic PCAs as the states have
+    if (OV) {
+      const grad = stops => `linear-gradient(90deg, ${stops.map((c, i) => `${c} ${Math.round(100 * i / (stops.length - 1))}%`).join(", ")})`;
+      const at = (stops, t) => { t = Math.max(0, Math.min(1, t)) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(t)); return d3i(stops[i], stops[i + 1], t - i); };
+      const vote = (PF.topics || []).find(T => T.k === OV.vote);
+      PF.topics = OV.topics.concat(vote ? [vote] : []);
+      G.shares = Object.assign(G.shares || {}, OV.shares);
+      Object.assign(PF.place, OV.place); Object.entries(OV.blocs).forEach(([b, x]) => Object.assign(PF.blocs[b], x));
+      PF.note = who => `${OV.note} ${who}.`;
+      const old = Object.fromEntries((G.panels || []).map(p => [p.k, p]));
+      const placeShare = (T, cats) => cats.reduce((s, c) => s + (PF.place[T][c] || 0), 0);
+      G.col = G.col || {}; G.val = G.val || {}; G.tipfmt = G.tipfmt || {};
+      G.panels = OV.panels.map(p => {
+        if (p.kind === "keep") return { ...old[p.k], t: p.t };
+        if (p.kind === "dens") {                    // ranked within the country, as the states are
+          const v = U.id.map((_, i) => G.pop[i] > 0 && G.dens[i] != null ? G.dens[i] : null);
+          const s = v.filter(x => x != null).sort((a, b) => a - b), n = s.length;
+          const rank = x => { let lo = 0, hi = n; while (lo < hi) { const m = (lo + hi) >> 1; if (s[m] < x) lo = m + 1; else hi = m; } return lo / Math.max(n - 1, 1); };
+          G.col[p.k] = v.map(x => x == null ? "#bdbdbd" : at(p.stops, rank(x)));
+          const fmt = x => x >= 1000 ? Math.round(x / 1000) + "k" : String(x);
+          const ticks = [1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000].filter(x => x > s[Math.floor(0.03 * n)] && x < s[Math.floor(0.97 * n)])
+            .reduce((a, x) => (!a.length || rank(x) - rank(a[a.length - 1]) >= 0.14 ? a.concat(x) : a), []);   // no two ticks crowded together
+          return { k: p.k, t: p.t, key: `<h4>Residents per km&sup2;</h4><div class="ap-ramp" style="background:${grad(p.stops)}"></div>` +
+            `<div class="ap-ticks">${ticks.map(x => `<span style="left:${(100 * rank(x)).toFixed(1)}%">${fmt(x)}</span>`).join("")}</div>` +
+            `<p>Ranked within ${esc(D.title)}, so ticks sit at shares of ${D.unit}; the median has ${Math.round(s[n >> 1]).toLocaleString("en-US")} per km&sup2;.</p>` };
+        }
+        const T = OV.topics.find(x => x.k === p.topic), sh = G.shares[p.topic];
+        if (p.kind === "mix") {                     // colours mixed in proportion to the topic's shares
+          const rgb = T.cats.map(c => [1, 3, 5].map(o => parseInt(c[2].slice(o, o + 2), 16)));
+          G.col[p.k] = U.id.map((_, i) => { if (sh[T.cats[0][0]][i] == null) return "#bdbdbd";
+            const a = [0, 0, 0]; let w = 0; T.cats.forEach((c, j) => { const x = sh[c[0]][i] || 0; w += x; rgb[j].forEach((v, q) => a[q] += x * v); });
+            return w ? "#" + a.map(x => Math.round(x / w).toString(16).padStart(2, "0")).join("") : "#bdbdbd"; });
+          demogTip[p.k] = i => sh[T.cats[0][0]][i] == null ? "" : `<div class="ap-tnum">${T.cats.map(c => [c[1], sh[c[0]][i]]).filter(([, x]) => x >= 1)
+            .sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, x]) => `${l} ${x}%`).join(" &middot; ")}</div>`;
+          return { k: p.k, t: p.t, key: `<h4>${p.t}</h4><ul class="ap-race">${T.cats.map(c => `<li><span style="background:${c[2]}"></span>${c[1]}</li>`).join("")}</ul><p>${p.note}</p>` };
+        }
+        // ramp: the sum of some of the topic's shares, on one scale from 0 to p.max
+        const v = U.id.map((_, i) => sh[p.cats[0]][i] == null ? null : p.cats.reduce((s, c) => s + (sh[c][i] || 0), 0));
+        G.col[p.k] = v.map(x => x == null ? "#bdbdbd" : at(p.stops, x / p.max)); G.val[p.k] = v; G.tipfmt[p.k] = `<b>{v}%</b> ${p.tip}`;
+        return { k: p.k, t: p.t, key: `<h4>${p.h}</h4><div class="ap-ramp" style="background:${grad(p.stops)}"></div>` +
+          `<div class="ap-ticks">${[0, 0.25, 0.5, 0.75, 1].map((f, j) => `<span style="left:${25 * j}%">${Math.round(p.max * f)}%${j === 4 ? "+" : ""}</span>`).join("")}</div>` +
+          `<p>One scale for every ${unitWord}. ${esc(D.title)} overall: ${Math.round(100 * placeShare(p.topic, p.cats))}%. Gray: no data.</p>` };
+      });
+      G.gifs = null; G.note = OV.demog_note;
+    }
 
     // ---- country mode: the census measures (CEN) as live demographic panels, with bloc and country means ----
     const CV = CEN ? CEN.order.map(k => k === CEN.mix.k ? { ...CEN.mix, mix: true } : CEN.vars.find(v => v.k === k)).filter(Boolean) : [];
@@ -666,7 +714,7 @@
     const bar = (vals, cats, label, who) => `<div class="bp-row"><span class="bp-who">${who}</span><div class="bp-bar">` +
       cats.filter(c => vals[c[0]] > 0.0005).map(c => { const v = vals[c[0]];
         return `<span class="bp-seg" style="flex:${v} 1 0;background:${c[2]};color:${ink(c[2])}" data-tip="${c[1]}: <b>${pct(v)}</b> ${label}">${v >= 0.09 ? pct(v) : ""}</span>`; }).join("") + "</div></div>";
-    const placeLab = PF.title, note = who => PF.note || `Race from 2020 Census blocks; everything else from the ACS 2020&ndash;24 (block groups; language and nativity by tract), shared out to blocks by population and summed over ${who}.`;
+    const placeLab = PF.title, note = who => typeof PF.note === "function" ? PF.note(who) : PF.note || `Race from 2020 Census blocks; everything else from the ACS 2020&ndash;24 (block groups; language and nativity by tract), shared out to blocks by population and summed over ${who}.`;
     // country mode: the bloc's description and its place on a map and in the PCA, side by side, above its profile
     let cbMap = null, cbBuilt = false;
     function renderBlocCountry(host, b) {
