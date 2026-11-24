@@ -55,9 +55,10 @@
   Promise.all([
     fetch("assets/world-50m.json").then(r => r.json()),
     fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json").then(r => r.json()).catch(() => null),
+    fetch("assets/world_k4/us_states.json?v=4").then(r => r.ok ? r.json() : null).catch(() => null),
     fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})),
     Promise.all(ALL.map(c => fetch(c.k4).then(r => r.ok ? r.json() : null).catch(() => null)))
-  ]).then(([WORLD, USA, QUAL, K4]) => {
+  ]).then(([WORLD, USA, USB, QUAL, K4]) => {
     QUALITY = QUAL;
     const countries = topojson.feature(WORLD, WORLD.objects.countries).features;
     const land = svg.append("g").selectAll("path").data(countries).join("path").attr("class", "ng-land")
@@ -84,6 +85,25 @@
         .on("pointermove", (e, d) => showTip(e, `${d.properties.name}: ${done.has(d.properties.name) ? "voting blocs in the atlas" : "work under way"}`))
         .on("pointerleave", hideTip).on("click", (e, d) => { if (done.has(d.properties.name)) openState(d.properties.name); });
       layers.push(g);
+      // each fitted state's blocs, shaded in the US pink as a country's blocs are in its hue (assets/world_k4/us_states.json)
+      if (USB) {
+        const rw = gm => ({ ...gm, coordinates: gm.type === "Polygon" ? gm.coordinates.map(r => r.slice().reverse())
+          : gm.coordinates.map(p => p.map(r => r.slice().reverse())) });
+        // a collection of polygons (as the dissolve may leave) drawn as one multipolygon
+        const flat = gm => { if (!gm) return null; if (/Polygon$/.test(gm.type)) return gm;
+          const ps = (gm.geometries || []).flatMap(x => x.type === "Polygon" ? [x.coordinates] : x.type === "MultiPolygon" ? x.coordinates : []);
+          return ps.length ? { type: "MultiPolygon", coordinates: ps } : null; };
+        const gb = svg.append("g").attr("class", "ng-usb");
+        gb.selectAll("path").data(USB.features.map(f => ({ ...f, geometry: flat(f.geometry) })).filter(f => f.geometry).map(f => ({ ...f, geometry: rw(f.geometry) }))).join("path")
+          .attr("fill", f => blocColour(US_NAME, f.properties.b, f.properties.nb)).style("cursor", "pointer")
+          .on("pointermove", (e, f) => showTip(e, `${f.properties.state}: bloc ${f.properties.b} of ${f.properties.nb}, ${Math.round(100 * f.properties.share)}% of units`))
+          .on("pointerleave", hideTip).on("click", (e, f) => openState(f.properties.state));
+        layers.push(gb);
+        // the state lines again on top, so neighbouring states stay apart
+        const gl = svg.append("path").datum(topojson.mesh(USA, USA.objects.states, (a, b) => a !== b)).attr("class", "ng-us-lines")
+          .attr("fill", "none").attr("stroke", "rgba(5,9,15,.55)").attr("stroke-width", 0.45);
+        layers.push({ selectAll: () => gl });
+      }
     }
     // fitted countries: their blocs
     ALL.forEach((c, i) => { const fc = K4[i]; if (!fc) return;
