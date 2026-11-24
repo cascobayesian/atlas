@@ -98,7 +98,7 @@
 
     // ---- country mode: the census measures (CEN) as live demographic panels, with bloc and country means ----
     const CV = CEN ? CEN.order.map(k => k === CEN.mix.k ? { ...CEN.mix, mix: true } : CEN.vars.find(v => v.k === k)).filter(Boolean) : [];
-    const CRAMP = ["#ece7f2", "#a6bddb", "#3690c0", "#02818a", "#014636"], NOCEN = "#bdbdbd";
+    const CRAMP = ["#b2182b", "#d6604d", "#e4a07f", "#8fb8d6", "#4a8cc2", "#1d4f91"], NOCEN = "#bdbdbd";   // red (low) -> blue (high)
     const rampAt = (v, max) => { if (v == null) return NOCEN; const t = Math.min(1, Math.max(0, v / max)) * (CRAMP.length - 1), i = Math.min(CRAMP.length - 2, Math.floor(t)); return d3i(CRAMP[i], CRAMP[i + 1], t - i); };
     const cval = (k, u) => CEN.v[k][u];
     const mixCol = u => { const ps = CEN.mix.parts, w = ps.map(p => cval(CEN.mix.k + "_" + p.k, u)); if (w.some(x => x == null)) return NOCEN;
@@ -126,9 +126,9 @@
         G.col[v.k] = U.id.map((_, u) => rampAt(cval(v.k, u), v.max)); G.val[v.k] = CEN.v[v.k]; G.tipfmt[v.k] = `<b>{v}%</b> ${esc(v.t.toLowerCase())}`;
         G.panels.push({ k: v.k, t: v.t, key: `<h4>${esc(v.t)}</h4><div class="ap-ramp" style="background:${grad(CRAMP)}"></div>` +
           `<div class="ap-ticks">${[0, 0.25, 0.5, 0.75, 1].map(f => `<span style="left:${100 * f}%">${Math.round(v.max * f)}%${f === 1 ? "+" : ""}</span>`).join("")}</div>` +
-          `<p>${esc(v.note)} ${esc(D.title)}: ${pct(CM[v.k])}. Gray: no census residents.</p>` });
+          `<p>${esc(v.note)} Red: low, blue: high. ${esc(D.title)}: ${pct(CM[v.k])}. Gray: no census residents.</p>` });
       });
-      G.note = `The same points and the same turning view as the PCA above: drag any panel to turn them all; hover a bloc in the list to bring it forward. ${esc(CEN.note)}`;
+      G.note = `The same points and the same view as the PCA above, held still: drag any panel to turn them all, or press play to set them turning; hover a bloc in the list to bring it forward. ${esc(CEN.note)}`;
     }
     // census bars: a measure for a unit / bloc / country, on the measure's own scale
     const cbar = (who, v, max, col) => `<div class="ap-srow"><span class="ap-swho">${who}</span><span class="ap-sbar"><span style="width:${v == null ? 0 : Math.max(0, Math.min(100, 100 * v / max))}%;background:${col}"></span></span><span class="ap-sval">${v == null ? "&ndash;" : pct(v)}</span></div>`;
@@ -562,6 +562,7 @@
       tabs.forEach(b => { b.setAttribute("aria-selected", String(b.dataset.tab === t)); b.tabIndex = b.dataset.tab === t ? 0 : -1; });
       subp.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== t);
       if (t === "demog" && !demogBuilt) { demogBuilt = true; GIFS_IN_DEMOG ? buildGifs(pane("demog")) : buildDemog(); }
+      if (t === "demog" && COUNTRY) setAuto(false);   // country mode: the demographic PCAs stay still until play is pressed
       if (t === "gifs" && !gifsBuilt) { gifsBuilt = true; buildGifs(pane("gifs")); }
       if (t === "heat" && !heat) { heat = buildHeat(pane("heat").querySelector(".ap-heat-plot")); buildMiniMap(); }
       if (t === "bloc") renderBloc(); if (t === "unit") renderUnit();
@@ -702,7 +703,27 @@
       if (host.dataset.u === String(i)) return; host.dataset.u = i;
       host.innerHTML = unitHTML(i);
     }
+    function unitBrief(i) {
+      const b = U.b[i], p = PF.blocs[b], all = PF.place, bl = B[b], who = esc(U.name[i]), pop = G.pop[i];
+      const T = TOPICS[TOPICS.length - 1], val = c => { const v = G.shares[T.k][c[0]][i]; return v == null ? 0 : v / 100; };
+      const uv = Object.fromEntries(T.cats.map(c => [c[0], val(c)])), hasV = T.cats.some(c => G.shares[T.k][c[0]][i] != null);
+      const um = k => CEN.v[k][i] == null ? null : CEN.v[k][i] / 100, bm = blocMean(b), hasC = CEN.pop[i] > 0;
+      const short = s => s.length > 22 ? s.slice(0, 21) + "…" : s;
+      const three = (k, max, lab) => { const mx = Math.max(max / 100, um(k) || 0, bm[k] || 0, CM[k] || 0) * 1.05;
+        return `<section><h5>${lab}</h5>${cbar(short(U.name[i]), hasC ? um(k) : null, mx, "#3a3a3a")}${cbar("Bloc " + b, bm[k], mx, bl.color)}${cbar(placeLab, CM[k], mx, "#c9ced3")}</section>`; };
+      const mix = CV.find(v => v.mix);
+      return `<header class="bp-head ub-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(pop || 0).toLocaleString("en-US")} ${POPW}</p></div></header>` +
+        `<div class="ub-grid"><div><section><h5>${T.t.replace(/ federal election$/i, "")} vote</h5>` + (hasV ? bar(uv, T.cats, "in " + who, short(U.name[i])) : `<p class="bp-note">No votes recorded.</p>`) +
+        bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
+        `<ul class="bp-key">${T.cats.filter(c => all[T.k][c[0]] >= 0.01).map(c => `<li><span style="background:${c[2]}"></span>${c[1]}</li>`).join("")}</ul></section>` +
+        (mix ? `<section><h5>${esc(mix.t)}</h5>` + [[short(U.name[i]), k => hasC ? um(k) : null, "in " + who], ["Bloc " + b, k => bm[k], "in bloc " + b], [placeLab, k => CM[k], "in " + placeLab]]
+          .map(([w, m, lab]) => bar(Object.fromEntries(mix.parts.map(q => [q.k, m(mix.k + "_" + q.k) || 0])), mix.parts.map(q => [q.k, esc(q.l), q.c]), lab, w)).join("") +
+          `<ul class="bp-key">${mix.parts.map(q => `<li><span style="background:${q.c}"></span>${esc(q.l)}</li>`).join("")}</ul></section>` : "") + `</div>` +
+        `<div>${three("bachelors", 60, "Bachelor&rsquo;s degree or higher")}${three("apprentice", 25, "Apprenticeship or trades")}${three("agmining", 30, "Agriculture and mining (labour force)")}` +
+        (hasC ? "" : `<p class="bp-note">No census residents recorded here.</p>`) + `</div></div>`;
+    }
     function unitHTML(i) {
+      if (CEN) return unitBrief(i);
       const b = U.b[i], p = PF.blocs[b], all = PF.place, bl = B[b], who = esc(U.name[i]), pop = G.pop[i];
       const val = (T, c) => { const v = G.shares[T.k][c[0]][i]; return v == null ? null : v / 100; };
       const p1 = x => x == null ? "&ndash;" : pct(x);

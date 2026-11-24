@@ -32,3 +32,19 @@ body.light .back:hover { color: var(--accent, #1f5f7a); }
 #ap[data-mode="country"] .ap-heat-wrap { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
 #ap[data-mode="country"] .ap-mini { position: static; }
 @media (max-width: 900px) { #ap[data-mode="country"] .ap-heat-wrap { grid-template-columns: 1fr; } }
+/* the brief polling-division summary (map clicks): about the height of the map */
+.ub-head { margin-bottom: .5rem; }
+.ub-head h3 { font-size: 1.05rem; }
+.ub-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: .6rem 1.6rem; max-width: 62rem; }
+@media (max-width: 760px) { .ub-grid { grid-template-columns: 1fr; } }
+.ub-grid section { margin: 0 0 .55rem; }
+.ub-grid h5 { font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: #555; margin: 0 0 .25rem; font-weight: 600; }
+.ub-grid .bp-row { margin: .1rem 0; }
+.ub-grid .bp-key { margin: .2rem 0 0; font-size: .72rem; }
+.ub-grid .ap-srow { display: grid; grid-template-columns: 8.5rem 1fr 2.6rem; gap: .5rem; align-items: center; font-size: .76rem; margin: .1rem 0; }
+.ub-grid .ap-swho { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333; }
+.ub-grid .ap-sbar { height: .6rem; background: #f0f0ee; border-radius: 2px; overflow: hidden; display: block; }
+.ub-grid .ap-sbar span { display: block; height: 100%; }
+.ub-grid .ap-sval { text-align: right; font-variant-numeric: tabular-nums; }
+.ub-grid .bp-key { display: flex; flex-wrap: wrap; gap: .05rem .8rem; }
+.ub-grid .bp-key li { margin: 0; }
