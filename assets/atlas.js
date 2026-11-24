@@ -403,14 +403,19 @@
       const cos = Math.cos((h.minLat + h.maxLat) / 2 * Math.PI / 180), dLat = 20 / 69.0, dLon = 20 / (69.17 * cos);
       const cx = (h.minLon + h.maxLon) / 2, cy = (h.minLat + h.maxLat) / 2;
       const half = Math.max((h.maxLon - h.minLon) / 2 * cos, (h.maxLat - h.minLat) / 2) * 1.08;   // in latitude degrees
-      const maxBounds = [[Math.min(h.minLon, cx - half / cos) - dLon, Math.min(h.minLat, cy - half) - dLat],
-                         [Math.max(h.maxLon, cx + half / cos) + dLon, Math.max(h.maxLat, cy + half) + dLat]];
-      const map = new maplibregl.Map({ container, style: "https://tiles.openfreemap.org/styles/positron", bounds, fitBoundsOptions: { padding: 10 }, maxBounds,
+      // ... and widened again to the map's own shape, so that a wide map (the enlarged view) is not forced to zoom in
+      const limit = () => { const w = container.clientWidth || 1, hh = container.clientHeight || 1, ax = Math.max(1, w / hh), ay = Math.max(1, hh / w);
+        return [[Math.min(h.minLon, cx - ax * half / cos) - dLon, Math.min(h.minLat, cy - ay * half) - dLat],
+                [Math.max(h.maxLon, cx + ax * half / cos) + dLon, Math.max(h.maxLat, cy + ay * half) + dLat]]; };
+      const map = new maplibregl.Map({ container, style: "https://tiles.openfreemap.org/styles/positron", bounds, fitBoundsOptions: { padding: 10 }, maxBounds: limit(),
         attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false, preserveDrawingBuffer: /[?&]test/.test(location.search) });
       map.touchZoomRotate.disableRotation();
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
       map.once("load", () => map.getContainer().querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
-      map.refit = () => requestAnimationFrame(() => { map.resize(); map.fitBounds(bounds, { padding: 10, duration: 0 }); });
+      // refit: the whole place in view, then the pan limit widened to take in that view (a wide map shows more around it)
+      map.refit = () => requestAnimationFrame(() => { map.resize(); map.setMaxBounds(null); map.fitBounds(bounds, { padding: 10, duration: 0 });
+        const v = map.getBounds(), L = limit();
+        map.setMaxBounds([[Math.min(L[0][0], v.getWest() - dLon), Math.min(L[0][1], v.getSouth() - dLat)], [Math.max(L[1][0], v.getEast() + dLon), Math.max(L[1][1], v.getNorth() + dLat)]]); });
       map.once("style.load", () => {
         addUnits(map, map.getStyle().layers.find(l => l.type === "symbol")?.id, opts);
         if (opts.outlines) {
