@@ -48,3 +48,6 @@ body.light .back:hover { color: var(--accent, #1f5f7a); }
 .ub-grid .ap-sval { text-align: right; font-variant-numeric: tabular-nums; }
 .ub-grid .bp-key { display: flex; flex-wrap: wrap; gap: .05rem .8rem; }
 .ub-grid .bp-key li { margin: 0; }
+/* the heatmap's picked unit: its votes in the last three elections against its bloc and the country */
+.ap-heat-votes { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid #e3e3e3; }
+.ap-heat-votes .bp-grid { margin-top: .6rem; }

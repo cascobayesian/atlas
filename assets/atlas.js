@@ -103,6 +103,7 @@
       const grad = stops => `linear-gradient(90deg, ${stops.map((c, i) => `${c} ${Math.round(100 * i / (stops.length - 1))}%`).join(", ")})`;
       const at = (stops, t) => { t = Math.max(0, Math.min(1, t)) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(t)); return d3i(stops[i], stops[i + 1], t - i); };
       const vote = (PF.topics || []).find(T => T.k === OV.vote);
+      PF.votes = (PF.topics || []).filter(T => /^v\d{4}$/.test(T.k));   // every election, for the heatmap's unit readout
       PF.topics = OV.topics.concat(vote ? [vote] : []);
       G.shares = Object.assign(G.shares || {}, OV.shares);
       Object.assign(PF.place, OV.place); Object.entries(OV.blocs).forEach(([b, x]) => Object.assign(PF.blocs[b], x));
@@ -378,8 +379,9 @@
     const addUnits = (map, firstLabel, opts = {}) => {
       map.addSource("units", { type: "vector", url: "pmtiles://" + url, promoteId: "u" }); unitMaps.add(map);
       if (opts.only) map.only = opts.only;
-      map.addLayer({ id: "units-fill", type: "fill", source: "units", "source-layer": "units", paint: { "fill-color": opts.only ? oneBloc(opts.only()) : color, "fill-opacity": 0.82, "fill-opacity-transition": { duration: 150 } } }, firstLabel);
-      if (opts.only) { let lastO; const po = () => { const b = opts.only(); if (b === lastO) return; lastO = b; map.setPaintProperty("units-fill", "fill-color", oneBloc(b)); }; on(po); map.repaintOnly = () => { lastO = undefined; po(); }; }
+      const paintOf = b => b == null && opts.all ? color : oneBloc(b);   // opts.all: every bloc in colour until one is picked
+      map.addLayer({ id: "units-fill", type: "fill", source: "units", "source-layer": "units", paint: { "fill-color": opts.only ? paintOf(opts.only()) : color, "fill-opacity": 0.82, "fill-opacity-transition": { duration: 150 } } }, firstLabel);
+      if (opts.only) { let lastO; const po = () => { const b = opts.only(); if (b === lastO) return; lastO = b; map.setPaintProperty("units-fill", "fill-color", paintOf(b)); }; on(po); map.repaintOnly = () => { lastO = undefined; po(); }; }
       map.addLayer({ id: "units-line", type: "line", source: "units", "source-layer": "units",
         paint: { "line-color": "#fff", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.1, 14, 1.2], "line-opacity": 0.8 } }, firstLabel);
       const hw = opts.scope === "dlg" ? 3.4 : 2.4;
@@ -628,7 +630,7 @@
       subp.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== t);
       if (t === "demog" && !demogBuilt) { demogBuilt = true; GIFS_IN_DEMOG ? buildGifs(pane("demog")) : buildDemog(); }
       if (t === "gifs" && !gifsBuilt) { gifsBuilt = true; buildGifs(pane("gifs")); }
-      if (t === "heat" && !heat) { heat = buildHeat(pane("heat").querySelector(".ap-heat-plot")); buildMiniMap(); }
+      if (t === "heat" && !heat) { heat = buildHeat(pane("heat").querySelector(".ap-heat-plot")); buildMiniMap(); if (OV) buildHeatVotes(); }
       if (t === "bloc") renderBloc(); if (t === "unit") renderUnit();
       if (t) { const r = subp.getBoundingClientRect(); if (r.top > innerHeight - 120) subp.scrollIntoView({ behavior: "smooth", block: "start" }); }
       views.forEach(w => w.dirty = true);
@@ -640,6 +642,26 @@
     on(() => { if (S.tab === "bloc") renderBloc(); if (S.tab === "unit") renderUnit(); });
 
     // the heatmap's companion: the map at a fixed scale (no zoom or pan), marking the ward under the cursor
+    // country pages: below the heatmap and its map, the picked unit's votes in the last three elections against its
+    // bloc and the country
+    function buildHeatVotes() {
+      const host = document.createElement("div"); host.className = "ap-heat-votes"; host.hidden = true;
+      pane("heat").appendChild(host);
+      const VT = (PF.votes || []).slice(-3);
+      let last;
+      on(() => { const u = S.heatSel; if (u === last) return; last = u;
+        if (u == null || !VT.length) { host.hidden = true; host.innerHTML = ""; return; }
+        const b = U.b[u], bl = B[b], p = PF.blocs[b], all = PF.place, who = esc(U.name[u]);
+        const short = t => t.length > 24 ? t.slice(0, 23) + "…" : t;
+        host.innerHTML = `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(G.pop[u] || 0).toLocaleString("en-US")} ${POPW}</p></div></header>` +
+          `<div class="bp-grid">${VT.map(T => { const has = T.cats.some(c => G.shares[T.k] && G.shares[T.k][c[0]][u] != null);
+            const uv = Object.fromEntries(T.cats.map(c => [c[0], has ? (G.shares[T.k][c[0]][u] || 0) / 100 : 0]));
+            return `<section><h4>${T.t}</h4>` + (has ? bar(uv, T.cats, "in " + who, esc(short(U.name[u]))) : `<p class="bp-note">No votes recorded here.</p>`) +
+              bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
+              `<ul class="bp-key">${T.cats.filter(c => all[T.k][c[0]] >= 0.005 || uv[c[0]] >= 0.005).map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${has ? pct(uv[c[0]]) : "&ndash;"}</b> <i>${pct(p[T.k][c[0]])} &middot; ${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>`; }).join("")}</div>` +
+          `<p class="bp-note">Bold: this ${unitWord}; gray: bloc ${b} &middot; ${placeLab}.</p>`;
+        host.hidden = false; });
+    }
     function buildMiniMap() {
       const box = pane("heat").querySelector(".ap-mini-map"), lab = pane("heat").querySelector(".ap-mini-name");
       const go = h => {
@@ -652,7 +674,7 @@
         mm.once("style.load", () => {
           const style = mm.getStyle();                // a quieter basemap: no place labels at this scale
           style.layers.filter(l => l.type === "symbol").forEach(l => mm.setLayoutProperty(l.id, "visibility", "none"));
-          addUnits(mm, undefined, { scope: "heat" });
+          addUnits(mm, undefined, OV ? { scope: "heat", only: () => S.heatBloc, all: true } : { scope: "heat" });
           mm.on("mousemove", "units-fill", e => { const u = e.features[0].properties.u; mm.getCanvas().style.cursor = "pointer"; setHover(u); });
           mm.on("mouseleave", "units-fill", () => { mm.getCanvas().style.cursor = ""; setHover(null); });
           mm.on("click", "units-fill", e => heat && heat.pinUnit(e.features[0].properties.u));
