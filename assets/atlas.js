@@ -6,8 +6,14 @@
 //   Data      the referendum heatmap, grouped by bloc; click to open it full size
 // One subpanel under the row at a time: Demographics (the PCA coloured by density, race, education, turning with
 // the main PCA), Bloc profile, Division profile, Heatmap (rows linked to the map and PCA).
+// Country mode (country.html sets data-mode="country", data-place and data-census on #ap): the demographics are the
+// bloc colouring and the country's census measures (assets/countries/<key>_census.json), all turning together; the
+// bloc profile adds the bloc's description, its place on a map and in the PCA side by side, and census bars against
+// the country; the main map shows the units without bloc colours until a unit (or bloc) is picked, and the unit
+// profile compares its census measures with its bloc and the country; the heatmap's companion map can be zoomed.
 (() => {
-  const root = document.getElementById("ap"), qp = new URLSearchParams(location.search).get("place");
+  const root = document.getElementById("ap"), qp = root.dataset.place || new URLSearchParams(location.search).get("place");
+  const COUNTRY = root.dataset.mode === "country";
   // where the data lives: data/ next to the page, or another host (e.g. a Cloudflare R2 bucket) set on #ap's data-data
   const DATA = root.dataset.data || "data/";
   // no place chosen: the page is just the US map (assets/us_map.js); clicking a place reloads with ?place=<key>
@@ -40,14 +46,16 @@
   const subs = [], on = f => subs.push(f), update = () => subs.forEach(f => f());
 
   // the place picker: every exported place (data/places.json)
-  fetch(DATA + "places.json").then(r => r.ok ? r.json() : []).then(list => {
+  if (COUNTRY) { const pk = root.querySelector(".ap-pick"); if (pk) pk.hidden = true; }
+  else fetch(DATA + "places.json").then(r => r.ok ? r.json() : []).then(list => {
     const sel = document.getElementById("ap-place"); if (!sel || !list.length) return;
     const cur = base.match(/([a-z_]+)\/$/)[1];
     sel.innerHTML = list.map(p => `<option value="${p.key}"${p.key === cur ? " selected" : ""}>${esc(p.title)}</option>`).join("");
     sel.addEventListener("change", () => window.atlasOpen(sel.value));
   }).catch(() => {});
   const J = f => fetch(base + f).then(r => { if (!r.ok) throw new Error(f + " " + r.status); return r.json(); });
-  Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json")]).then(([D, G, PF, HJ]) => {
+  const CENSUS = COUNTRY && root.dataset.census ? fetch(root.dataset.census).then(r => r.ok ? r.json() : null).catch(() => null) : null;
+  Promise.all([J("data.json"), J("demog.json"), J("profile.json"), J("heat.json"), CENSUS]).then(([D, G, PF, HJ, CEN]) => {
     const U = D.units, N = U.id.length, B = Object.fromEntries(D.blocs.map(b => [b.b, b]));
     const POPW = D.popword || "residents";   // what pop counts (Vienna: eligible voters)
     const unitWord = D.unit1 || D.unit.replace(/s$/, ""), UnitWord = unitWord[0].toUpperCase() + unitWord.slice(1);
@@ -87,6 +95,55 @@
       ba: u => G.ba[u] != null ? `<div class="ap-tnum"><b>${pct(G.ba[u])}</b> of adults 25+ with a bachelor&rsquo;s</div>` : "",
       race: u => { const r = G.shares.race, k = [["white", "White"], ["black", "Black"], ["hispanic", "Hispanic"], ["asian", "Asian"]];
         return `<div class="ap-tnum">${k.filter(([c]) => r[c][u] != null).map(([c, l]) => `${l} ${r[c][u]}%`).join(" &middot; ")}</div>`; } };
+
+    // ---- country mode: the census measures (CEN) as live demographic panels, with bloc and country means ----
+    const CV = CEN ? CEN.order.map(k => k === CEN.mix.k ? { ...CEN.mix, mix: true } : CEN.vars.find(v => v.k === k)).filter(Boolean) : [];
+    const CRAMP = ["#ece7f2", "#a6bddb", "#3690c0", "#02818a", "#014636"], NOCEN = "#bdbdbd";
+    const rampAt = (v, max) => { if (v == null) return NOCEN; const t = Math.min(1, Math.max(0, v / max)) * (CRAMP.length - 1), i = Math.min(CRAMP.length - 2, Math.floor(t)); return d3i(CRAMP[i], CRAMP[i + 1], t - i); };
+    const cval = (k, u) => CEN.v[k][u];
+    const mixCol = u => { const ps = CEN.mix.parts, w = ps.map(p => cval(CEN.mix.k + "_" + p.k, u)); if (w.some(x => x == null)) return NOCEN;
+      const s = w.reduce((a, b) => a + b, 0); if (!s) return NOCEN;
+      const rgb = [0, 0, 0]; ps.forEach((p, j) => [1, 3, 5].forEach((o, c) => { rgb[c] += w[j] / s * parseInt(p.c.slice(o, o + 2), 16); }));
+      return "#" + rgb.map(x => Math.round(Math.min(255, x)).toString(16).padStart(2, "0")).join(""); };
+    // pop-weighted means over a set of units (all of them, or a bloc's): { k: share 0-1 }, mix parts as k_part
+    const ckeys = CEN ? Object.keys(CEN.v) : [];
+    const cmean = test => { const a = {}, w = {}; ckeys.forEach(k => { a[k] = 0; w[k] = 0; });
+      for (let u = 0; u < N; u++) { if (!test(u)) continue; const p = CEN.pop[u] || 0; if (!p) continue;
+        for (const k of ckeys) { const v = CEN.v[k][u]; if (v != null) { a[k] += p * v; w[k] += p; } } }
+      return Object.fromEntries(ckeys.map(k => [k, w[k] ? a[k] / w[k] / 100 : null])); };
+    const CM = CEN ? cmean(() => true) : null, BM = {};
+    const blocMean = b => BM[b] || (BM[b] = cmean(u => U.b[u] === b));
+    if (CEN) {
+      const grad = stops => `linear-gradient(90deg, ${stops.map((c, i) => `${c} ${Math.round(100 * i / (stops.length - 1))}%`).join(", ")})`;
+      G.gifs = null; G.col = G.col || {}; G.val = G.val || {}; G.tipfmt = G.tipfmt || {};
+      G.col.bloc = U.b.map(b => B[b] ? B[b].color : NOCEN);
+      G.panels = [{ k: "bloc", t: `K = ${D.blocs.length} voting blocs`, key: `<h4>Voting blocs</h4><p>The ${D.blocs.length} blocs, coloured as in the list above.</p>` }];
+      CV.forEach(v => {
+        if (v.mix) { G.col[v.k] = U.id.map((_, u) => mixCol(u));
+          demogTip[v.k] = u => `<div class="ap-tnum">${v.parts.map(p => `${p.l} ${cval(v.k + "_" + p.k, u) ?? "–"}%`).join(" &middot; ")}</div>`;
+          G.panels.push({ k: v.k, t: v.t, key: `<h4>${esc(v.t)}</h4><ul class="ap-race">${v.parts.map(p => `<li><span style="background:${p.c}"></span>${esc(p.l)}</li>`).join("")}</ul><p>${esc(v.note)} ${esc(D.title)}: ` +
+            v.parts.map(p => `${esc(p.l)} ${pct(CM[v.k + "_" + p.k])}`).join(", ") + `.</p>` }); return; }
+        G.col[v.k] = U.id.map((_, u) => rampAt(cval(v.k, u), v.max)); G.val[v.k] = CEN.v[v.k]; G.tipfmt[v.k] = `<b>{v}%</b> ${esc(v.t.toLowerCase())}`;
+        G.panels.push({ k: v.k, t: v.t, key: `<h4>${esc(v.t)}</h4><div class="ap-ramp" style="background:${grad(CRAMP)}"></div>` +
+          `<div class="ap-ticks">${[0, 0.25, 0.5, 0.75, 1].map(f => `<span style="left:${100 * f}%">${Math.round(v.max * f)}%${f === 1 ? "+" : ""}</span>`).join("")}</div>` +
+          `<p>${esc(v.note)} ${esc(D.title)}: ${pct(CM[v.k])}. Gray: no census residents.</p>` });
+      });
+      G.note = `The same points and the same turning view as the PCA above: drag any panel to turn them all; hover a bloc in the list to bring it forward. ${esc(CEN.note)}`;
+    }
+    // census bars: a measure for a unit / bloc / country, on the measure's own scale
+    const cbar = (who, v, max, col) => `<div class="ap-srow"><span class="ap-swho">${who}</span><span class="ap-sbar"><span style="width:${v == null ? 0 : Math.max(0, Math.min(100, 100 * v / max))}%;background:${col}"></span></span><span class="ap-sval">${v == null ? "&ndash;" : pct(v)}</span></div>`;
+    const censusHTML = (rows, title) => !CEN ? "" : `<h4 class="cb-h">${title}</h4><div class="cb-grid">${CV.map(v => {
+      if (v.mix) return `<section><h5>${esc(v.t)}</h5>${rows.map(r => bar(Object.fromEntries(v.parts.map(p => [p.k, r.m(v.k + "_" + p.k) || 0])), v.parts.map(p => [p.k, esc(p.l), p.c]), r.label, r.who)).join("")}` +
+        `<ul class="bp-key">${v.parts.map(p => `<li><span style="background:${p.c}"></span>${esc(p.l)}</li>`).join("")}</ul></section>`;
+      const mx = Math.max(v.max / 100, ...rows.map(r => r.m(v.k) || 0)) * 1.05;
+      return `<section><h5>${esc(v.t)}</h5>${rows.map(r => cbar(r.who, r.m(v.k), mx, r.col)).join("")}</section>`; }).join("")}</div><p class="bp-note">${esc(CEN.note)}</p>`;
+    // a few words on where a bloc stands out: the measures furthest above and below the country (ratio to the country)
+    const blocBlurb = b => { if (!CEN) return ""; const m = blocMean(b), keys = CV.flatMap(v => v.mix ? v.parts.map(p => [v.k + "_" + p.k, `${p.l} ${v.t.toLowerCase()}`, true]) : [[v.k, v.t, false]]);
+      const r = keys.filter(([k]) => CM[k] > 0.005 && m[k] != null).map(([k, t, keep]) => ({ t, keep, r: m[k] / CM[k], v: m[k], c: CM[k] })).sort((a, b) => b.r - a.r);
+      const hi = r.filter(x => x.r >= 1.25).slice(0, 3), lo = r.filter(x => x.r <= 0.8).slice(-2).reverse();
+      const f = x => `${x.keep ? x.t : x.t.charAt(0).toLowerCase() + x.t.slice(1)} (${pct(x.v)} against ${pct(x.c)})`;
+      return (hi.length ? `Compared with ${esc(D.title)} as a whole, more ${hi.map(f).join(", ")}` : `Close to ${esc(D.title)} on most census measures`) +
+        (lo.length ? `; less ${lo.map(f).join(", ")}.` : "."); };
 
     // ---- selection ----
     const selectUnit = u => { S.sel = u === S.sel ? null : u; if (S.sel != null) openTab("unit"); update(); };
@@ -245,6 +302,8 @@
     makePCA(document.getElementById("ap-pca"), i => B[U.b[i]].color, null, pcaClick(true));
     const pcLine = () => D.pct.map((v, j) => `<span><b>PC${j + 1}</b> ${v.toFixed(1)}%</span>`).join("");
     document.getElementById("ap-pca-cap").innerHTML = pcLine();
+    if (COUNTRY) { document.getElementById("ap-pca-cap").insertAdjacentHTML("afterend", `<button type="button" class="ap-demog-link">Click to view demographics</button>`);
+      document.querySelector(".ap-demog-link").addEventListener("click", () => openTab(S.tab === "demog" ? null : "demog")); }
     requestAnimationFrame(frame);
 
     // ---- map ----
@@ -253,9 +312,14 @@
     const url = new URL(base + "units.pmtiles", location.href).href, archive = new pmtiles.PMTiles(url); protocol.add(archive);
     const blocExpr = () => ["match", ["get", "b"], ...D.blocs.flatMap(b => [b.b, b.color]), "#ccc"];
     let color = blocExpr();
+    const NEUTRAL = "#a7b1bb";
+    // a map that shows only one bloc (the focused or picked one, or the selected unit's), the rest neutral
+    const oneBloc = b => b == null || !B[b] ? NEUTRAL : ["case", ["==", ["get", "b"], b], B[b].color, NEUTRAL];
     const addUnits = (map, firstLabel, opts = {}) => {
       map.addSource("units", { type: "vector", url: "pmtiles://" + url, promoteId: "u" }); unitMaps.add(map);
-      map.addLayer({ id: "units-fill", type: "fill", source: "units", "source-layer": "units", paint: { "fill-color": color, "fill-opacity": 0.82, "fill-opacity-transition": { duration: 150 } } }, firstLabel);
+      if (opts.only) map.only = opts.only;
+      map.addLayer({ id: "units-fill", type: "fill", source: "units", "source-layer": "units", paint: { "fill-color": opts.only ? oneBloc(opts.only()) : color, "fill-opacity": 0.82, "fill-opacity-transition": { duration: 150 } } }, firstLabel);
+      if (opts.only) { let lastO; const po = () => { const b = opts.only(); if (b === lastO) return; lastO = b; map.setPaintProperty("units-fill", "fill-color", oneBloc(b)); }; on(po); map.repaintOnly = () => { lastO = undefined; po(); }; }
       map.addLayer({ id: "units-line", type: "line", source: "units", "source-layer": "units",
         paint: { "line-color": "#fff", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.1, 14, 1.2], "line-opacity": 0.8 } }, firstLabel);
       const hw = opts.scope === "dlg" ? 3.4 : 2.4;
@@ -329,7 +393,8 @@
     };
     archive.getHeader().then(h => {
       header = h;
-      const map = liveMap("ap-map", h, u => unitTip(u), selectUnit);
+      const map = liveMap("ap-map", h, u => unitTip(u), selectUnit, null,
+        COUNTRY ? { fade: false, only: () => { const f = focusBloc(); return f != null ? f : S.sel != null ? U.b[S.sel] : null; } } : {});
       window.__apMap = map; mapApi.refit = map.refit;
     });
 
@@ -514,10 +579,11 @@
       const box = pane("heat").querySelector(".ap-mini-map"), lab = pane("heat").querySelector(".ap-mini-name");
       const go = h => {
         const mm = new maplibregl.Map({ container: box, style: "https://tiles.openfreemap.org/styles/positron", interactive: true,
-          dragPan: false, scrollZoom: false, boxZoom: false, dragRotate: false, doubleClickZoom: false, keyboard: false, touchZoomRotate: false, touchPitch: false,
+          dragPan: COUNTRY, scrollZoom: COUNTRY, boxZoom: false, dragRotate: false, doubleClickZoom: COUNTRY, keyboard: COUNTRY, touchZoomRotate: COUNTRY, touchPitch: false,
           bounds: D.view || [[h.minLon, h.minLat], [h.maxLon, h.maxLat]], fitBoundsOptions: { padding: 6 }, attributionControl: { compact: true },
           preserveDrawingBuffer: /[?&]test/.test(location.search) });
         mm.once("load", () => mm.getContainer().querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
+        if (COUNTRY) { mm.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right"); mm.touchZoomRotate.disableRotation(); }
         mm.once("style.load", () => {
           const style = mm.getStyle();                // a quieter basemap: no place labels at this scale
           style.layers.filter(l => l.type === "symbol").forEach(l => mm.setLayoutProperty(l.id, "visibility", "none"));
@@ -592,8 +658,33 @@
       cats.filter(c => vals[c[0]] > 0.0005).map(c => { const v = vals[c[0]];
         return `<span class="bp-seg" style="flex:${v} 1 0;background:${c[2]};color:${ink(c[2])}" data-tip="${c[1]}: <b>${pct(v)}</b> ${label}">${v >= 0.09 ? pct(v) : ""}</span>`; }).join("") + "</div></div>";
     const placeLab = PF.title, note = who => PF.note || `Race from 2020 Census blocks; everything else from the ACS 2020&ndash;24 (block groups; language and nativity by tract), shared out to blocks by population and summed over ${who}.`;
+    // country mode: the bloc's description and its place on a map and in the PCA, side by side, above its profile
+    let cbMap = null, cbBuilt = false;
+    function renderBlocCountry(host, b) {
+      if (!cbBuilt) { cbBuilt = true;
+        host.innerHTML = `<div class="cb-top"></div><div class="cb-figs"><figure><div class="cb-map"></div><figcaption>Where: the bloc&rsquo;s ${D.unit}, the rest gray. Scroll or pinch to zoom.</figcaption></figure>` +
+          `<figure><div class="ap-pca ap-pca-sm" id="ap-pca-cbloc"></div><figcaption>Its place in the PCA: the bloc in front, the rest gray.</figcaption></figure></div><div class="cb-rest"></div>`;
+        makePCA(document.getElementById("ap-pca-cbloc"), i => U.b[i] === S.selBloc ? B[U.b[i]].color : "#c9c9c9", null, pcaClick(false), false);
+        const go = h => { cbMap = liveMap(host.querySelector(".cb-map"), h, u => unitTip(u), selectUnit, null, { fade: false, only: () => S.selBloc }); };
+        if (header) go(header); else archive.getHeader().then(go);
+      }
+      if (host.dataset.b === String(b)) return; host.dataset.b = b;
+      const p = PF.blocs[b], all = PF.place, bl = B[b], d = CEN && CEN.desc ? CEN.desc[bl.name] : null;
+      host.querySelector(".cb-top").innerHTML = `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${esc(bl.name)}</h3><p>${bl.n.toLocaleString()} ${D.unit} &middot; ${bl.vote} ${Math.round(100 * bl.dem)}% &middot; ` +
+        `${p.pop.toLocaleString("en-US")} ${POPW} (${pct(p.pop / all.pop)} of ${placeLab})</p></div></header>` +
+        (d ? `<p class="cb-desc"><b>Vote, 2015 &rarr; 2025:</b> ${esc(d)}.</p>` : "") + (CEN ? `<p class="cb-desc"><b>Demographics:</b> ${blocBlurb(b)}</p>` : "");
+      const m = blocMean(b);
+      host.querySelector(".cb-rest").innerHTML = censusHTML([{ who: "Bloc " + b, label: "in bloc " + b, m: k => m[k], col: bl.color },
+          { who: placeLab, label: "in " + placeLab, m: k => CM[k], col: "#c9ced3" }], "Census measures: the bloc against " + esc(placeLab)) +
+        `<h4 class="cb-h">Votes</h4><div class="bp-grid">${TOPICS.map(T => `<section><h4>${T.t}</h4>` +
+          bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
+          `<ul class="bp-key">${T.cats.map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${pct(p[T.k][c[0]])}</b> <i>${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>`).join("")}</div>` +
+        `<p class="bp-note">Bold: the bloc; gray: ${placeLab} overall. ${note("the bloc&rsquo;s " + D.unit)}</p>`;
+      if (cbMap) cbMap.refit(); views.forEach(w => w.dirty = true);
+    }
     function renderBloc() {
       const host = pane("bloc"), b = S.selBloc;
+      if (COUNTRY) { if (b == null) return; return renderBlocCountry(host, b); }
       if (b == null) { delete host.dataset.b; host.innerHTML = ""; return; }
       if (host.dataset.b === String(b)) return; host.dataset.b = b;
       const p = PF.blocs[b], all = PF.place, bl = B[b];
@@ -623,11 +714,14 @@
       return `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(pop || 0).toLocaleString("en-US")} ${POPW}</p>` +
         `<p class="uc-cert">${meter}${cert}</p></div></header>` +
         (!hasPop ? `<p class="bp-note">${PF.topics ? `No votes are recorded in this ${unitWord}.` : `No residents are recorded in this ${unitWord} (2020 Census), so it has no demographic summary.`}</p>` :
-        `<div class="bp-grid uc">${TOPICS.map(T => { const uv = Object.fromEntries(T.cats.map(c => [c[0], val(T, c) || 0])), mi = G.median_income[i];
+        `<div class="bp-grid uc">${TOPICS.map(T => { const uv = Object.fromEntries(T.cats.map(c => [c[0], val(T, c) || 0])), mi = G.median_income ? G.median_income[i] : null;   // (places without income data: Canada)
           return `<section><h4>${T.t}</h4>` + (T.k === "income" ? `<p class="bp-stat">Median <b>${mi == null ? "&ndash;" : money(mi)}</b> <span>(bloc ${money(p.median_income)}, ${placeLab} ${money(all.median_income)})</span></p>` : "") +
             bar(uv, T.cats, "in " + who, who) + bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
             `<ul class="bp-key">${T.cats.map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${p1(val(T, c))}</b> <i>${pct(p[T.k][c[0]])} &middot; ${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>`; }).join("")}</div>` +
-        `<p class="bp-note">Bold: this ${unitWord}; gray: bloc ${b} &middot; ${placeLab} overall. ${note("the " + unitWord)}${PF.topics ? "" : ` For a single ${unitWord} these survey estimates carry wide margins of error.`}</p>`);
+        `<p class="bp-note">Bold: this ${unitWord}; gray: bloc ${b} &middot; ${placeLab} overall. ${note("the " + unitWord)}${PF.topics ? "" : ` For a single ${unitWord} these survey estimates carry wide margins of error.`}</p>`) +
+        (CEN ? (CEN.pop[i] ? censusHTML([{ who, label: "in " + who, m: k => CEN.v[k][i] == null ? null : CEN.v[k][i] / 100, col: "#3a3a3a" },
+            { who: "Bloc " + b, label: "in bloc " + b, m: k => blocMean(b)[k], col: bl.color }, { who: placeLab, label: "in " + placeLab, m: k => CM[k], col: "#c9ced3" }],
+            `Census measures: this ${unitWord} against its bloc and ${esc(placeLab)}`) : `<p class="bp-note">No census residents are recorded in this ${unitWord}.</p>`) : "");
     }
     subp.addEventListener("pointermove", e => { const s = e.target.closest(".bp-seg"); if (s) showTip(s.dataset.tip, e.clientX, e.clientY); else if (!e.target.closest("canvas")) showTip(null); });
     subp.addEventListener("pointerleave", () => showTip(null));
@@ -665,6 +759,16 @@
     function demogStat(which, u) {
       const b = U.b[u], bl = B[b], ids = [...Array(N).keys()].filter(i => U.b[i] === b), who = esc(U.name[u]);
       const head = `<div class="ap-stat-head">${swatch(bl, "sm")}<b>${who}</b><span>${esc(bl.name)}</span></div>`;
+      if (CEN) {                                     // country mode: the measure for this unit, its bloc and the country
+        if (which === "bloc") return head + `<p class="ap-note">${esc(bl.name)} (bloc ${b}).</p>`;
+        const v = CV.find(x => x.k === which); if (!v) return head;
+        const rows = [{ who, label: "in " + who, m: k => CEN.v[k][u] == null ? null : CEN.v[k][u] / 100, col: "#3a3a3a" },
+          { who: "Bloc " + b, label: "in bloc " + b, m: k => blocMean(b)[k], col: bl.color }, { who: placeLab, label: "in " + placeLab, m: k => CM[k], col: "#c9ced3" }];
+        if (v.mix) return head + rows.map(r => bar(Object.fromEntries(v.parts.map(p => [p.k, r.m(v.k + "_" + p.k) || 0])), v.parts.map(p => [p.k, esc(p.l), p.c]), r.label, r.who)).join("") +
+          `<ul class="bp-key">${v.parts.map(p => `<li><span style="background:${p.c}"></span>${esc(p.l)}</li>`).join("")}</ul>`;
+        const mx = Math.max(v.max / 100, ...rows.map(r => r.m(v.k) || 0)) * 1.05;
+        return head + rows.map(r => cbar(r.who, r.m(v.k), mx, r.col)).join("") + `<p class="ap-note">${esc(v.note)}</p>`;
+      }
       if (which === "race") {
         const cats = TOPICS[0].cats, uv = Object.fromEntries(cats.map(c => [c[0], (G.shares.race[c[0]][u] || 0) / 100]));
         return head + (G.pop[u] > 0 ? bar(uv, cats, "in " + who, who) : `<p class="ap-hint">No residents recorded.</p>`) +
@@ -733,7 +837,7 @@
       D.blocs.forEach(b => { b.color = hc ? hcCols[b.b] : b.national; });
       HJ.blocs.forEach(b => { if (B[b.b]) b.c = B[b.b].color; });
       color = blocExpr();
-      unitMaps.forEach(m => { try { if (m === bigMap) paintBig(); else if (m.getLayer("units-fill")) m.setPaintProperty("units-fill", "fill-color", color); } catch (e) {} });
+      unitMaps.forEach(m => { try { if (m === bigMap) paintBig(); else if (m.repaintOnly) m.repaintOnly(); else if (m.getLayer("units-fill")) m.setPaintProperty("units-fill", "fill-color", color); } catch (e) {} });
       document.querySelectorAll("[data-sb]").forEach(el => { const c = B[+el.dataset.sb].color; el.style.background = c; el.style.color = ink(c); });
       document.querySelectorAll("[data-sbg]").forEach(el => { el.style.background = B[+el.dataset.sbg].color; });
       recolorFns.forEach(f => f());

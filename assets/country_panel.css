@@ -1,0 +1,34 @@
+/* country.html in panel mode (assets/country.js panelPage, assets/atlas.js country mode): light page, the panel of
+   world.html?place=<key>, plus the country-mode pieces (demographics link, bloc profile with map and PCA side by side,
+   census bars, the heatmap's zoomable companion map). */
+body.light { background: var(--paper, #fff); color: var(--ink, #1d2733); }
+body.light main.wrap { padding-bottom: 3rem; }
+body.light .back { color: var(--slate, #5d6a76); display: inline-block; margin: 1rem 0 .2rem; text-decoration: none; font-size: .9rem; }
+body.light .back:hover { color: var(--accent, #1f5f7a); }
+.c-lede { color: var(--slate, #5d6a76); margin: .2rem 0 1rem; max-width: 70rem; }
+.ap-demog-link { display: block; width: 100%; margin: .4rem 0 .35rem; padding: .45rem .6rem; border: 1px solid #c9d2da; border-radius: 6px;
+  background: #f4f7fa; color: var(--accent, #1f5f7a); font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer; }
+.ap-demog-link:hover, .ap-demog-link:focus-visible { background: #e8eff5; border-color: var(--accent, #1f5f7a); outline: none; }
+/* the demographics: nine panels, three to a row */
+#ap[data-mode="country"] .ap-demog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { #ap[data-mode="country"] .ap-demog-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { #ap[data-mode="country"] .ap-demog-grid { grid-template-columns: 1fr; } }
+/* bloc profile: description, then the map and the PCA side by side */
+.cb-desc { margin: .35rem 0; max-width: 62rem; line-height: 1.45; font-size: .93rem; }
+.cb-figs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1rem 0 1.2rem; }
+@media (max-width: 760px) { .cb-figs { grid-template-columns: 1fr; } }
+.cb-figs figure { margin: 0; }
+.cb-figs figcaption { font-size: .8rem; color: #666; margin-top: .35rem; }
+.cb-map { width: 100%; aspect-ratio: 1; border: 1px solid #e3e3e3; border-radius: 4px; }
+.cb-h { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: #555; margin: 1.2rem 0 .6rem; border: 0; }
+.cb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: .9rem 1.4rem; }
+.cb-grid section h5 { font-size: .82rem; margin: 0 0 .35rem; font-weight: 600; }
+.cb-grid .ap-srow { display: grid; grid-template-columns: 7.5rem 1fr 3rem; gap: .5rem; align-items: center; font-size: .8rem; margin: .18rem 0; }
+.cb-grid .ap-swho { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333; }
+.cb-grid .ap-sbar { height: .7rem; background: #f0f0ee; border-radius: 2px; overflow: hidden; display: block; }
+.cb-grid .ap-sbar span { display: block; height: 100%; }
+.cb-grid .ap-sval { text-align: right; font-variant-numeric: tabular-nums; }
+/* heatmap: the companion map is a full, zoomable map */
+#ap[data-mode="country"] .ap-heat-wrap { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+#ap[data-mode="country"] .ap-mini { position: static; }
+@media (max-width: 900px) { #ap[data-mode="country"] .ap-heat-wrap { grid-template-columns: 1fr; } }

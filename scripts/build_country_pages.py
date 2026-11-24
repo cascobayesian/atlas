@@ -178,6 +178,59 @@ def bundle(key):
     return out
 
 
+# census measures for countries with the full panels, per unit in the atlas's order (data/<key>/data.json units):
+# the live demographic PCAs, the bloc profiles and the unit profiles of country.html (assets/atlas.js, country mode)
+CENSUS = {
+    "canada": dict(
+        csv="Canada/realign_2025/model/fits/pd_compare_2021.csv", id="join_id", pop="pop2021",
+        desc=("Canada/realign_2025/model/atlas_export_ca.R", r'^\s*\d+,\s*"([^"]+)",\s*"#[0-9A-Fa-f]{6}"\)?,?\s*#\s*(.+)$'),
+        note="2021 Census shares (dissemination areas shared out to blocks by population and summed into the 2025 polling divisions).",
+        vars=[dict(k="commonlaw", t="Living common-law", cols=["Living common-law"], max=35, note="Residents 15+ living common-law."),
+              dict(k="indigenous", t="Indigenous identity", cols=["Indigenous identity"], max=30, note="Residents with an Indigenous identity (First Nations, Métis, Inuit)."),
+              dict(k="immigrants", t="Immigrants", cols=["Immigrants"], max=60, note="Residents who are or have been landed immigrants."),
+              dict(k="apprentice", t="Apprenticeship or trades", cols=["Apprenticeship or trades"], max=25, note="Residents 15+ whose highest qualification is an apprenticeship or trades certificate."),
+              dict(k="bachelors", t="Bachelor’s degree or higher", cols=["Bachelor's or higher"], max=60, note="Residents 15+ with a bachelor’s degree or higher."),
+              dict(k="agmining", t="Agriculture and mining", cols=["Agriculture, forestry, fishing", "Mining, oil and gas"], max=30, note="Labour force in agriculture, forestry, fishing and hunting, or mining, quarrying, oil and gas."),
+              dict(k="infoedu", t="Information, culture and education", cols=["Information and culture", "Educational services"], max=25, note="Labour force in information and cultural industries or educational services.")],
+        mix=dict(k="mothertongue", t="Mother tongue", note="Single-response mother tongue; colours mix in proportion to the three.",
+                 parts=[dict(k="en", l="English", col="Mother tongue: English", c="#1f78b4"), dict(k="fr", l="French", col="Mother tongue: French", c="#e31a1c"),
+                        dict(k="xx", l="Non-official", col="Mother tongue: non-official", c="#ffb000")]),
+        order=["commonlaw", "mothertongue", "indigenous", "immigrants", "apprentice", "bachelors", "agmining", "infoedu"]),
+}
+
+
+def census(key):
+    cfg = CENSUS.get(key)
+    if not cfg:
+        return None
+    ids = json.load(open(os.path.join(REPO, "data", key, "data.json"), encoding="utf-8"))["units"]["id"]
+    rows = {r[cfg["id"]]: r for r in read_csv(os.path.join(C, cfg["csv"]))}
+    R = [rows.get(str(i)) for i in ids]
+    miss = sum(r is None for r in R)
+    def col(r, names):
+        if r is None: return None
+        vals = [num(r.get(n)) for n in names]
+        return None if any(v is None for v in vals) else round(sum(vals))
+    out = dict(note=cfg["note"], order=cfg["order"], vars=[], v={}, pop=[None if r is None else int(num(r[cfg["pop"]]) or 0) for r in R])
+    for V in cfg["vars"]:
+        out["vars"].append({k: V[k] for k in ("k", "t", "max", "note")}); out["v"][V["k"]] = [col(r, V["cols"]) for r in R]
+    M = cfg["mix"]
+    out["mix"] = dict(k=M["k"], t=M["t"], note=M["note"], parts=[{k: p[k] for k in ("k", "l", "c")} for p in M["parts"]])
+    for p in M["parts"]:
+        out["v"][M["k"] + "_" + p["k"]] = [col(r, [p["col"]]) for r in R]
+    desc = {}
+    if cfg.get("desc"):
+        f, rx = cfg["desc"]
+        for line in open(os.path.join(C, f), encoding="utf-8"):
+            m = re.match(rx, line)
+            if m: desc[m.group(1)] = m.group(2).strip().replace("->", "→")
+    out["desc"] = desc
+    json.dump(out, open(os.path.join(OUT, f"{key}_census.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    print(f"  {key}: census for {len(ids) - miss:,} of {len(ids):,} units, {len(desc)} bloc descriptions, "
+          f"{os.path.getsize(os.path.join(OUT, f'{key}_census.json')) / 1e6:.1f} MB")
+    return f"assets/countries/{key}_census.json"
+
+
 def fig(key, f):
     return f"assets/world/{key}_{f}" if os.path.exists(os.path.join(WORLD, f"{key}_{f}")) else None
 
@@ -228,6 +281,7 @@ def main():
         if cfg.get("bundle"):
             for k2, v2 in bundle(key).items():
                 page[k2] = v2
+            page["census"] = census(key)
         json.dump(page, open(os.path.join(OUT, f"{key}.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
         nb = len(page["blocs"]["blocs"]) if page.get("blocs") else 0
         index.append(key)
