@@ -37,8 +37,12 @@ def japan():
 
     panels = [
         dict(k="dens", t="Population density", kind="dens", stops=NC_RAMP),
-        dict(k="industry", t="Industry", kind="mix", topic="industry",
-             note="Colours mix in proportion to the employed in farming, forestry and fishing (green), industry (red) and services (blue), 2020 census."),
+        # services left out of the colours: grey near Japan's shares, green where farming stands out (three times the national
+        # share or more), red where industry does (a fifth above or more), brown where both; deeper the further above
+        dict(k="industry", t="Industry", kind="excess", topic="industry", cats=["primary", "secondary"], lo=[3.0, 1.2], hi=[10.0, 1.7],
+             colors=dict(base="#cfcfcf", a="#2E9E3A", b="#D7301F", both="#8C5A2B"),
+             h="Farming and industry against Japan as a whole (services left out)",
+             labels=["Near the Japanese average", "Farming, forestry, fishing above average", "Manufacturing, construction, mining above average", "Both above average"]),
         dict(k="educ", t="University degree", kind="ramp", topic="educ", cats=["ed_univ"], max=45, stops=RB_RAMP,
              h="Residents 25 and over whose last school was a university or graduate school", tip="of residents 25+ with a university degree"),
         dict(k="age", t="Aged 65 and over", kind="ramp", topic="age", cats=["a65"], max=60, stops=RB_RAMP,

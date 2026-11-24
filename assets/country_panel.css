@@ -69,3 +69,9 @@ body.light .back:hover { color: var(--accent, #1f5f7a); }
 .ap-noinfo b { display: block; color: #3a4550; font-weight: 600; }
 .ap-noinfo span { display: block; font-size: .8rem; margin-top: .25rem; }
 #ap-map > .ap-noinfo { min-height: 100%; }
+/* the language switch (pages with a translation), beside the colour-scheme button */
+.ap-lang { display: inline-flex; align-items: center; margin-left: auto; margin-right: .6rem; padding: .45rem 1rem; border: 1px solid #1f5f7a; border-radius: 999px;
+  color: #1f5f7a; font-weight: 600; font-size: .9rem; text-decoration: none; background: #fff; }
+.ap-lang:hover, .ap-lang:focus-visible { background: #eef4f7; outline: none; }
+/* Japanese reads top to bottom: the heatmap's side label upright in vertical writing */
+html[lang="ja"] .ap-heat-y span { transform: none; text-transform: none; letter-spacing: .1em; }

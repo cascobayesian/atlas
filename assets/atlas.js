@@ -103,6 +103,7 @@
 
     // ---- a country in the design of the US state panels (OV: assets/countries/<key>_us.json, scripts/build_country_us.py):
     // census topics for the bloc and unit profiles, then the last election's vote; four demographic PCAs as the states have
+    const OVP = OV ? Object.fromEntries((OV.panels || []).map(p => [p.k, p])) : {};   // country panels by key (demogStat)
     if (OV) {
       const grad = stops => `linear-gradient(90deg, ${stops.map((c, i) => `${c} ${Math.round(100 * i / (stops.length - 1))}%`).join(", ")})`;
       const at = (stops, t) => { t = Math.max(0, Math.min(1, t)) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(t)); return d3i(stops[i], stops[i + 1], t - i); };
@@ -131,6 +132,18 @@
             "" };
         }
         const T = OV.topics.find(x => x.k === p.topic), sh = G.shares[p.topic];
+        if (p.kind === "excess") {                  // two groups against the national share: grey near it, a hue for whichever stands out, a third for both
+          const nat = p.cats.map(c => PF.place[p.topic][c] || 1e-3), cs = p.colors;
+          const lift = (x, j) => Math.max(0, Math.min(1, (x / 100 / nat[j] - p.lo[j]) / (p.hi[j] - p.lo[j])));
+          G.col[p.k] = U.id.map((_, i) => { if (sh[p.cats[0]][i] == null) return "#bdbdbd";
+            const t = p.cats.map((c, j) => lift(sh[c][i] || 0, j)), up = t.map(x => x > 0);
+            const hue = up[0] && up[1] ? cs.both : up[0] ? cs.a : up[1] ? cs.b : null;
+            return hue ? d3i(cs.base, hue, 0.6 + 0.4 * Math.max(...t)) : cs.base; });
+          const lab = p.cats.map(c => (T.cats.find(x => x[0] === c) || [, c])[1]);
+          demogTip[p.k] = i => sh[p.cats[0]][i] == null ? "" : `<div class="ap-tnum">${lab.map((l, j) => `${l} ${sh[p.cats[j]][i]}%`).join(" &middot; ")}</div>`;
+          return { k: p.k, t: p.t, key: `<h4>${p.h || p.t}</h4><ul class="ap-race">` +
+            [[cs.base, p.labels[0]], [cs.a, p.labels[1]], [cs.b, p.labels[2]], [cs.both, p.labels[3]]].map(([c, l]) => `<li><span style="background:${c}"></span>${l}</li>`).join("") + `</ul>` };
+        }
         if (p.kind === "mix") {                     // colours mixed in proportion to the topic's shares
           const cc = p.colors || T.cats.map(c => c[2]);   // a panel can mix its own, brighter colours
           const rgb = cc.map(c => [1, 3, 5].map(o => parseInt(c.slice(o, o + 2), 16)));
@@ -910,6 +923,21 @@
           `<ul class="bp-key">${v.parts.map(p => `<li><span style="background:${p.c}"></span>${esc(p.l)}</li>`).join("")}</ul>`;
         const mx = Math.max(v.max / 100, ...rows.map(r => r.m(v.k) || 0)) * 1.05;
         return head + rows.map(r => cbar(r.who, r.m(v.k), mx, r.col)).join("") + `<p class="ap-note">${esc(v.note)}</p>`;
+      }
+      if (OVP[which]) {                              // country pages: the topic for this unit, its bloc and the country
+        const p = OVP[which], med = a => { const v = a.filter(x => x != null).sort((x, y) => x - y); return v.length ? v[v.length >> 1] : null; };
+        if (p.kind === "dens" || p.kind === "keep") {
+          const val = p.kind === "dens" ? G.dens : G.val[which], all = [...Array(N).keys()];
+          const vu = val[u], vb = med(ids.map(i => val[i])), vp = med(all.map(i => val[i])), mx = Math.max(vu || 0, vb || 0, vp || 0) * 1.1 || 1;
+          const f = x => x == null ? "&ndash;" : p.kind === "dens" ? Math.round(x).toLocaleString() : Math.round(x) + "%";
+          return head + statRow(who, vu || 0, mx, G.col[which][u], f(vu)) + statRow(`Bloc ${b} median`, vb || 0, mx, "#9aa3ad", f(vb)) +
+            statRow(`${placeLab} median`, vp || 0, mx, "#c9ced3", f(vp)) + (p.kind === "dens" ? `<p class="ap-note">Residents per km&sup2;.</p>` : "");
+        }
+        const T = PF.topics.find(t => t.k === p.topic), sh = G.shares[p.topic], has = sh[T.cats[0][0]][u] != null;
+        const uv = Object.fromEntries(T.cats.map(c => [c[0], (sh[c[0]][u] || 0) / 100]));
+        return head + `<p class="ap-note">${T.t}</p>` + (has ? bar(uv, T.cats, "in " + who, who) : `<p class="ap-hint">No data recorded here.</p>`) +
+          bar(PF.blocs[b][p.topic], T.cats, "in bloc " + b, "Bloc " + b) + bar(PF.place[p.topic], T.cats, "in " + placeLab, placeLab) +
+          `<ul class="bp-key">${T.cats.map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${has ? sh[c[0]][u] + "%" : "&ndash;"}</b></li>`).join("")}</ul>`;
       }
       if (which === "race") {
         const cats = TOPICS[0].cats, uv = Object.fromEntries(cats.map(c => [c[0], (G.shares.race[c[0]][u] || 0) / 100]));
