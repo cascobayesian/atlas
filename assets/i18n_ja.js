@@ -6,7 +6,7 @@
   const exact = {
     "Atlas of Voting Blocs": "投票ブロック地図帳", "Countries": "国", "Cities": "都市", "Japan": "日本",
     "Jack O’Brien · Bowdoin College": "ジャック・オブライエン・ボウディン大学", "← Back to the globe": "← 地球儀に戻る",
-    "High-contrast color scheme": "高コントラスト配色", "Statistical method": "統計手法", "Statistical method · Japan": "統計手法・日本", "Japan · PCA and map": "日本・主成分分析と地図", "Place": "地域", "PCA": "主成分分析", "Blocs": "ブロック", "Map": "地図",
+    "High-contrast color scheme": "高コントラスト配色", "Hi-contrast": "高コントラスト", "Data sources": "データの出典", "Statistical method": "統計手法", "Statistical method · Japan": "統計手法・日本", "Japan · PCA and map": "日本・主成分分析と地図", "Place": "地域", "PCA": "主成分分析", "Blocs": "ブロック", "Map": "地図",
     "Data": "データ", "Demographics": "人口統計", "Bloc profile": "ブロックの特徴", "Municipality profile": "市区町村の特徴",
     "Heatmap": "ヒートマップ", "Data from": "データ：",
     "1,887 municipalities, 6 House of Representatives elections (2012–2026) × 17 parties, PR votes; Tokyo and designated-city wards as units, 11 voting blocs.":

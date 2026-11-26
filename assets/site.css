@@ -229,3 +229,7 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
   border-radius: 4px; min-height: 2.3rem; box-sizing: border-box; }
 .ap-head-btns > [hidden] { display: none; }
 @media (max-width: 560px) { .ap-head-btns { width: 100%; } }
+/* all four header buttons one size: one line each, the same height */
+.ap-head-btns { grid-auto-rows: 2.3rem; }
+.ap-head-btns > .ap-method-btn, .ap-head-btns > .ap-hc, .ap-head-btns > .ap-colors { height: 100%; min-height: 0; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; padding: 0 .6rem; }
