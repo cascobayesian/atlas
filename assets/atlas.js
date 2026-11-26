@@ -266,7 +266,7 @@
 
     function makePCA(box, colorOf, tipExtra, onClick, sub, own) {
       const cam = own || CAM0;                     // this view's camera
-      const BOOST = OV && sub && !own ? 1.7 : 1;   // country pages: larger, solid dots in the demographic panels
+      const BOOST = OV && sub && !own ? 1.15 : 1;   // country pages: slightly larger, see-through dots in the demographic panels (cities capped lower)
       const cv = document.createElement("canvas"); box.prepend(cv);
       const ctx = cv.getContext("2d"), v = { box, cam, dirty: true, sx: new Float32Array(N), sy: new Float32Array(N), sd: new Float32Array(N) };
       addPlay(box, v);
@@ -303,11 +303,11 @@
         for (const i of idx) { proj(P[3 * i], P[3 * i + 1], P[3 * i + 2], tmp); v.sx[i] = tmp[0]; v.sy[i] = tmp[1]; v.sd[i] = tmp[2]; }
         const scope = box.closest("dialog") ? "dlg" : sub ? "sub" : "main", order = idx.slice().sort((a, b) => v.sd[b] - v.sd[a]), fb = focusOf(scope);
         const dot = (i, grow, alpha, stroke) => {
-          const near = Math.min(Math.max((R - v.sd[i]) / (2 * R), 0), 1), r = 3.3 * k * size[i] * (1 + 0.3 * near) * grow * BOOST;
+          const near = Math.min(Math.max((R - v.sd[i]) / (2 * R), 0), 1), r = 3.3 * k * (BOOST > 1 ? Math.min(size[i], 1.6) : size[i]) * (1 + 0.3 * near) * grow * BOOST;
           ctx.beginPath(); ctx.arc(v.sx[i], v.sy[i], r, 0, 2 * Math.PI); ctx.globalAlpha = alpha; ctx.fillStyle = colorOf(i); ctx.fill();
           if (stroke) { ctx.globalAlpha = 1; ctx.lineWidth = stroke * k; ctx.strokeStyle = "#fff"; ctx.stroke(); }
         };
-        if (fb == null) for (const i of order) dot(i, 1, BOOST > 1 ? 1 : 0.85, BOOST > 1 ? 0 : 0.35);
+        if (fb == null) for (const i of order) dot(i, 1, BOOST > 1 ? 0.6 : 0.85, BOOST > 1 ? 0 : 0.35);
         else {                                       // the bloc in front, larger and full strength; the rest set back
           for (const i of order) if (U.b[i] !== fb) dot(i, 0.9, 0.3, 0);
           for (const i of order) if (U.b[i] === fb) dot(i, 1.45, 1, 0.5);
