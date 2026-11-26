@@ -273,7 +273,7 @@
       let W = 0, H = 0, scale = 1, dpr = 1;
       const tmp = [0, 0, 0], tmp2 = [0, 0, 0];
       const proj = (x, y, z, out) => {
-        const th = cam.theta * Math.PI / 180, ph = cam.phi * Math.PI / 180;
+        const th = v.cam.theta * Math.PI / 180, ph = v.cam.phi * Math.PI / 180;   // v.cam: the enlarged view can lend a camera
         const x1 = Math.cos(th) * x + Math.sin(th) * y, y1 = -Math.sin(th) * x + Math.cos(th) * y;
         const d = Math.cos(ph) * y1 - Math.sin(ph) * z, up = Math.sin(ph) * y1 + Math.cos(ph) * z, f = DCAM / (DCAM + d);
         out[0] = W / 2 + x1 * f * scale; out[1] = H / 2 - up * f * scale; out[2] = d; return out;
@@ -345,12 +345,12 @@
       };
       new ResizeObserver(resize).observe(box); resize();
       let drag = null;
-      cv.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, th: cam.theta, ph: cam.phi, moved: false }; cv.setPointerCapture(e.pointerId); });
+      cv.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, th: v.cam.theta, ph: v.cam.phi, moved: false }; cv.setPointerCapture(e.pointerId); });
       cv.addEventListener("pointermove", e => {
         if (drag) {
           const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-          if (Math.abs(dx) + Math.abs(dy) > 3) { if (!drag.moved) setAuto(false, cam); drag.moved = true; }
-          if (drag.moved) { cam.theta = drag.th - dx * 0.5; cam.phi = Math.max(-5, Math.min(85, drag.ph + dy * 0.4)); views.forEach(w => { if (w.cam === cam) w.dirty = true; }); showTip(null); return; }
+          if (Math.abs(dx) + Math.abs(dy) > 3) { if (!drag.moved) setAuto(false, v.cam); drag.moved = true; }
+          if (drag.moved) { const c = v.cam; c.theta = drag.th - dx * 0.5; c.phi = Math.max(-5, Math.min(85, drag.ph + dy * 0.4)); views.forEach(w => { if (w.cam === c) w.dirty = true; }); showTip(null); return; }
         }
         const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
         let best = null, bd = 64;
@@ -908,7 +908,9 @@
       } else { paintBig(); bigMap.refit(); }
     };
     let moved = null;
-    const restore = () => { if (moved) { moved.home.appendChild(moved.el); if (moved.which === "map") mapApi.refit(); moved = null; } };
+    const restore = () => { if (moved) { moved.home.appendChild(moved.el); if (moved.which === "map") mapApi.refit();
+      if (moved.blocs) { moved.blocs.home.appendChild(moved.blocs.el); if (moved.blocs.view) { moved.blocs.view.cam = moved.blocs.cam; moved.blocs.view.dirty = true; } }
+      bigSlot.querySelectorAll(".ap-big-sub").forEach(x => x.remove()); moved = null; } };
     const bigStat = dlg.querySelector(".ap-big-stat");
     const median = a => { const b = a.filter(x => x != null).sort((x, y) => x - y); return b.length ? b[b.length >> 1] : null; };
     const statRow = (who, val, max, col, txt) => `<div class="ap-srow"><span class="ap-swho">${who}</span><span class="ap-sbar"><span style="width:${Math.max(0, Math.min(100, 100 * val / max))}%;background:${col}"></span></span><span class="ap-sval">${txt}</span></div>`;
@@ -979,6 +981,14 @@
       const which = btn.dataset.target === "map" ? "pca" : btn.dataset.target, el = document.getElementById(which === "map" ? "ap-map" : which === "pca" ? "ap-pca" : "ap-pca-" + which);
       moved = { el, home: document.querySelector(`[data-slot="${which}"]`), btn, which };
       bigSlot.className = "ap-big-slot " + (which === "map" ? "map" : "pca"); bigSlot.appendChild(el);
+      if (which !== "map" && which !== "pca") {   // a demographic panel: the variable above, the blocs below, turning together
+        const bel = document.getElementById("ap-pca"), bv = views.find(w => w.box === bel), dv = views.find(w => w.box === el);
+        moved.blocs = { el: bel, home: document.querySelector('[data-slot="pca"]'), view: bv, cam: bv && bv.cam };
+        if (bv && dv) { bv.cam = dv.cam; bv.dirty = true; setAuto(dv.cam.auto, dv.cam); }
+        bigSlot.classList.add("stack");
+        el.insertAdjacentHTML("beforebegin", `<p class="ap-big-sub">${esc(BIG[which].title)}</p>`);
+        bigSlot.insertAdjacentHTML("beforeend", `<p class="ap-big-sub">Voting blocs</p>`); bigSlot.appendChild(bel);
+      }
       const t = which === "map" ? "Map" : which === "pca" ? "PCA and map" : BIG[which].title;
       document.getElementById("ap-big-title").textContent = `${D.title} · ${t}`;
       bigKey.innerHTML = BIG[which] ? BIG[which].key : ""; bigKey.hidden = !bigKey.innerHTML;

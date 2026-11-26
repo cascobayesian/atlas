@@ -146,3 +146,8 @@
 .ap-gif-list img { display: block; width: 100%; height: auto; }
 .ap-gif-list span { display: block; font-size: .72rem; color: #333; margin-top: .2rem; line-height: 1.2; }
 @media (max-width: 760px) { .ap-gifs { grid-template-columns: 1fr; } .ap-gif-list { grid-template-columns: repeat(3, 1fr); } }
+
+/* enlarged demographic panel: the variable's PCA above the bloc PCA, stacked to the dialog's height */
+.ap-big .ap-big-slot.pca.stack, .ap-big.prof .ap-big-slot.pca.stack { width: min(39vh, calc((96vw - 23rem) / 2)); display: flex; flex-direction: column; gap: .15rem; }
+.ap-big-slot.stack .ap-big-sub { margin: 0; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #555; }
+@media (max-width: 800px) { .ap-big .ap-big-slot.pca.stack { width: min(90vw, 30vh); } }
