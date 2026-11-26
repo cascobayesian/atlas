@@ -745,6 +745,16 @@
           preserveDrawingBuffer: /[?&]test/.test(location.search) });
         mm.once("load", () => mm.getContainer().querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
         mm.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right"); mm.touchZoomRotate.disableRotation();
+        // zoom out no further than the whole place, and pan only within it: fully zoomed out, the map sits centred on the place
+        const B0 = D.view || [[h.minLon, h.minLat], [h.maxLon, h.maxLat]];
+        let fit = null;
+        const lock = () => { fit = mm.cameraForBounds(B0, { padding: 6 }); if (!fit) return;
+          const dx = (B0[1][0] - B0[0][0]) * 0.35, dy = (B0[1][1] - B0[0][1]) * 0.35;
+          mm.setMaxBounds(null); mm.setMinZoom(Math.max(0, fit.zoom));
+          mm.setMaxBounds([[B0[0][0] - dx, B0[0][1] - dy], [B0[1][0] + dx, B0[1][1] + dy]]); };
+        mm.once("load", lock); let lt; mm.on("resize", () => { clearTimeout(lt); lt = setTimeout(lock, 120); });
+        mm.on("moveend", e => { if (!fit || e.recentre) return;          // back at (or near) the whole place: centred on it again
+          if (mm.getZoom() < fit.zoom + 0.35) mm.easeTo({ center: fit.center, zoom: fit.zoom, duration: 250 }, { recentre: true }); });
         mm.once("style.load", () => {
           const style = mm.getStyle();                // a quieter basemap: no place labels at this scale
           style.layers.filter(l => l.type === "symbol").forEach(l => mm.setLayoutProperty(l.id, "visibility", "none"));
