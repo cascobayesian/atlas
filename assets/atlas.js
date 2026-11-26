@@ -408,24 +408,40 @@
     const blocExpr = () => ["match", ["get", "b"], ...D.blocs.flatMap(b => [b.b, b.color]), "#ccc"];
     let color = blocExpr();
     const NEUTRAL = "#a7b1bb";
+    // D.points (Serbia's polling stations, which have no boundaries): units.pmtiles holds points, drawn as dots over
+    // munis.pmtiles, municipalities filled with their main bloc (b), paler as the effective number of blocs (e) grows
+    const PT = !!D.points, FC = PT ? "circle-color" : "fill-color", FO = PT ? "circle-opacity" : "fill-opacity", OP = PT ? 0.95 : 0.82;
     // a map that shows only one bloc (the focused or picked one, or the selected unit's), the rest neutral
     const oneBloc = b => b == null || !B[b] ? NEUTRAL : ["case", ["==", ["get", "b"], b], B[b].color, NEUTRAL];
     const addUnits = (map, firstLabel, opts = {}) => {
       map.addSource("units", { type: "vector", url: "pmtiles://" + url, promoteId: "u" }); unitMaps.add(map);
       if (opts.only) map.only = opts.only;
       const paintOf = b => b == null && opts.all ? color : oneBloc(b);   // opts.all: every bloc in colour until one is picked
-      map.addLayer({ id: "units-fill", type: "fill", source: "units", "source-layer": "units", paint: { "fill-color": opts.only ? paintOf(opts.only()) : color, "fill-opacity": 0.82, "fill-opacity-transition": { duration: 150 } } }, firstLabel);
-      if (opts.only) { let lastO; const po = () => { const b = opts.only(); if (b === lastO) return; lastO = b; map.setPaintProperty("units-fill", "fill-color", paintOf(b)); }; on(po); map.repaintOnly = () => { lastO = undefined; po(); }; }
-      map.addLayer({ id: "units-line", type: "line", source: "units", "source-layer": "units",
+      const c0 = opts.only ? paintOf(opts.only()) : color;
+      if (PT) {
+        const mu = new URL(base + "munis.pmtiles", location.href).href; if (!protocol.get(mu)) protocol.add(new pmtiles.PMTiles(mu));
+        map.addSource("munis", { type: "vector", url: "pmtiles://" + mu });
+        map.addLayer({ id: "munis-fill", type: "fill", source: "munis", "source-layer": "munis", paint: { "fill-color": c0,
+          "fill-opacity": ["interpolate", ["linear"], ["get", "e"], 1.5, 0.6, 2.5, 0.42, 3.5, 0.3, 4.5, 0.2] } }, firstLabel);
+        map.addLayer({ id: "munis-line", type: "line", source: "munis", "source-layer": "munis",
+          paint: { "line-color": "#4a4a48", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.4, 11, 1.2], "line-opacity": 0.55 } }, firstLabel);
+        const hotX = (a, b) => ["case", ["boolean", ["feature-state", "hot"], false], a, b];
+        map.addLayer({ id: "units-fill", type: "circle", source: "units", "source-layer": "units", paint: { "circle-color": c0, "circle-opacity": OP,
+          "circle-opacity-transition": { duration: 150 }, "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, hotX(4.5, 0.7), 6, hotX(5, 1.2), 8, hotX(6, 2.2), 11, hotX(7.5, 4), 14, hotX(10, 7)],
+          "circle-stroke-color": hotX("#111", "#fff"), "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 6, hotX(2.4, 0), 8, hotX(2.4, 0.3), 11, hotX(2.4, 0.8)] } }, firstLabel);
+      } else map.addLayer({ id: "units-fill", type: "fill", source: "units", "source-layer": "units", paint: { "fill-color": c0, "fill-opacity": OP, "fill-opacity-transition": { duration: 150 } } }, firstLabel);
+      map.paintMunis = c => { if (map.getLayer("munis-fill")) map.setPaintProperty("munis-fill", "fill-color", c); };
+      if (opts.only) { let lastO; const po = () => { const b = opts.only(); if (b === lastO) return; lastO = b; map.setPaintProperty("units-fill", FC, paintOf(b)); map.paintMunis(paintOf(b)); }; on(po); map.repaintOnly = () => { lastO = undefined; po(); }; }
+      if (!PT) map.addLayer({ id: "units-line", type: "line", source: "units", "source-layer": "units",
         paint: { "line-color": "#fff", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.1, 14, 1.2], "line-opacity": 0.8 } }, firstLabel);
       const hw = opts.scope === "dlg" ? 3.4 : 2.4;
-      map.addLayer({ id: "units-hot-halo", type: "line", source: "units", "source-layer": "units",
+      if (!PT) map.addLayer({ id: "units-hot-halo", type: "line", source: "units", "source-layer": "units",
         paint: { "line-color": "#fff", "line-width": ["case", ["boolean", ["feature-state", "hot"], false], hw + 3, 0] } });
-      map.addLayer({ id: "units-hot", type: "line", source: "units", "source-layer": "units",
+      if (!PT) map.addLayer({ id: "units-hot", type: "line", source: "units", "source-layer": "units",
         paint: { "line-color": "#111", "line-width": ["case", ["boolean", ["feature-state", "hot"], false], hw, 0] } });
       let lastFocus, hot = new Set();
       const paintFocus = () => { const f = opts.fade === false ? null : focusOf(opts.scope || "main"); if (f === lastFocus) return; lastFocus = f;
-        map.setPaintProperty("units-fill", "fill-opacity", f == null ? 0.82 : ["case", ["==", ["get", "b"], f], 0.95, 0.25]); };
+        map.setPaintProperty("units-fill", FO, f == null ? OP : ["case", ["==", ["get", "b"], f], 0.95, 0.25]); };
       const paintHot = () => {
         const want = new Set(hotOf(opts.scope || "main").filter(u => u != null));
         for (const u of hot) if (!want.has(u)) map.setFeatureState({ source: "units", sourceLayer: "units", id: u }, { hot: false });
@@ -459,7 +475,7 @@
         map.setMaxBounds([[Math.min(L[0][0], v.getWest() - dLon), Math.min(L[0][1], v.getSouth() - dLat)], [Math.max(L[1][0], v.getEast() + dLon), Math.max(L[1][1], v.getNorth() + dLat)]]); });
       map.once("style.load", () => {
         addUnits(map, map.getStyle().layers.find(l => l.type === "symbol")?.id, opts);
-        if (opts.outlines) {
+        if (opts.outlines && !PT) {
           const bu = new URL(base + "blocs.pmtiles", location.href).href;
           if (!protocol.get(bu)) protocol.add(new pmtiles.PMTiles(bu));
           map.addSource("blocs", { type: "vector", url: "pmtiles://" + bu });
@@ -473,6 +489,8 @@
             b = f != null ? f : us != null ? U.b[us] : -1; if (b === lastB) return; lastB = b;
             ["blocs-heavy", "blocs-heavy-halo"].forEach(id => map.setFilter(id, ["==", ["get", "b"], b])); };
           on(heavy); heavy();
+        }
+        if (opts.outlines) {
           // a ring around the enlarged view's selected ward
           map.addSource("ring", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
           map.addLayer({ id: "ring-halo", type: "circle", source: "ring", paint: { "circle-radius": 15, "circle-color": "rgba(0,0,0,0)", "circle-stroke-width": 2.5, "circle-stroke-color": "#fff" } });
@@ -942,7 +960,7 @@
     const demogExpr = {};
     const bigColor = which => which === "pca" ? color : (demogExpr[which] = demogExpr[which] ||
       ["match", ["get", "u"], ...U.id.flatMap((_, i) => [i, G.col[which][i]]), "#bdbdbd"]);
-    const paintBig = () => { if (bigMap && bigMap.loadedUnits && bigWhich) bigMap.setPaintProperty("units-fill", "fill-color", bigColor(bigWhich)); };
+    const paintBig = () => { if (bigMap && bigMap.loadedUnits && bigWhich) { bigMap.setPaintProperty("units-fill", FC, bigColor(bigWhich)); bigMap.paintMunis(bigWhich === "pca" ? color : "#e4e6e8"); } };
     const showBigMap = which => {
       bigWhich = which; bigMapBox.hidden = false;
       if (D.nomap) { bigMapBox.querySelector(".ap-big-map").innerHTML = NOINFO(`No ${unitWord} boundaries in the atlas yet.`); return; }
@@ -1067,7 +1085,7 @@
       D.blocs.forEach(b => { b.color = hc ? hcCols[b.b] : b.national; });
       HJ.blocs.forEach(b => { if (B[b.b]) b.c = B[b.b].color; });
       color = blocExpr();
-      unitMaps.forEach(m => { try { if (m === bigMap) paintBig(); else if (m.repaintOnly) m.repaintOnly(); else if (m.getLayer("units-fill")) m.setPaintProperty("units-fill", "fill-color", color); } catch (e) {} });
+      unitMaps.forEach(m => { try { if (m === bigMap) paintBig(); else if (m.repaintOnly) m.repaintOnly(); else if (m.getLayer("units-fill")) { m.setPaintProperty("units-fill", FC, color); m.paintMunis(color); } } catch (e) {} });
       document.querySelectorAll("[data-sb]").forEach(el => { const c = B[+el.dataset.sb].color; el.style.background = c; el.style.color = ink(c); });
       document.querySelectorAll("[data-sbg]").forEach(el => { el.style.background = B[+el.dataset.sbg].color; });
       recolorFns.forEach(f => f());
