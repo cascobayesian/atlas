@@ -159,3 +159,12 @@
 .ap-big-slot.stack .ap-pca-rect { height: calc((84vh - 3.6rem) / 2); }
 .ap-big-slot.stack .ap-big-zhint { margin: 0; font-size: .72rem; color: #777; text-align: right; }
 @media (max-width: 800px) { .ap-big.demog .ap-big-mapbox { width: min(90vw, 40vh); } .ap-big-slot.stack .ap-pca-rect { height: 45vh; } }
+/* ... and the map fills the column's height beside them (the unit's readout, when open, below it) */
+.ap-big.demog .ap-big-mapbox { display: flex; flex-direction: column; gap: .5rem; height: calc(84vh - .5rem); }
+.ap-big.demog .ap-big-map { flex: 1 1 auto; aspect-ratio: auto; min-height: 0; }
+.ap-big.demog .ap-big-stat { flex: none; max-height: 45%; overflow: auto; }
+@media (max-width: 800px) { .ap-big.demog .ap-big-mapbox { height: 60vh; } }
+/* the PCAs only as wide as their cloud (1.25 x their height); the map takes the rest of the width */
+.ap-big.demog .ap-big-slot.pca.stack, .ap-big.demog.prof .ap-big-slot.pca.stack { flex: none; width: calc((84vh - 3.6rem) / 2 * 1.25); }
+.ap-big.demog .ap-big-mapbox, .ap-big.demog.prof .ap-big-mapbox { flex: 1 1 auto; width: auto; min-width: 0; }
+@media (max-width: 800px) { .ap-big.demog .ap-big-slot.pca.stack { width: min(90vw, 56vh); } }

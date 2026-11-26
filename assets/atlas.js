@@ -283,8 +283,11 @@
       };
       const line = (a, b, style, w, dash) => { proj(...a, tmp); proj(...b, tmp2); ctx.beginPath(); ctx.setLineDash(dash || []);
         ctx.moveTo(tmp[0], tmp[1]); ctx.lineTo(tmp2[0], tmp2[1]); ctx.strokeStyle = style; ctx.lineWidth = w; ctx.stroke(); };
-      const resize = () => { dpr = devicePixelRatio || 1; W = box.clientWidth; H = box.classList.contains("ap-pca-rect") && box.clientHeight ? box.clientHeight : W;
-        cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px"; scale = Math.min(W, H) / 2 / L; v.dirty = true; };
+      const resize = () => { dpr = devicePixelRatio || 1; const rect = box.classList.contains("ap-pca-rect") && box.clientHeight;
+        W = box.clientWidth; H = rect ? box.clientHeight : W; cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
+        // square: the whole turning cube fits; wide (stacked, enlarged): fitted to the height the cube actually takes on its
+        // path (corners may clip at the steepest tilt), so the cloud fills the box rather than sitting in white space
+        scale = rect ? Math.min(W / 2 / 1.5, H / 2 / 1.25) : W / 2 / L; v.dirty = true; };
       v.draw = () => {
         if (!W) return;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
