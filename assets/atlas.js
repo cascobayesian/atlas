@@ -760,7 +760,8 @@
         (G.note === "" ? "" : G.note ? `<p class="ap-note">${G.note}</p>` : `<p class="ap-note">The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too. ` +
         `PC1 accounts for ${Math.round(100 * lg.r2_pc1_logdens)}% of the variation in log density, ${Math.round(100 * lg.r2_pc1_white)}% in white share and ` +
         `${Math.round(100 * lg.r2_pc1_ba)}% in bachelor&rsquo;s share across these ${D.unit}. Gray: no residents (no returns for partisanship).</p>`);
-      host.querySelector(".ap-demog-grid").style.setProperty("--n", K.length);
+      // up to four panels in one row; more wrap into even rows (six: two rows of three)
+      host.querySelector(".ap-demog-grid").style.setProperty("--n", K.length <= 4 ? K.length : Math.ceil(K.length / Math.ceil(K.length / 4)));
       // readouts for data-defined panels: G.tipfmt[k] with {v} for the unit's value G.val[k]
       const tipOf = k => demogTip[k] || (G.tipfmt && G.tipfmt[k] ? u => G.val[k][u] != null ? `<div class="ap-tnum">${G.tipfmt[k].replace("{v}", G.val[k][u].toLocaleString("en-US"))}</div>` : "" : null);
       // country mode: each panel has its own camera, all starting from the same view and still until its play is pressed

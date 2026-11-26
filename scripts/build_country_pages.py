@@ -42,7 +42,7 @@ CONFIG = {
     "romania":  dict(panels=True, bundle=True, unit="communes and towns"),
     "serbia":   dict(json="Serbia/data/atlas_blocs_serbia.json", unit="polling stations", heat="Serbia/maps/parliament_2020_2026_dmm_K10_heatmap.png"),
     "slovakia": dict(blocs="Slovakia/model/fits/nrsr/blocs_K10.csv", profiles="Slovakia/model/fits/nrsr/bloc_profiles_K10.csv", unit="units"),
-    "switzerland": dict(unit="communes", heat="Switzerland/bbmm/maps/swiss_referendum_heatmap_K10.png", heat_cap="Referendum yes shares by commune, grouped by the K = 10 blocs."),
+    "switzerland": dict(panels=True, bundle=True, unit="communes"),
     "canada":   dict(panels=True, bundle=True, unit="polling divisions"),
     "germany":  dict(panels=True, bundle=True, unit="municipalities"),
 }
@@ -171,9 +171,12 @@ def bundle(key):
               blocs=[dict(b=x["b"], c=x["colour"], nm=x["name"], n=x["n"] or 0, a=hb["a"]) for x, hb in zip(blocs, h["blocs"])],
               all=h["all"], min=h["min"], stops=[[round(mx * i / (len(SEQ) - 1), 2), c] for i, c in enumerate(SEQ)],
               key=f"Vote share: white 0%, dark blue {mx:g}% or more")
+    cap = f"Vote shares in each federal election (columns: party by election), {len(h['rn']):,} sampled {d.get('unit', 'units')} (rows), grouped by bloc. Hover for a row's share; click to pin it."
+    if h.get("ramp") != "seq":                                   # yes shares (Switzerland's referendums): red no, white even, blue yes
+        wh.update(stops=[[0, "#B2182B"], [50, "#F7F7F7"], [100, "#2166AC"]], key="Yes share: red 0%, white 50%, blue 100%")
+        cap = f"Yes share in each referendum (columns, in date order), {len(h['rn']):,} sampled {d.get('unit', 'units')} (rows), grouped by bloc. Hover for a row's share; click to pin it."
     json.dump(wh, open(os.path.join(OUT, f"{key}_heat.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    out["heat"] = dict(json=f"assets/countries/{key}_heat.json",
-                       cap=f"Vote shares in each federal election (columns: party by election), {len(h['rn']):,} sampled {d.get('unit', 'units')} (rows), grouped by bloc. Hover for a row's share; click to pin it.")
+    out["heat"] = dict(json=f"assets/countries/{key}_heat.json", cap=cap)
     return out
 
 

@@ -78,8 +78,8 @@ const FITTED = [
       ["map.png", "Bloc map, K = 10, drawn on municipalities: a municipality split into several units takes the bloc of most of its 2023 voters (black outline where its units fall in more than one bloc). Insets: Bratislava and Košice city districts."],
       ["pca.gif", "Rotating principal components of the units' 2016–2023 vote shares, coloured by the K = 10 blocs; dot area proportional to 2023 voters."],
       ["heatmap.png", "Party vote shares in each election (columns), one row per unit, grouped by K = 10 bloc."]] },
-  { name: "Switzerland", key: "switzerland", title: "Switzerland", k: 10, k4: "assets/world_k4/switzerland.json", model: "beta-binomial mixture",
-    data: "communes, federal referendums 2010–2024", why: "K = 10 by the 3% rule (best BIC at K = 15)", pca: true }
+  { name: "Switzerland", key: "switzerland", title: "Switzerland", k: 15, k4: "assets/world_k4/switzerland.json", model: "beta-binomial mixture",
+    data: "communes, national referendums 2012–2025", why: "K = 15 at ζ = 1, every bloc at least 3% of communes", pca: true }
 ];
 
 // US states with statewide blocs in the atlas (data/places.json); cities and counties elsewhere are on the US page
