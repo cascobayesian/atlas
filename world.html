@@ -71,7 +71,7 @@
 
 <section class="wm-section" aria-labelledby="h-rec">
   <h2 id="h-rec">Where the records would let us look</h2>
-  <p>Finding voting blocs needs results for small areas, over several elections, in a form a computer can read, with boundaries to map them. Our regional surveys of election data (Africa, Asia, Europe, the Americas, Western Asia and the Caribbean) graded each country&rsquo;s records from A to F; the globe shows those grades in four steps.</p>
+  <p>Finding voting blocs needs results for small areas, over several elections, in a form a computer can read, with boundaries to map them. Our regional surveys of election data (Africa, Asia, Europe, the Americas, Western Asia, the Caribbean and Oceania) graded each country&rsquo;s records from A to F; the globe shows those grades in four steps.</p>
   <div class="wm-grades" id="wm-grades"></div>
 </section>
 
@@ -161,7 +161,7 @@ function fillPage(Q) {
 }
 
 document.getElementById("wm-big").addEventListener("click", e => { if (e.target.id === "wm-big") e.target.close(); });
-fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})).then(QUALITY => {
+fetch("assets/world_quality.json?v=2").then(r => r.json()).catch(() => ({})).then(QUALITY => {
   fillPage(QUALITY);
   return drawWorld(document.getElementById("world"), { hover: true, tip: document.getElementById("wm-tip"),
     fitted: FITTED.concat(PANELS), onFit: showCountry, started: STARTED.map(c => c.name),

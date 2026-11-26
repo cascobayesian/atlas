@@ -62,7 +62,7 @@
     fetch("assets/world-50m.json").then(r => r.json()),
     fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json").then(r => r.json()).catch(() => null),
     fetch("assets/world_k4/us_states.json?v=4").then(r => r.ok ? r.json() : null).catch(() => null),
-    fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})),
+    fetch("assets/world_quality.json?v=2").then(r => r.json()).catch(() => ({})),
     Promise.all(ALL.map(c => fetch(c.k4).then(r => r.ok ? r.json() : null).catch(() => null))),
     Promise.all(ALL.map(c => fetch(`assets/countries/${c.key}.json`).then(r => r.ok ? r.json() : null).catch(() => null)))
   ]).then(([WORLD, USA, USB, QUAL, K4, PAGES]) => {
