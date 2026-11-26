@@ -168,3 +168,16 @@
 .ap-big.demog .ap-big-slot.pca.stack, .ap-big.demog.prof .ap-big-slot.pca.stack { flex: none; width: calc((84vh - 3.6rem) / 2 * 1.25); }
 .ap-big.demog .ap-big-mapbox, .ap-big.demog.prof .ap-big-mapbox { flex: 1 1 auto; width: auto; min-width: 0; }
 @media (max-width: 800px) { .ap-big.demog .ap-big-slot.pca.stack { width: min(90vw, 56vh); } }
+/* revised: the PCAs take the width left over (clouds flush left); the map square, between the half-size and full
+   sizes, centred in its column */
+.ap-big.demog .ap-big-slot.pca.stack, .ap-big.demog.prof .ap-big-slot.pca.stack { flex: 1 1 auto; width: auto; min-width: 0; }
+.ap-big.demog .ap-big-mapbox, .ap-big.demog.prof .ap-big-mapbox { flex: none; width: min(78vh, calc((96vw - 23rem) * .52)); height: calc(84vh - .5rem);
+  justify-content: center; }
+.ap-big.demog.prof .ap-big-mapbox { width: min(78vh, calc((96vw - 36rem) * .52)); }
+.ap-big.demog .ap-big-map { flex: none; aspect-ratio: 1; height: auto; width: 100%; max-height: 100%; }
+@media (max-width: 800px) { .ap-big.demog .ap-big-mapbox { width: min(90vw, 60vh); height: auto; } }
+/* the PCAs at their cloud's width; the map's column takes the rest, the square map centred in it both ways */
+.ap-big.demog .ap-big-slot.pca.stack, .ap-big.demog.prof .ap-big-slot.pca.stack { flex: none; width: calc((84vh - 3.6rem) / 2 * 1.25); }
+.ap-big.demog .ap-big-mapbox, .ap-big.demog.prof .ap-big-mapbox { flex: 1 1 auto; width: auto; min-width: 0; align-items: center; }
+.ap-big.demog .ap-big-map { width: min(100%, 78vh, calc((96vw - 23rem) * .52)); }
+.ap-big.demog .ap-big-stat { align-self: stretch; }

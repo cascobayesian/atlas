@@ -272,14 +272,14 @@
       const cv = document.createElement("canvas"); box.prepend(cv);
       const ctx = cv.getContext("2d"), v = { box, cam, dirty: true, sx: new Float32Array(N), sy: new Float32Array(N), sd: new Float32Array(N) };
       addPlay(box, v);
-      let W = 0, H = 0, scale = 1, dpr = 1;
+      let W = 0, H = 0, scale = 1, dpr = 1, cx = 0;
       const tmp = [0, 0, 0], tmp2 = [0, 0, 0];
       const proj = (x, y, z, out) => {
         const th = v.cam.theta * Math.PI / 180, ph = v.cam.phi * Math.PI / 180;   // v.cam: the enlarged view can lend a camera
         const x1 = Math.cos(th) * x + Math.sin(th) * y, y1 = -Math.sin(th) * x + Math.cos(th) * y;
         const d = Math.cos(ph) * y1 - Math.sin(ph) * z, up = Math.sin(ph) * y1 + Math.cos(ph) * z, f = DCAM / (DCAM + d);
         const c = v.cam, Z = c.zoom || 1, Sm = Math.min(W, H);   // zoom / pan (enlarged view), pan in units of the canvas's short side
-        out[0] = W / 2 + (c.px || 0) * Sm + x1 * f * scale * Z; out[1] = H / 2 + (c.py || 0) * Sm - up * f * scale * Z; out[2] = d; return out;
+        out[0] = cx + (c.px || 0) * Sm + x1 * f * scale * Z; out[1] = H / 2 + (c.py || 0) * Sm - up * f * scale * Z; out[2] = d; return out;
       };
       const line = (a, b, style, w, dash) => { proj(...a, tmp); proj(...b, tmp2); ctx.beginPath(); ctx.setLineDash(dash || []);
         ctx.moveTo(tmp[0], tmp[1]); ctx.lineTo(tmp2[0], tmp2[1]); ctx.strokeStyle = style; ctx.lineWidth = w; ctx.stroke(); };
@@ -287,7 +287,9 @@
         W = box.clientWidth; H = rect ? box.clientHeight : W; cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
         // square: the whole turning cube fits; wide (stacked, enlarged): fitted to the height the cube actually takes on its
         // path (corners may clip at the steepest tilt), so the cloud fills the box rather than sitting in white space
-        scale = rect ? Math.min(W / 2 / 1.5, H / 2 / 1.25) : W / 2 / L; v.dirty = true; };
+        scale = rect ? Math.min(W / 2 / 1.62, H / 2 / 1.3) : W / 2 / L;   // margins keep the axis labels inside
+        cx = rect ? Math.min(W / 2, 1.55 * scale) : W / 2;   // a wide box: the cloud against its left edge, spare room to the right
+        v.dirty = true; };
       v.draw = () => {
         if (!W) return;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
