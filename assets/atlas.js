@@ -109,7 +109,9 @@
       const at = (stops, t) => { t = Math.max(0, Math.min(1, t)) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(t)); return d3i(stops[i], stops[i + 1], t - i); };
       PF.note0 = typeof PF.note === "string" ? PF.note : "";
       const vote = (PF.topics || []).find(T => T.k === OV.vote);
-      PF.votes = (PF.topics || []).filter(T => /^v\d{4}$/.test(T.k));   // every election, for the heatmap's unit readout
+      // every election, for the heatmap's unit readout: profile.json "ballots" when a page lists them one by one (Switzerland's
+      // referendums, several a year), otherwise its v<year> topics
+      PF.votes = PF.ballots || (PF.topics || []).filter(T => /^v\d{4}$/.test(T.k));
       PF.topics = OV.topics.concat(vote ? [vote] : []);
       G.shares = Object.assign(G.shares || {}, OV.shares);
       Object.assign(PF.place, OV.place); Object.entries(OV.blocs).forEach(([b, x]) => Object.assign(PF.blocs[b], x));
@@ -276,15 +278,17 @@
         const th = v.cam.theta * Math.PI / 180, ph = v.cam.phi * Math.PI / 180;   // v.cam: the enlarged view can lend a camera
         const x1 = Math.cos(th) * x + Math.sin(th) * y, y1 = -Math.sin(th) * x + Math.cos(th) * y;
         const d = Math.cos(ph) * y1 - Math.sin(ph) * z, up = Math.sin(ph) * y1 + Math.cos(ph) * z, f = DCAM / (DCAM + d);
-        out[0] = W / 2 + x1 * f * scale; out[1] = H / 2 - up * f * scale; out[2] = d; return out;
+        const c = v.cam, Z = c.zoom || 1, Sm = Math.min(W, H);   // zoom / pan (enlarged view), pan in units of the canvas's short side
+        out[0] = W / 2 + (c.px || 0) * Sm + x1 * f * scale * Z; out[1] = H / 2 + (c.py || 0) * Sm - up * f * scale * Z; out[2] = d; return out;
       };
       const line = (a, b, style, w, dash) => { proj(...a, tmp); proj(...b, tmp2); ctx.beginPath(); ctx.setLineDash(dash || []);
         ctx.moveTo(tmp[0], tmp[1]); ctx.lineTo(tmp2[0], tmp2[1]); ctx.strokeStyle = style; ctx.lineWidth = w; ctx.stroke(); };
-      const resize = () => { dpr = devicePixelRatio || 1; W = box.clientWidth; H = W; cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px"; scale = W / 2 / L; v.dirty = true; };
+      const resize = () => { dpr = devicePixelRatio || 1; W = box.clientWidth; H = box.classList.contains("ap-pca-rect") && box.clientHeight ? box.clientHeight : W;
+        cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px"; scale = Math.min(W, H) / 2 / L; v.dirty = true; };
       v.draw = () => {
         if (!W) return;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-        const k = W / 520;
+        const k = Math.min(W, H) / 520;
         for (const g of [-0.5, 0, 0.5]) { line([g, -1, -1], [g, 1, -1], "#e4e4e4", 0.7 * k); line([-1, g, -1], [1, g, -1], "#e4e4e4", 0.7 * k); }
         const C = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
         for (let j = 0; j < 4; j++) { const a = C[j], b = C[(j + 1) % 4];
@@ -358,6 +362,13 @@
         setHover(best); showTip(best == null ? null : unitTip(best, tipExtra && tipExtra(best)), e.clientX, e.clientY);
       });
       cv.addEventListener("pointerup", () => { if (drag && !drag.moved) onClick(S.hover); drag = null; });
+      const zoomed = c => views.forEach(w => { if (w.cam === c) w.dirty = true; });
+      cv.addEventListener("wheel", e => { if (!box.closest("dialog")) return;      // the enlarged view only: on the page the wheel scrolls
+        e.preventDefault(); const c = v.cam, z0 = c.zoom || 1, z1 = Math.max(1, Math.min(12, z0 * Math.pow(2, -e.deltaY * (e.deltaMode ? 0.05 : 0.002))));
+        const r = cv.getBoundingClientRect(), Sm = Math.min(W, H), mx = e.clientX - r.left - W / 2, my = e.clientY - r.top - H / 2;
+        if (z1 === 1) { c.px = 0; c.py = 0; } else { c.px = (mx - (mx - (c.px || 0) * Sm) * z1 / z0) / Sm; c.py = (my - (my - (c.py || 0) * Sm) * z1 / z0) / Sm; }
+        c.zoom = z1; zoomed(c); showTip(null); }, { passive: false });
+      cv.addEventListener("dblclick", e => { if (!box.closest("dialog")) return; e.preventDefault(); const c = v.cam; c.zoom = 1; c.px = 0; c.py = 0; zoomed(c); });
       cv.addEventListener("pointerleave", () => { if (!drag) { setHover(null); showTip(null); } });
       views.push(v); setAuto(cam.auto, cam); return v;
     }
@@ -612,7 +623,7 @@
         pinned = pinned ? null : h ? Object.assign(h, { x, y }) : null;
         inside = h; draw(); show(h, x, y);
         if (pinned && HJ.u[h.r] != null) { const u = HJ.u[h.r]; S.heatSel = u; S.heatBloc = U.b[u]; S.sel = u; S.selBloc = U.b[u];
-          S.heatQ = YR[h.c] ? "v" + YR[h.c] : null; }      // the readout below shows the clicked column's election
+          S.heatQ = HJ.q[h.c].t || (YR[h.c] ? "v" + YR[h.c] : null); }      // the readout below shows the clicked column's election
         else { S.heatSel = null; S.heatBloc = null; }
         update(); });
       let t; new ResizeObserver(() => { clearTimeout(t); t = setTimeout(layout, 60); }).observe(host);
@@ -689,28 +700,34 @@
     function buildHeatVotes() {
       const host = document.createElement("div"); host.className = "ap-heat-votes"; host.hidden = true;
       pane("heat").appendChild(host);
-      const VT = (PF.votes || []).slice().sort((a, b) => a.k.localeCompare(b.k));   // every election, by year (v<year>)
+      const VT = PF.ballots ? PF.votes.slice() : (PF.votes || []).slice().sort((a, b) => a.k.localeCompare(b.k));   // every election, in date order
+      const yearOf = T => String(T.y || T.k.slice(1, 5)), YEARS = [...new Set(VT.map(yearOf))];
       let last, allOpen = false;
       host.addEventListener("click", e => {
         const t = e.target.closest("[data-hv]"); if (!t) return; e.stopPropagation();
-        if (t.dataset.hv === "all") allOpen = !allOpen; else S.heatQ = t.dataset.hv;
+        if (t.dataset.hv === "all") allOpen = !allOpen; else S.heatQ = t.dataset.hv;   // "y:<year>": every election that year
         last = null; update(); });
-      on(() => { const u = S.heatSel, T = u == null ? null : VT.find(x => x.k === S.heatQ) || VT[VT.length - 1], key = `${u}|${T && T.k}|${allOpen}`;
+      on(() => { const u = S.heatSel, q = S.heatQ || "";
+        const list = u == null ? [] : q.startsWith("y:") ? VT.filter(x => yearOf(x) === q.slice(2)) : [VT.find(x => x.k === q) || VT[VT.length - 1]];
+        const key = `${u}|${q}|${list.length && list[0].k}|${allOpen}`;
         if (key === last) return;
-        if (u == null || !VT.length) { host.hidden = true; host.innerHTML = ""; last = key; allOpen = false; return; }
+        if (u == null || !VT.length || !list.length) { host.hidden = true; host.innerHTML = ""; last = key; allOpen = false; return; }
         if (last && last.split("|")[0] !== String(u)) allOpen = false;   // a new unit opens on its one election
-        last = `${u}|${T.k}|${allOpen}`;
+        last = `${u}|${q}|${list[0].k}|${allOpen}`;
         const b = U.b[u], bl = B[b], p = PF.blocs[b], all = PF.place, who = esc(U.name[u]);
         const short = t => t.length > 24 ? t.slice(0, 23) + "…" : t;
-        const has = T.cats.some(c => G.shares[T.k] && G.shares[T.k][c[0]][u] != null);
-        const uv = Object.fromEntries(T.cats.map(c => [c[0], has ? (G.shares[T.k][c[0]][u] || 0) / 100 : 0]));
-        const yr = x => x.k.slice(1);
+        const yearMode = q.startsWith("y:"), yr = yearMode ? q.slice(2) : yearOf(list[0]);
+        const one = T => { const has = T.cats.some(c => G.shares[T.k] && G.shares[T.k][c[0]][u] != null);
+          const uv = Object.fromEntries(T.cats.map(c => [c[0], has ? (G.shares[T.k][c[0]][u] || 0) / 100 : 0]));
+          return `<section class="ap-hv-one">` + (yearMode ? `<h4>${T.t}</h4>` : "") + (has ? bar(uv, T.cats, "in " + who, esc(short(U.name[u]))) : `<p class="bp-note">No votes recorded here.</p>`) +
+            bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
+            `<ul class="bp-key">${T.cats.filter(c => all[T.k][c[0]] >= 0.005 || uv[c[0]] >= 0.005).map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${has ? pct(uv[c[0]]) : "&ndash;"}</b> <i>${pct(p[T.k][c[0]])} &middot; ${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>`; };
+        const head = yearMode ? (list.length > 1 ? `${yr}: all ${list.length} ${PF.ballots ? "ballots" : "elections"}` : list[0].t) : list[0].t;
         host.innerHTML = `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(G.pop[u] || 0).toLocaleString("en-US")} ${POPW}</p></div></header>` +
-          `<div class="ap-hv-head"><h4>${T.t}</h4>` + (VT.length > 1 ? `<button type="button" class="ap-hv-all" data-hv="all" aria-expanded="${allOpen}">${allOpen ? "Hide all elections" : "Show all elections"}</button>` : "") + `</div>` +
-          (allOpen ? `<div class="ap-hv-years" role="group" aria-label="Elections by year">${VT.map(x => `<button type="button" data-hv="${x.k}" title="${esc(x.t.replace(/<[^>]+>/g, ""))}" aria-pressed="${x.k === T.k}">${yr(x)}</button>`).join("")}</div>` : "") +
-          `<section class="ap-hv-one">` + (has ? bar(uv, T.cats, "in " + who, esc(short(U.name[u]))) : `<p class="bp-note">No votes recorded here.</p>`) +
-          bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
-          `<ul class="bp-key">${T.cats.filter(c => all[T.k][c[0]] >= 0.005 || uv[c[0]] >= 0.005).map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${has ? pct(uv[c[0]]) : "&ndash;"}</b> <i>${pct(p[T.k][c[0]])} &middot; ${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>` +
+          `<div class="ap-hv-head"><h4>${head}</h4>` + (VT.length > 1 ? `<button type="button" class="ap-hv-all" data-hv="all" aria-expanded="${allOpen}">${allOpen ? "Hide all elections" : "Show all elections"}</button>` : "") + `</div>` +
+          (allOpen ? `<div class="ap-hv-years" role="group" aria-label="Elections by year">${YEARS.map(y => { const n = VT.filter(x => yearOf(x) === y).length;
+            return `<button type="button" data-hv="y:${y}" title="${n} ${n === 1 ? "election" : "elections"} in ${y}" aria-pressed="${y === yr}">${y}</button>`; }).join("")}</div>` : "") +
+          `<div class="${yearMode && list.length > 1 ? "ap-hv-many" : ""}">${list.map(one).join("")}</div>` +
           `<p class="bp-note">Bold: this ${unitWord}; gray: bloc ${b} &middot; ${placeLab}.</p>`;
         host.hidden = false; });
     }
@@ -921,7 +938,9 @@
     let moved = null;
     const restore = () => { if (moved) { moved.home.appendChild(moved.el); if (moved.which === "map") mapApi.refit();
       if (moved.blocs) { moved.blocs.home.appendChild(moved.blocs.el); if (moved.blocs.view) { moved.blocs.view.cam = moved.blocs.cam; moved.blocs.view.dirty = true; } }
-      bigSlot.querySelectorAll(".ap-big-sub").forEach(x => x.remove()); moved = null; } };
+      bigSlot.querySelectorAll(".ap-big-sub, .ap-big-zhint").forEach(x => x.remove()); dlg.classList.remove("demog");
+      document.querySelectorAll(".ap-pca-rect").forEach(x => x.classList.remove("ap-pca-rect"));
+      views.forEach(w => { if (w.cam.zoom && w.cam.zoom !== 1 || w.cam.px || w.cam.py) { w.cam.zoom = 1; w.cam.px = 0; w.cam.py = 0; } w.dirty = true; }); moved = null; } };
     const bigStat = dlg.querySelector(".ap-big-stat");
     const median = a => { const b = a.filter(x => x != null).sort((x, y) => x - y); return b.length ? b[b.length >> 1] : null; };
     const statRow = (who, val, max, col, txt) => `<div class="ap-srow"><span class="ap-swho">${who}</span><span class="ap-sbar"><span style="width:${Math.max(0, Math.min(100, 100 * val / max))}%;background:${col}"></span></span><span class="ap-sval">${txt}</span></div>`;
@@ -996,9 +1015,10 @@
         const bel = document.getElementById("ap-pca"), bv = views.find(w => w.box === bel), dv = views.find(w => w.box === el);
         moved.blocs = { el: bel, home: document.querySelector('[data-slot="pca"]'), view: bv, cam: bv && bv.cam };
         if (bv && dv) { bv.cam = dv.cam; bv.dirty = true; setAuto(dv.cam.auto, dv.cam); }
-        bigSlot.classList.add("stack");
+        bigSlot.classList.add("stack"); dlg.classList.add("demog"); el.classList.add("ap-pca-rect"); bel.classList.add("ap-pca-rect");
         el.insertAdjacentHTML("beforebegin", `<p class="ap-big-sub">${esc(BIG[which].title)}</p>`);
         bigSlot.insertAdjacentHTML("beforeend", `<p class="ap-big-sub">Voting blocs</p>`); bigSlot.appendChild(bel);
+        bigSlot.insertAdjacentHTML("beforeend", `<p class="ap-big-zhint">Drag to turn &middot; scroll to zoom &middot; double-click to reset</p>`);
       }
       const t = which === "map" ? "Map" : which === "pca" ? "PCA and map" : BIG[which].title;
       document.getElementById("ap-big-title").textContent = `${D.title} · ${t}`;

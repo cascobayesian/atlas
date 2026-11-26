@@ -151,3 +151,11 @@
 .ap-big .ap-big-slot.pca.stack, .ap-big.prof .ap-big-slot.pca.stack { width: min(39vh, calc((96vw - 23rem) / 2)); display: flex; flex-direction: column; gap: .15rem; }
 .ap-big-slot.stack .ap-big-sub { margin: 0; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #555; }
 @media (max-width: 800px) { .ap-big .ap-big-slot.pca.stack { width: min(90vw, 30vh); } }
+
+/* enlarged demographic panel: the two PCAs take most of the width (each half the height), the map half its usual size */
+.ap-big.demog .ap-big-mapbox { width: min(39vh, calc((96vw - 23rem) / 4)); }
+.ap-big.demog.prof .ap-big-mapbox { width: min(39vh, calc((96vw - 36rem) / 4)); }
+.ap-big.demog .ap-big-slot.pca.stack, .ap-big.demog.prof .ap-big-slot.pca.stack { flex: 1 1 auto; width: auto; min-width: 0; }
+.ap-big-slot.stack .ap-pca-rect { height: calc((84vh - 3.6rem) / 2); }
+.ap-big-slot.stack .ap-big-zhint { margin: 0; font-size: .72rem; color: #777; text-align: right; }
+@media (max-width: 800px) { .ap-big.demog .ap-big-mapbox { width: min(90vw, 40vh); } .ap-big-slot.stack .ap-pca-rect { height: 45vh; } }

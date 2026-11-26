@@ -86,3 +86,5 @@ html[lang="ja"] .ap-heat-y span { transform: none; text-transform: none; letter-
 .ap-hv-years button:hover { background: #e8eff5; }
 .ap-hv-years button[aria-pressed="true"] { background: #1f5f7a; border-color: #1f5f7a; color: #fff; }
 .ap-hv-one { max-width: 42rem; }
+.ap-hv-many { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); gap: 1rem 2rem; }
+.ap-hv-many h4 { margin: .2rem 0 .35rem; font-size: .8rem; }
