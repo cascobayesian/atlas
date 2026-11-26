@@ -75,3 +75,14 @@ body.light .back:hover { color: var(--accent, #1f5f7a); }
 .ap-lang:hover, .ap-lang:focus-visible { background: #eef4f7; outline: none; }
 /* Japanese reads top to bottom: the heatmap's side label upright in vertical writing */
 html[lang="ja"] .ap-heat-y span { transform: none; text-transform: none; letter-spacing: .1em; }
+
+/* heatmap readout: one election, and on request a bar of every election by year */
+.ap-hv-head { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; margin: .6rem 0 .4rem; }
+.ap-hv-head h4 { margin: 0; }
+.ap-hv-all { font: inherit; font-size: .78rem; padding: .2rem .65rem; border: 1px solid #c9d2da; border-radius: 999px; background: #fff; color: #1f5f7a; cursor: pointer; }
+.ap-hv-all:hover, .ap-hv-all:focus-visible { background: #e8eff5; outline: none; }
+.ap-hv-years { display: flex; flex-wrap: wrap; gap: .3rem; margin: 0 0 .7rem; }
+.ap-hv-years button { font: inherit; font-size: .78rem; font-variant-numeric: tabular-nums; padding: .15rem .55rem; border: 1px solid #d5d9dd; border-radius: 4px; background: #f6f7f8; color: #333; cursor: pointer; }
+.ap-hv-years button:hover { background: #e8eff5; }
+.ap-hv-years button[aria-pressed="true"] { background: #1f5f7a; border-color: #1f5f7a; color: #fff; }
+.ap-hv-one { max-width: 42rem; }

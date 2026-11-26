@@ -602,7 +602,7 @@
       const pinUnit = u => {
         const r = rowOf.get(u);
         if (u == null || (pinned && HJ.u[pinned.r] === u)) { pinned = null; inside = null; show(null); S.heatSel = null; S.heatBloc = null; update(); return; }
-        S.heatSel = u; S.heatBloc = U.b[u]; S.sel = u; S.selBloc = U.b[u];
+        S.heatSel = u; S.heatBloc = U.b[u]; S.sel = u; S.selBloc = U.b[u]; S.heatQ = null;   // picked on the map: the latest election
         if (r == null) { pinned = null; show(null); update(); return; }   // not among the heatmap's sampled rows
         const g = gs.find(g => r >= g.r0 && r < g.r0 + g.n), [y0, rh] = rowY(r), cw = Lh.hw / nc;
         const x = (lastC + 0.5) * cw, y = y0 + rh / 2;
@@ -611,7 +611,8 @@
       over.addEventListener("click", e => { const [x, y] = pos(e), h = hit(x, y);
         pinned = pinned ? null : h ? Object.assign(h, { x, y }) : null;
         inside = h; draw(); show(h, x, y);
-        if (pinned && HJ.u[h.r] != null) { const u = HJ.u[h.r]; S.heatSel = u; S.heatBloc = U.b[u]; S.sel = u; S.selBloc = U.b[u]; }
+        if (pinned && HJ.u[h.r] != null) { const u = HJ.u[h.r]; S.heatSel = u; S.heatBloc = U.b[u]; S.sel = u; S.selBloc = U.b[u];
+          S.heatQ = YR[h.c] ? "v" + YR[h.c] : null; }      // the readout below shows the clicked column's election
         else { S.heatSel = null; S.heatBloc = null; }
         update(); });
       let t; new ResizeObserver(() => { clearTimeout(t); t = setTimeout(layout, 60); }).observe(host);
@@ -688,18 +689,28 @@
     function buildHeatVotes() {
       const host = document.createElement("div"); host.className = "ap-heat-votes"; host.hidden = true;
       pane("heat").appendChild(host);
-      const VT = (PF.votes || []).slice(-3);
-      let last;
-      on(() => { const u = S.heatSel; if (u === last) return; last = u;
-        if (u == null || !VT.length) { host.hidden = true; host.innerHTML = ""; return; }
+      const VT = (PF.votes || []).slice().sort((a, b) => a.k.localeCompare(b.k));   // every election, by year (v<year>)
+      let last, allOpen = false;
+      host.addEventListener("click", e => {
+        const t = e.target.closest("[data-hv]"); if (!t) return; e.stopPropagation();
+        if (t.dataset.hv === "all") allOpen = !allOpen; else S.heatQ = t.dataset.hv;
+        last = null; update(); });
+      on(() => { const u = S.heatSel, T = u == null ? null : VT.find(x => x.k === S.heatQ) || VT[VT.length - 1], key = `${u}|${T && T.k}|${allOpen}`;
+        if (key === last) return;
+        if (u == null || !VT.length) { host.hidden = true; host.innerHTML = ""; last = key; allOpen = false; return; }
+        if (last && last.split("|")[0] !== String(u)) allOpen = false;   // a new unit opens on its one election
+        last = `${u}|${T.k}|${allOpen}`;
         const b = U.b[u], bl = B[b], p = PF.blocs[b], all = PF.place, who = esc(U.name[u]);
         const short = t => t.length > 24 ? t.slice(0, 23) + "…" : t;
+        const has = T.cats.some(c => G.shares[T.k] && G.shares[T.k][c[0]][u] != null);
+        const uv = Object.fromEntries(T.cats.map(c => [c[0], has ? (G.shares[T.k][c[0]][u] || 0) / 100 : 0]));
+        const yr = x => x.k.slice(1);
         host.innerHTML = `<header class="bp-head">${swatch(bl, "lg")}<div><h3>${who}</h3><p>${esc(bl.name)} (bloc ${b}) &middot; ${(G.pop[u] || 0).toLocaleString("en-US")} ${POPW}</p></div></header>` +
-          `<div class="bp-grid">${VT.map(T => { const has = T.cats.some(c => G.shares[T.k] && G.shares[T.k][c[0]][u] != null);
-            const uv = Object.fromEntries(T.cats.map(c => [c[0], has ? (G.shares[T.k][c[0]][u] || 0) / 100 : 0]));
-            return `<section><h4>${T.t}</h4>` + (has ? bar(uv, T.cats, "in " + who, esc(short(U.name[u]))) : `<p class="bp-note">No votes recorded here.</p>`) +
-              bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
-              `<ul class="bp-key">${T.cats.filter(c => all[T.k][c[0]] >= 0.005 || uv[c[0]] >= 0.005).map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${has ? pct(uv[c[0]]) : "&ndash;"}</b> <i>${pct(p[T.k][c[0]])} &middot; ${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>`; }).join("")}</div>` +
+          `<div class="ap-hv-head"><h4>${T.t}</h4>` + (VT.length > 1 ? `<button type="button" class="ap-hv-all" data-hv="all" aria-expanded="${allOpen}">${allOpen ? "Hide all elections" : "Show all elections"}</button>` : "") + `</div>` +
+          (allOpen ? `<div class="ap-hv-years" role="group" aria-label="Elections by year">${VT.map(x => `<button type="button" data-hv="${x.k}" title="${esc(x.t.replace(/<[^>]+>/g, ""))}" aria-pressed="${x.k === T.k}">${yr(x)}</button>`).join("")}</div>` : "") +
+          `<section class="ap-hv-one">` + (has ? bar(uv, T.cats, "in " + who, esc(short(U.name[u]))) : `<p class="bp-note">No votes recorded here.</p>`) +
+          bar(p[T.k], T.cats, "in bloc " + b, "Bloc " + b) + bar(all[T.k], T.cats, "in " + placeLab, placeLab) +
+          `<ul class="bp-key">${T.cats.filter(c => all[T.k][c[0]] >= 0.005 || uv[c[0]] >= 0.005).map(c => `<li><span style="background:${c[2]}"></span>${c[1]} <b>${has ? pct(uv[c[0]]) : "&ndash;"}</b> <i>${pct(p[T.k][c[0]])} &middot; ${pct(all[T.k][c[0]])}</i></li>`).join("")}</ul></section>` +
           `<p class="bp-note">Bold: this ${unitWord}; gray: bloc ${b} &middot; ${placeLab}.</p>`;
         host.hidden = false; });
     }
