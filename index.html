@@ -53,6 +53,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 #ng-qkey small { display: block; color: var(--ng-muted); font-size: .76rem; line-height: 1.35; }
 .ng-grey { display: grid; grid-template-columns: 1.1rem 1fr; gap: .55rem; font-size: .84rem; color: var(--ng-muted); margin: .4rem 0 .2rem; }
 .ng-grey i { height: .9rem; border-radius: 2px; background: rgba(196,205,214,.22); border: 1px solid rgba(225,233,240,.3); }
+.ng-grey i.full { background: linear-gradient(90deg, #f0c9a6, #8fb3e6, #e58cb5); border: 0; }
+.ng-grey i.fit { background: #8f979e; border: 0; }
 .ng-grey i.wip { background: #c9d0d6; border-color: #c9d0d6; opacity: .8; }
 .ng-cities { display: inline-flex; align-items: center; gap: .5rem; margin: .5rem 0 1.2rem; padding: .6rem 1.2rem; border-radius: 999px;
              background: var(--ng-accent); color: #14110a; font-weight: 600; text-decoration: none; font-size: .95rem; transition: filter .15s, transform .15s; }
@@ -85,11 +87,13 @@ footer { color: var(--ng-muted); font-size: .8rem; margin-top: 1.4rem; }
 <h1>The Atlas of Voting Blocs</h1>
 <a class="ng-cities" href="cities.html">Explore the cities &rarr;</a>
 <div class="ng-stage">
-  <div class="ng-globe"><svg id="ng-globe" role="img" aria-label="Night globe: fitted countries coloured by their voting blocs, countries with work under way light grey, others translucent grey"></svg><div class="ng-tip" id="ng-tip" hidden></div>
+  <div class="ng-globe"><svg id="ng-globe" role="img" aria-label="Night globe: countries with full pages coloured by their voting blocs, other fitted countries in grey shades, countries with work under way light grey, others translucent grey"></svg><div class="ng-tip" id="ng-tip" hidden></div>
     <div class="ng-ctl"><button type="button" id="ng-zin" aria-label="Zoom in">+</button><button type="button" id="ng-zout" aria-label="Zoom out">&minus;</button><button type="button" id="ng-zreset" aria-label="Reset the view">&#8634;</button></div>
     <p class="ng-hint">Drag to turn &middot; Ctrl/Cmd-scroll, pinch or double-click to zoom &middot; click a coloured country for its blocs</p></div>
   <aside aria-label="Key">
     <h2>Key</h2>
+    <div class="ng-grey"><i class="full"></i><span>Blocs fitted, full country page</span></div>
+    <div class="ng-grey"><i class="fit"></i><span>Blocs fitted, full page to come</span></div>
     <div class="ng-grey"><i class="wip"></i><span>Work under way</span></div>
     <div class="ng-grey"><i></i><span>Not yet fitted</span></div>
     <h2 style="margin-top:1rem">Where the model has not run</h2>
@@ -112,6 +116,6 @@ footer { color: var(--ng-muted); font-size: .8rem; margin-top: 1.4rem; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="assets/world_countries.js?v=2"></script>
-<script src="assets/world_night.js?v=8"></script>
+<script src="assets/world_night.js?v=10"></script>
 </body>
 </html>
