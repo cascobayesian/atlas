@@ -94,11 +94,11 @@ const STARTED = [
   { name: "Slovenia", note: "polling stations matched to the 212 current municipalities, 2002–2026" },
   { name: "Turkey", note: "work begun" }
 ];
-const CANADA = { name: "Canada", key: "canada", title: "Canada", k: 15, k4: "assets/world_k4/canada.json",
+const CANADA = { name: "Canada", key: "canada", title: "Canada", k: 15, k4: "assets/world_k4/canada.json", model: "Dirichlet-multinomial mixture",
   data: "70,644 polling divisions, federal elections 2015–2025; full interactive panels",
   open: () => window.atlasOpen ? window.atlasOpen("canada") : (location.search = "?place=canada") };
 // Germany: full interactive panels (Germany/realign_2025/model/atlas_export_de.R); the globe shades its K = 5 blocs
-const GERMANY = { name: "Germany", key: "germany", title: "Germany", k: 10, k4: "assets/world_k4/germany.json", kShade: 5,
+const GERMANY = { name: "Germany", key: "germany", title: "Germany", k: 10, k4: "assets/world_k4/germany.json", kShade: 5, model: "Dirichlet-multinomial mixture",
   data: "10,754 municipalities, Bundestag elections 2017–2025; full interactive panels",
   open: () => window.atlasOpen ? window.atlasOpen("germany") : (location.search = "?place=germany") };
 const PANELS = [CANADA, GERMANY];   // countries with the full interactive panels

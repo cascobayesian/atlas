@@ -41,6 +41,16 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .ap-hc:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ap-hc[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .ap-hc-dots { display: inline-flex; }
+/* the buttons beside the place's name: statistical method above the colour scheme (and, for US places, a link to the scheme's page) */
+.ap-head-btns { display: flex; flex-direction: column; align-items: flex-end; gap: .4rem; margin-left: auto; }
+.ap-lang + .ap-head-btns { margin-left: 0; }
+.ap-method-btn, .ap-colors { display: inline-flex; align-items: center; padding: .4rem .85rem; border: 1px solid var(--accent); border-radius: 999px;
+         background: var(--paper); color: var(--accent); font: inherit; font-size: .88rem; font-weight: 500; cursor: pointer; text-decoration: none;
+         transition: background .15s, color .15s; }
+.ap-method-btn:hover, .ap-colors:hover { background: #eef4f7; }
+.ap-method-btn:focus-visible, .ap-colors:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ap-method-btn[hidden], .ap-colors[hidden] { display: none; }
+@media (max-width: 560px) { .ap-head-btns { align-items: flex-start; margin-left: 0; } }
 .ap-hc-dots i { width: .7rem; height: .7rem; border-radius: 50%; border: 1.5px solid var(--paper); margin-left: -.22rem; }
 .ap-hc-dots i:first-child { margin-left: 0; }
 .ap-hc[aria-pressed="true"] .ap-hc-dots i { border-color: var(--accent); }

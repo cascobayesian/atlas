@@ -28,7 +28,7 @@
     const main = document.querySelector("main"); main.className = "wrap";
     ["c-title", "c-sub", "c-why", "c-panels", "c-row", "c-detail"].forEach(id => $(id).hidden = true);
     main.insertAdjacentHTML("beforeend", `<div id="ap-mount"></div>`);
-    const V = "?v=25";
+    const V = "?v=26";
     return Promise.all(["https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css", "assets/bloc_profiles.css" + V, "assets/atlas.css" + V,
       "assets/site.css" + V, "assets/country_panel.css" + V].map(loadCSS))
       .then(() => loadJS("https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"))
@@ -37,10 +37,11 @@
       .then(() => { const L = LANGS[C.key]; if (!L) return;           // a second language: a button to switch, and the translation
         const on = new URLSearchParams(location.search).get("lang") === L.code, u = new URL(location.href);
         if (on) u.searchParams.delete("lang"); else u.searchParams.set("lang", L.code);
-        const hc = document.getElementById("ap-hc");
+        const hc = document.querySelector(".ap-head-btns");
         hc.insertAdjacentHTML("beforebegin", `<a class="ap-lang" href="${u.search}" lang="${on ? "en" : L.code}">${on ? "English" : L.label}</a>`);
         return on ? loadJS(L.file + V) : null; })
-      .then(() => { const ap = $("ap"); ap.dataset.place = C.key; if (C.state) ap.dataset.state = "1"; else ap.dataset.over = `assets/countries/${C.key}_us.json` + V; return loadJS("assets/atlas.js" + V); });
+      .then(() => { const ap = $("ap"); ap.dataset.place = C.key; if (C.model) ap.dataset.model = C.model; if (C.why) ap.dataset.why = C.why;
+        if (C.state) ap.dataset.state = "1"; else ap.dataset.over = `assets/countries/${C.key}_us.json` + V; return loadJS("assets/atlas.js" + V); });
   }
 
   // a US state (or any place with a data bundle but no country file) opens on its data bundle, with its own census panels

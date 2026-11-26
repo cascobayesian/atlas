@@ -707,11 +707,11 @@
       const box = pane("heat").querySelector(".ap-mini-map"), lab = pane("heat").querySelector(".ap-mini-name");
       const go = h => {
         const mm = new maplibregl.Map({ container: box, style: "https://tiles.openfreemap.org/styles/positron", interactive: true,
-          dragPan: COUNTRY, scrollZoom: COUNTRY, boxZoom: false, dragRotate: false, doubleClickZoom: COUNTRY, keyboard: COUNTRY, touchZoomRotate: COUNTRY, touchPitch: false,
+          dragPan: true, scrollZoom: true, boxZoom: false, dragRotate: false, doubleClickZoom: true, keyboard: true, touchZoomRotate: true, touchPitch: false,
           bounds: D.view || [[h.minLon, h.minLat], [h.maxLon, h.maxLat]], fitBoundsOptions: { padding: 6 }, attributionControl: { compact: true },
           preserveDrawingBuffer: /[?&]test/.test(location.search) });
         mm.once("load", () => mm.getContainer().querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
-        if (COUNTRY) { mm.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right"); mm.touchZoomRotate.disableRotation(); }
+        mm.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right"); mm.touchZoomRotate.disableRotation();
         mm.once("style.load", () => {
           const style = mm.getStyle();                // a quieter basemap: no place labels at this scale
           style.layers.filter(l => l.type === "symbol").forEach(l => mm.setLayoutProperty(l.id, "visibility", "none"));
@@ -975,10 +975,10 @@
       if (bigMap && !bigMapBox.hidden) bigMap.refit(); }
     function wireEnlarge(btn) { btn.addEventListener("click", () => {
       restore(); dialogBack(); S.dlgSel = null; S.dlgBloc = null; update();
-      const which = btn.dataset.target, el = document.getElementById(which === "map" ? "ap-map" : which === "pca" ? "ap-pca" : "ap-pca-" + which);
+      const which = btn.dataset.target === "map" ? "pca" : btn.dataset.target, el = document.getElementById(which === "map" ? "ap-map" : which === "pca" ? "ap-pca" : "ap-pca-" + which);
       moved = { el, home: document.querySelector(`[data-slot="${which}"]`), btn, which };
       bigSlot.className = "ap-big-slot " + (which === "map" ? "map" : "pca"); bigSlot.appendChild(el);
-      const t = which === "map" ? "Map" : which === "pca" ? "PCA" : BIG[which].title;
+      const t = which === "map" ? "Map" : which === "pca" ? "PCA and map" : BIG[which].title;
       document.getElementById("ap-big-title").textContent = `${D.title} · ${t}`;
       bigKey.innerHTML = BIG[which] ? BIG[which].key : ""; bigKey.hidden = !bigKey.innerHTML;
       dlg.showModal(); if (which === "map") mapApi.refit();
@@ -1020,6 +1020,33 @@
     hcBtn.hidden = false;
     let hcSaved = false; try { hcSaved = sessionStorage.getItem("atlas-hc") === "1"; } catch (e) {}
     if (hcSaved) setScheme(true);         // kept while moving between places in this visit; a new visit starts national
+    // ---- statistical method: a button above the colour-scheme button opens a short account of how this place's blocs were found ----
+    const mDlg = document.getElementById("ap-method"), mBtn = document.getElementById("ap-method-btn");
+    if (mDlg && mBtn) {
+      const US = !D.what, K = D.blocs.length, units = esc(D.unit), one = esc(unitWord), model = root.dataset.model || "";
+      const why = (root.dataset.why || "").split(/;\s*the globe/)[0].trim();
+      const data = US ? `${D.n_q} ballot questions and races` : esc(D.what);
+      const how = US
+        ? `<p>The model is a <b>beta-binomial mixture</b>. Each bloc has its own expected share of the vote on every question: the &ldquo;yes&rdquo; share on a ballot question, the Democratic share in a race. A ${one}&rsquo;s counts are binomial draws around its bloc&rsquo;s shares, with beta-distributed extra spread so that ${units} in the same bloc can differ from one another more than sampling alone would allow.</p>`
+        : /dirichlet/i.test(model)
+        ? `<p>The model is a <b>Dirichlet-multinomial mixture</b>. Each bloc has its own expected share for every party in every election. A ${one}&rsquo;s vote counts in an election are multinomial draws around its bloc&rsquo;s shares, with Dirichlet-distributed extra spread so that ${units} in the same bloc can differ from one another more than sampling alone would allow.</p>`
+        : `<p>The model is a <b>mixture model of the vote</b>. Each bloc has its own expected share for every party (or candidate) in every election, and each ${one} belongs to the bloc whose shares best account for its votes.</p>`;
+      const measure = U.measure === "probability";
+      mDlg.querySelector("#ap-method-title").textContent = `Statistical method · ${D.title}`;
+      mDlg.querySelector(".ap-method-body").innerHTML =
+        `<p>The ${K} blocs of ${esc(D.title)} are groups of ${units} that vote alike, found by fitting a mixture model to the votes of ${N.toLocaleString("en-US")} ${units}: ${data}.</p>` + how +
+        `<p>The model is fitted by expectation&ndash;maximization from several random starts. ${why ? `Number of blocs: ${esc(why)}.` : `The atlas shows the fit with ${K} blocs.`} ` +
+        (measure ? `Each ${one} is shown in the bloc it most probably belongs to under the fitted model.` : "") + `</p>` +
+        `<p>The PCA places each ${one} by its votes: the first three principal components` +
+        (D.pct ? ` (${D.pct.map(v => v.toFixed(1) + "%").join(", ")} of the variation)` : "") + `, colored by bloc. Distances in the PCA are a summary; the blocs come from the model, not from the PCA.</p>` +
+        `<p class="ap-method-more"><a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">More about the method &rarr;</a> &middot; ` +
+        `J. D. O&rsquo;Brien (2026), &ldquo;<a href="https://doi.org/10.1017/psrm.2025.10050">A Bayesian mixture model captures temporal and spatial structure of voting blocs within longitudinal referendum data</a>,&rdquo; <i>Political Science Research and Methods</i>.</p>`;
+      mBtn.addEventListener("click", () => mDlg.showModal());
+      mDlg.querySelector(".ap-big-close").addEventListener("click", () => mDlg.close());
+      mDlg.addEventListener("click", e => { if (e.target === mDlg) mDlg.close(); });
+      mBtn.hidden = false;
+      const cl = document.getElementById("ap-colors"); if (cl) cl.hidden = !US;   // the national colour scheme is the US one
+    }
     dlg.addEventListener("close", () => { if (dlg.open) return; const b = moved && moved.btn; restore(); dialogBack(); if (b) b.focus(); showTip(null); });
     update();
   }).catch(e => { root.insertAdjacentHTML("beforeend", `<p class="ap-hint">Could not load the data (${esc(e.message)}).</p>`); });

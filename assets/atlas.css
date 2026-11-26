@@ -60,6 +60,9 @@
 /* enlarge dialog */
 .ap-big { border: 0; border-radius: 8px; padding: 1rem 1.25rem 1.25rem; width: 96vw; max-width: 96vw; max-height: 96vh; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
 .ap-big::backdrop { background: rgba(20,20,20,.55); }
+.ap-big.ap-method { width: min(46rem, 94vw); line-height: 1.5; font-size: .95rem; }
+.ap-method p { margin: 0 0 .8rem; }
+.ap-method .ap-method-more { font-size: .85rem; color: #555; margin: 1rem 0 0; padding-top: .7rem; border-top: 1px solid #e3e3e3; }
 .ap-big header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: .5rem; }
 .ap-big h2 { margin: 0; border: 0; font-size: 1.2rem; }
 .ap-big-close { background: none; border: 0; font-size: 1.8rem; line-height: 1; cursor: pointer; color: #555; }
