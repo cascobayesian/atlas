@@ -1104,6 +1104,36 @@
       mBtn.hidden = false;
       const cl = document.getElementById("ap-colors"); if (cl) cl.hidden = !US;   // the national colour scheme is the US one
     }
+    // ---- data sources: a button beside the statistical method: where the votes and the census measures come from, and where the
+    // exact numbers are (data.json "sources" {votes, census, geometry} when a place gives them; otherwise its profile and census notes)
+    const sDlg = document.getElementById("ap-src"), sBtn = document.getElementById("ap-src-btn");
+    if (sDlg && sBtn) {
+      const US = !D.what, SRC = D.sources || {}, units = esc(D.unit), key = root.dataset.place || D.key || "";
+      const strip = t => String(t || "").trim();
+      const votes = strip(SRC.votes) || (!US && strip(PF.note0)) ||
+        `Precinct-level returns for every statewide ballot question and the presidential and U.S. Senate races, from the official results ` +
+        `published by the state (and, for some years, the Voting and Election Science Team&rsquo;s precinct files), moved onto the most recent ` +
+        `reliable precinct map by 2020 Census block population, so every election is counted on the same ${units}.`;
+      // a country's census note opens with its votes (already above): keep the census part
+      const cap = t => t ? t[0].toUpperCase() + t.slice(1) : t;
+      const census = strip(SRC.census) || (OV ? (OV.none ? "" : cap(`${strip(OV.note)} ${units}.`.replace(/^(?:&\w+;|[^;])*?\b(votes?|returns)\b(?:&\w+;|[^;])*;\s*/i, ""))) : note(units));
+      const geo = strip(SRC.geometry);
+      const repo = "https://github.com/cascobayesian/atlas";
+      sDlg.querySelector("#ap-src-title").textContent = `Data sources · ${D.title}`;
+      sDlg.querySelector(".ap-method-body").innerHTML =
+        `<h3>Election returns</h3><p>${votes}</p>` +
+        `<h3>Census and other statistics</h3><p>${census || `No census measures for these ${units} are in the atlas yet.`}</p>` +
+        (geo ? `<h3>Boundaries</h3><p>${geo}</p>` : "") +
+        `<h3>Bloc model</h3><p>The blocs, the PCA and every bloc and ${esc(placeLab)} average on this page are computed from these returns ` +
+        `(see <i>Statistical method</i>).</p>` +
+        `<h3>Exact data</h3><p>The numbers behind this page (each ${esc(unitWord)}&rsquo;s votes and census values, its bloc and the bloc profiles) are in ` +
+        `the atlas&rsquo;s data bundle, folder <code>data/${esc(key)}/</code>, on the <a href="${repo}/releases/tag/data">GitHub release &ldquo;data&rdquo;</a>; ` +
+        `the code that draws the page is in the <a href="${repo}">atlas repository on GitHub</a>.</p>`;
+      sBtn.addEventListener("click", () => sDlg.showModal());
+      sDlg.querySelector(".ap-big-close").addEventListener("click", () => sDlg.close());
+      sDlg.addEventListener("click", e => { if (e.target === sDlg) sDlg.close(); });
+      sBtn.hidden = false;
+    }
     dlg.addEventListener("close", () => { if (dlg.open) return; const b = moved && moved.btn; restore(); dialogBack(); if (b) b.focus(); showTip(null); });
     update();
   }).catch(e => { root.insertAdjacentHTML("beforeend", `<p class="ap-hint">Could not load the data (${esc(e.message)}).</p>`); });

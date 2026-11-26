@@ -220,3 +220,6 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .wm-big figure { margin: 0; }
 .wm-big img { display: block; width: 100%; height: auto; }
 .wm-big figcaption { font-size: .85rem; color: var(--slate); margin-top: .4rem; }
+/* the header buttons side by side: statistical method, data sources, colour scheme */
+.ap-head-btns { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center; max-width: 34rem; }
+@media (max-width: 560px) { .ap-head-btns { justify-content: flex-start; } }
