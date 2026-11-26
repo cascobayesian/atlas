@@ -2,7 +2,7 @@
 // (drafts/world_presentation_maps.R, map B): each fitted country in its own hue, its blocs (assets/world_k4/<key>.json,
 // b = 1 the largest) from deep (smallest) to pale (largest); countries without a fit translucent grey. A toggle colours
 // the countries without a fit by the quality of their election records (assets/world_quality.json, grades 1-4); countries
-// with work under way (STARTED) light grey; US states with atlas blocs one pink, the others grey. Only countries whose
+// with work under way (STARTED) light grey; US states with atlas blocs shaded by their blocs, all in the one US hue; the others grey. Only countries whose
 // page has the full template are coloured; other fitted countries are one grey.
 // The globe turns slowly only in its base view: a drag, a zoom or a click stops it, the reset button restores the base
 // view and the turning. Zoom with the on-map buttons, Ctrl/Cmd-wheel, a pinch or a double-click.
@@ -61,10 +61,11 @@
   Promise.all([
     fetch("assets/world-50m.json").then(r => r.json()),
     fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json").then(r => r.json()).catch(() => null),
+    fetch("assets/world_k4/us_states.json?v=4").then(r => r.ok ? r.json() : null).catch(() => null),
     fetch("assets/world_quality.json").then(r => r.json()).catch(() => ({})),
     Promise.all(ALL.map(c => fetch(c.k4).then(r => r.ok ? r.json() : null).catch(() => null))),
     Promise.all(ALL.map(c => fetch(`assets/countries/${c.key}.json`).then(r => r.ok ? r.json() : null).catch(() => null)))
-  ]).then(([WORLD, USA, QUAL, K4, PAGES]) => {
+  ]).then(([WORLD, USA, USB, QUAL, K4, PAGES]) => {
     QUALITY = QUAL;
     ALL.forEach((c, i) => { if (PAGES[i] && PAGES[i].panels) FULL.add(c.name); });
     const countries = topojson.feature(WORLD, WORLD.objects.countries).features;
@@ -80,7 +81,7 @@
     }).attr("fill-opacity", d => { const n = d.properties.name;
       return started.has(n) ? 0.8 : (showQuality && !fitBy.has(n) && n !== US_NAME && QUALITY[n]) ? 0.55 : 1; });
     paintLand();
-    // the United States: every state with atlas blocs in one pink, the rest grey
+    // the United States: every state with atlas blocs in the one US hue, shaded by its blocs; the rest grey
     if (USA) {
       const done = new Set(US_STATES);
       const g = svg.append("g").attr("class", "ng-us");
@@ -92,6 +93,25 @@
         .on("pointermove", (e, d) => showTip(e, `${d.properties.name}: ${done.has(d.properties.name) ? "voting blocs in the atlas" : "no bloc analysis yet"}`))
         .on("pointerleave", hideTip).on("click", (e, d) => { if (done.has(d.properties.name)) openState(d.properties.name); });
       layers.push(g);
+      // each fitted state's blocs, shaded as a country's blocs are, every state in the one US hue (assets/world_k4/us_states.json)
+      if (USB) {
+        const rw = gm => ({ ...gm, coordinates: gm.type === "Polygon" ? gm.coordinates.map(r => r.slice().reverse())
+          : gm.coordinates.map(p => p.map(r => r.slice().reverse())) });
+        // a collection of polygons (as the dissolve may leave) drawn as one multipolygon
+        const flat = gm => { if (!gm) return null; if (/Polygon$/.test(gm.type)) return gm;
+          const ps = (gm.geometries || []).flatMap(x => x.type === "Polygon" ? [x.coordinates] : x.type === "MultiPolygon" ? x.coordinates : []);
+          return ps.length ? { type: "MultiPolygon", coordinates: ps } : null; };
+        const gb = svg.append("g").attr("class", "ng-usb");
+        gb.selectAll("path").data(USB.features.map(f => ({ ...f, geometry: flat(f.geometry) })).filter(f => f.geometry).map(f => ({ ...f, geometry: rw(f.geometry) }))).join("path")
+          .attr("fill", f => blocColour(US_NAME, f.properties.b, f.properties.nb)).style("cursor", "pointer")
+          .on("pointermove", (e, f) => showTip(e, `${f.properties.state}: bloc ${f.properties.b} of ${f.properties.nb}, ${Math.round(100 * f.properties.share)}% of units`))
+          .on("pointerleave", hideTip).on("click", (e, f) => openState(f.properties.state));
+        layers.push(gb);
+        // the state lines again on top, so neighbouring states stay apart
+        const gl = svg.append("path").datum(topojson.mesh(USA, USA.objects.states, (a, b) => a !== b)).attr("class", "ng-us-lines")
+          .attr("fill", "none").attr("stroke", "rgba(5,9,15,.55)").attr("stroke-width", 0.45);
+        layers.push({ selectAll: () => gl });
+      }
     }
     // fitted countries: their blocs
     ALL.forEach((c, i) => { const fc = K4[i]; if (!fc) return;
