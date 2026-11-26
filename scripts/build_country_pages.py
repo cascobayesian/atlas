@@ -27,7 +27,7 @@ CONFIG = {
                      unit="municipalities", heat="Bulgaria/maps/heatmap_parliament_2013-2026.png"),
     "colombia": dict(profiles="Colombia/model/vote_fits/bloc_profiles_K19.csv", long=dict(cat="category", share="mean_share", n="n_municipalities"),
                      unit="municipalities"),
-    "croatia":  dict(panels=True, bundle=True, unit="municipalities"),
+    "croatia":  dict(panels=True, bundle=True, unit="polling stations"),
     "czechia":  dict(panels=True, bundle=True, unit="polling districts"),
     "hungary":  dict(blocs="Hungary/model/fits_2014-2026/blocs_K15.csv", profiles="Hungary/model/fits_2014-2026/bloc_profiles_K15.csv",
                      unit="settlements", heat="Hungary/maps/heatmap_parliament_1990-2026.png"),

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Croatia census overlay for the country page: assets/countries/croatia_us.json (see build_country_us.py).
 
-Units are the 556 municipalities (gradovi and općine) of 2024 in data/croatia/data.json. Measures from the 2021 census
+Units are the 6,793 polling stations of 2024 in data/croatia/data.json (units.mun = each station's municipality). Each
+station carries its municipality's 2021 census composition; residents are the municipal population shared out by 2024
+registered voters (Croatia/model/atlas_export_stations.R). Measures from the 2021 census
 (DZS, by town/municipality) in Croatia/data/municipal_covariates_2021.csv (Croatia/code/covariates_build.R): ethnicity,
 religion, education (15+), age and birthplace; density from the same file. Six demographic PCAs in two rows:
 ethnic minorities, not religious, density; tertiary education, age 65+, born abroad.
@@ -24,6 +26,7 @@ def croatia():
     D = json.load(open(os.path.join(REPO, "data", key, "data.json"), encoding="utf-8"))
     ids = D["units"]["id"]
     pop = [p or 0 for p in D["units"]["pop"]]
+    mun = D["units"]["mun"]
     cv = {r["municipality_id"]: r for r in read_csv(os.path.join(C, "Croatia/data/municipal_covariates_2021.csv"))}
     topics = [
         dict(k="ethnicity", t="Ethnicity, 2021 census", cats=ETH),
@@ -35,7 +38,7 @@ def croatia():
     ]
 
     def comp(i):
-        r = cv.get(ids[i])
+        r = cv.get(mun[i])
         if r is None: return {}
         g = lambda k: num(r.get(k)) or 0.0
         croat, serb = g("eth_croats_pct"), g("eth_serbs_pct")
@@ -63,8 +66,9 @@ def croatia():
         dict(k="born", t="Born abroad", kind="ramp", topic="born", cats=["abroad"], max=30, stops=RB_RAMP,
              h="Born abroad, 2021 census", tip="born abroad (2021)"),
     ]
-    note = ("Sabor votes from the State Electoral Commission (DIP) open data, summed to the 2024 municipalities; ethnicity, religion, "
-            "education, age and birthplace from the 2021 census (DZS, by town and municipality), summed over")
+    note = ("Sabor votes from the State Electoral Commission (DIP) open data, by 2024 polling station; ethnicity, religion, "
+            "education, age and birthplace from the 2021 census (DZS, by town and municipality: every station carries its "
+            "municipality&rsquo;s figures, so composition does not vary within a municipality), summed over")
     build(key, ids, pop, topics, comp, panels, note, "The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too.")
 
 
