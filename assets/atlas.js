@@ -738,6 +738,7 @@
     }
     function buildMiniMap() {
       const box = pane("heat").querySelector(".ap-mini-map"), lab = pane("heat").querySelector(".ap-mini-name");
+      if (D.nomap) { box.innerHTML = NOINFO(`No ${unitWord} boundaries in the atlas yet.`); return; }
       const go = h => {
         const mm = new maplibregl.Map({ container: box, style: "https://tiles.openfreemap.org/styles/positron", interactive: true,
           dragPan: true, scrollZoom: true, boxZoom: false, dragRotate: false, doubleClickZoom: true, keyboard: true, touchZoomRotate: true, touchPitch: false,
@@ -841,7 +842,8 @@
           `<figure><div class="ap-pca ap-pca-sm" id="ap-pca-cbloc"></div><figcaption>Its place in the PCA: the bloc in front, the rest gray.</figcaption></figure></div><div class="cb-rest"></div>`;
         makePCA(document.getElementById("ap-pca-cbloc"), i => U.b[i] === S.selBloc ? B[U.b[i]].color : "#c9c9c9", null, pcaClick(false), false);
         const go = h => { cbMap = liveMap(host.querySelector(".cb-map"), h, u => unitTip(u), selectUnit, null, { fade: false, only: () => S.selBloc }); };
-        if (header) go(header); else archive.getHeader().then(go);
+        if (D.nomap) host.querySelector(".cb-map").innerHTML = NOINFO(`No ${unitWord} boundaries in the atlas yet.`);
+        else if (header) go(header); else archive.getHeader().then(go);
       }
       if (host.dataset.b === String(b)) return; host.dataset.b = b;
       const p = PF.blocs[b], all = PF.place, bl = B[b], d = CEN && CEN.desc ? CEN.desc[bl.name] : null;
@@ -943,6 +945,7 @@
     const paintBig = () => { if (bigMap && bigMap.loadedUnits && bigWhich) bigMap.setPaintProperty("units-fill", "fill-color", bigColor(bigWhich)); };
     const showBigMap = which => {
       bigWhich = which; bigMapBox.hidden = false;
+      if (D.nomap) { bigMapBox.querySelector(".ap-big-map").innerHTML = NOINFO(`No ${unitWord} boundaries in the atlas yet.`); return; }
       if (!bigMap) {
         const go = h => { bigMap = liveMap(bigMapBox.querySelector(".ap-big-map"), h,
           u => unitTip(u, bigWhich !== "pca" && demogTip[bigWhich] ? demogTip[bigWhich](u) : ""), u => dialogUnit(u), () => { paintBig(); bigMap.refit(); }, { fade: false, outlines: true, scope: "dlg" });
