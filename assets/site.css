@@ -223,3 +223,9 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 /* the header buttons side by side: statistical method, data sources, colour scheme */
 .ap-head-btns { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center; max-width: 34rem; }
 @media (max-width: 560px) { .ap-head-btns { justify-content: flex-start; } }
+/* header buttons as a 2 x 2 grid of equal, square-cornered buttons (an empty cell where a place has only three) */
+.ap-head-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; width: min(27rem, 100%); max-width: none; }
+.ap-head-btns > .ap-method-btn, .ap-head-btns > .ap-hc, .ap-head-btns > .ap-colors { width: 100%; justify-content: center; text-align: center;
+  border-radius: 4px; min-height: 2.3rem; box-sizing: border-box; }
+.ap-head-btns > [hidden] { display: none; }
+@media (max-width: 560px) { .ap-head-btns { width: 100%; } }
