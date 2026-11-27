@@ -19,6 +19,8 @@
   const loadCSS = href => new Promise(ok => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.onload = ok; l.onerror = ok; document.head.appendChild(l); });
   const loadJS = src => new Promise((ok, no) => { const t = document.createElement("script"); t.src = src; t.onload = ok; t.onerror = () => no(new Error(src)); document.body.appendChild(t); });
   const LANGS = { japan: { code: "ja", label: "日本語", file: "assets/i18n_ja.js" } };   // pages with a translation
+  // a note under the title, shown from the start while the data load (pages with very many units)
+  const NOTICES = { brazil: "Brazil is divided into about 94,000 polling places, so the maps, the PCA and the other panels may take a while to load and can be slow to respond, especially on phones and older computers." };
 // an animated figure: the .gif names in the data are played as the looping .mp4 beside it (scripts/gif2mp4.sh)
   const anim = (src, alt, extra = "") => /\.gif$/.test(src) ? `<video src="${src.replace(/\.gif$/, ".mp4")}" autoplay loop muted playsinline aria-label="${alt}"${extra}></video>`
     : `<img src="${src}" alt="${alt}" loading="lazy"${extra}>`;
@@ -36,7 +38,9 @@
       "assets/site.css" + V, "assets/country_panel.css" + V].map(loadCSS))
       .then(() => loadJS("https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"))
       .then(() => loadJS("https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"))
-      .then(() => loadJS("assets/panel.js" + V)).then(() => loadJS("assets/high_contrast.js" + V))
+      .then(() => loadJS("assets/panel.js" + V)).then(() => { if (NOTICES[C.key]) $("ap-head").insertAdjacentHTML("afterend",
+        `<p class="ap-notice" role="note" style="margin:.4rem 0 .9rem;padding:.55rem .8rem;border-left:3px solid #c98a00;background:#fff7e0;color:#4a3b00;font-size:.92rem">${esc(NOTICES[C.key])}</p>`); })
+      .then(() => loadJS("assets/high_contrast.js" + V))
       .then(() => { const L = LANGS[C.key]; if (!L) return;           // a second language: a button to switch, and the translation
         const on = new URLSearchParams(location.search).get("lang") === L.code, u = new URL(location.href);
         if (on) u.searchParams.delete("lang"); else u.searchParams.set("lang", L.code);
