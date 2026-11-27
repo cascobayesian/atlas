@@ -9,7 +9,8 @@ set -euo pipefail
 cd "${0:A:h}/.."
 [[ -f data/places.json ]] || { echo "no data/places.json; run the export first" >&2; exit 1; }
 stamp=atlas-data.$(date -u +%Y%m%dT%H%M%SZ); tmp=$(mktemp -d)
-tar -czf $tmp/bundle.tar.gz -C data .
+scripts/gif2mp4.sh                     # the pages play MP4s; the GIFs stay out of the bundle
+tar -czf $tmp/bundle.tar.gz --exclude="*.gif" -C data .
 ls -lh $tmp/bundle.tar.gz
 (cd $tmp && shasum -a 256 bundle.tar.gz > $stamp.complete && split -b 90m -a 2 bundle.tar.gz $stamp.part- && rm bundle.tar.gz)   # marker holds the checksum
 gh release view data >/dev/null 2>&1 || gh release create data --title "Atlas data" --notes "Data bundle for the published atlas (replaced on each export)."

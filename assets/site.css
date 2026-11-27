@@ -176,7 +176,7 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .wm-country h2 { font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif; font-size: 1.5rem; margin: 0 0 .3rem; }
 .wm-country p { font-size: .92rem; color: var(--slate); margin: 0 0 1rem; max-width: 52rem; }
 .wm-country figure { margin: 0 0 1.4rem; }
-.wm-country img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); background: #fff; }
+.wm-country img, .wm-country video { display: block; width: 100%; height: auto; border: 1px solid var(--rule); background: #fff; }
 .wm-country figcaption { font-size: .82rem; color: var(--slate); margin-top: .35rem; }
 /* below the globe */
 .wm-section { margin: 2.4rem 0; }
@@ -218,7 +218,7 @@ h2.ap-place-name { font-size: 1.7rem; margin: 0; line-height: 1.2; }
 .wm-big-head h2 { font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif; font-size: 1.2rem; margin: 0; }
 .wm-big-close { font-size: 1.6rem; line-height: 1; padding: 0 .4rem; border: 0; background: none; cursor: pointer; color: var(--ink); }
 .wm-big figure { margin: 0; }
-.wm-big img { display: block; width: 100%; height: auto; }
+.wm-big img, .wm-big video { display: block; width: 100%; height: auto; }
 .wm-big figcaption { font-size: .85rem; color: var(--slate); margin-top: .4rem; }
 /* the header buttons side by side: statistical method, data sources, colour scheme */
 .ap-head-btns { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center; max-width: 34rem; }

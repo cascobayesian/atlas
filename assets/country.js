@@ -19,6 +19,9 @@
   const loadCSS = href => new Promise(ok => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.onload = ok; l.onerror = ok; document.head.appendChild(l); });
   const loadJS = src => new Promise((ok, no) => { const t = document.createElement("script"); t.src = src; t.onload = ok; t.onerror = () => no(new Error(src)); document.body.appendChild(t); });
   const LANGS = { japan: { code: "ja", label: "日本語", file: "assets/i18n_ja.js" } };   // pages with a translation
+// an animated figure: the .gif names in the data are played as the looping .mp4 beside it (scripts/gif2mp4.sh)
+  const anim = (src, alt, extra = "") => /\.gif$/.test(src) ? `<video src="${src.replace(/\.gif$/, ".mp4")}" autoplay loop muted playsinline aria-label="${alt}"${extra}></video>`
+    : `<img src="${src}" alt="${alt}" loading="lazy"${extra}>`;
   function panelPage(C) {
     document.title = `${C.title} · Atlas of Voting Blocs`;
     document.body.classList.add("light");
@@ -28,7 +31,7 @@
     const main = document.querySelector("main"); main.className = "wrap";
     ["c-title", "c-sub", "c-why", "c-panels", "c-row", "c-detail"].forEach(id => $(id).hidden = true);
     main.insertAdjacentHTML("beforeend", `<div id="ap-mount"></div>`);
-    const V = "?v=42";
+    const V = "?v=43";
     return Promise.all(["https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css", "assets/bloc_profiles.css" + V, "assets/atlas.css" + V,
       "assets/site.css" + V, "assets/country_panel.css" + V].map(loadCSS))
       .then(() => loadJS("https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"))
@@ -59,7 +62,7 @@
     // ---- the four tiles
     const tiles = [
       { id: "pca", title: "Rotating PCA", sub: C.demog_list ? `+ ${C.demog_list.length} demographic views` : C.demog ? "+ demographics" : "", ok: !!C.pca,
-        body: () => `<div class="pic dark"><img src="${C.pca.src}" alt="${esc(C.title)}: rotating principal components coloured by bloc" loading="lazy"></div>` },
+        body: () => `<div class="pic dark">${anim(C.pca.src, `${esc(C.title)}: rotating principal components coloured by bloc`)}</div>` },
       { id: "blocs", title: "Blocs", sub: B ? `${B.blocs.length} blocs` : "", ok: !!B,
         body: () => `<ul class="blist">${B.blocs.map(b => `<li>${badge(b)}<span><span class="nm">${esc(cap(b.name) || "Bloc " + b.b)}</span>` +
           `${b.share != null ? ` <span class="tp" style="display:inline">· ${pct(b.share)} of ${esc(C.unit)}</span>` : ""}` +
@@ -75,11 +78,11 @@
       (t.ok ? t.body() + `<span class="open-tag">Click to open &darr;</span>` : `<div class="none">Not yet in the atlas for ${esc(C.title)}.</div>`) + `</button>`).join("");
 
     // ---- the expanded view below the row: one at a time
-    const fig = (f, dark) => `<figure><div class="frame"${dark ? ' style="background:#0a1018"' : ""}><img src="${f.src}" alt="${esc(f.cap)}" loading="lazy"></div><figcaption>${esc(f.cap)}</figcaption></figure>`;
+    const fig = (f, dark) => `<figure><div class="frame"${dark ? ' style="background:#0a1018"' : ""}>${anim(f.src, esc(f.cap))}</div><figcaption>${esc(f.cap)}</figcaption></figure>`;
     const detail = {
       pca: () => fig(C.pca, true) + (C.demog ? `<h3 style="margin-top:.4rem">Demographics</h3>` + fig(C.demog) : "") +
         (C.demog_list ? `<h3 style="margin-top:.4rem">Demographics</h3><p class="note" style="margin:-.3rem 0 .8rem">${esc(C.demog_note)}</p>` +
-          `<div class="gal">${C.demog_list.map(f => `<figure><div class="frame" style="background:#0a1018"><img src="${f.src}" alt="${esc(f.title)}" loading="lazy"></div>` +
+          `<div class="gal">${C.demog_list.map(f => `<figure><div class="frame" style="background:#0a1018">${anim(f.src, esc(f.title))}</div>` +
             `<figcaption><b style="color:#eef1f4">${esc(f.title)}.</b> ${esc(f.cap)}</figcaption></figure>`).join("")}</div>` : ""),
       blocs: () => `<div class="btable-wrap"><table class="btable"><thead><tr><th>Bloc</th><th>Name</th><th class="num">${esc(C.unit)}</th><th class="num">Share</th>` +
         B.elections.map(e => `<th>${esc(elLabel(e))}: top lists</th>`).join("") + `</tr></thead><tbody>` +

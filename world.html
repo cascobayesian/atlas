@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="assets/bloc_profiles.css">
 <link rel="stylesheet" href="assets/atlas_heatmap.css">
 <link rel="stylesheet" href="assets/atlas.css">
-<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/site.css?v=2">
 <script>try { if (sessionStorage.getItem("atlas-scroll") && /[?&]place=/.test(location.search)) document.documentElement.classList.add("restoring"); } catch (e) {}</script>
 <style>.restoring body { visibility: hidden; }</style>
 </head>
@@ -52,7 +52,7 @@
 <div id="ap-mount"></div>
 <dialog class="wm-big" id="wm-big" aria-labelledby="wm-big-title">
   <div class="wm-big-head"><h2 id="wm-big-title"></h2><button type="button" class="wm-big-close" aria-label="Close" onclick="this.closest('dialog').close()">&times;</button></div>
-  <figure><img alt="" src=""><figcaption></figcaption></figure>
+  <figure><video autoplay loop muted playsinline></video><figcaption></figcaption></figure>
 </dialog>
 
 <div class="wm-stats" id="wm-stats"></div>
@@ -88,7 +88,7 @@
 <script src="assets/panel.js"></script>
 <script src="assets/us_map.js"></script>
 <script src="assets/high_contrast.js"></script>
-<script src="assets/atlas.js"></script>
+<script src="assets/atlas.js?v=43"></script>
 <script src="assets/world.js"></script>
 <script src="assets/world_heat.js"></script>
 <script src="assets/world_countries.js?v=3"></script>
@@ -100,6 +100,10 @@ function closePlace() {
   ["ap-head", "ap", "ap-subpanel", "ap-tip"].forEach(id => { const e = document.getElementById(id); if (e) e.hidden = true; });
   const dlg = document.getElementById("ap-big"); if (dlg && dlg.open) dlg.close();
 }
+// an animated figure: the .gif names in the data are played as the looping .mp4 beside it (scripts/gif2mp4.sh)
+const anim = (src, alt, extra = "") => /\.gif$/.test(src) ? `<video src="${src.replace(/\.gif$/, ".mp4")}" autoplay loop muted playsinline aria-label="${alt}"${extra}></video>`
+  : `<img src="${src}" alt="${alt}" loading="lazy"${extra}>`;
+document.getElementById("wm-big").addEventListener("close", e => { const v = e.target.querySelector("video"); v.removeAttribute("src"); v.load(); });
 function showCountry(c, scroll = true) {
   closePlace();
   const box = document.getElementById("wm-country");
@@ -109,12 +113,12 @@ function showCountry(c, scroll = true) {
   // a figure named "heat.json" is drawn as the clickable heatmap (assets/world_heat.js)
   // a third element { open, cap } makes the figure a button that opens assets/world/<key>_<open> in a dialog
   if (c.figs) box.innerHTML = head + c.figs.map(([f, cap, more], i) => (f === "heat.json" ? `<figure><div class="wm-heat" data-src="assets/world/${c.key}_${f}"></div>` :
-    more ? `<figure><button type="button" class="wm-open" data-i="${i}" aria-label="Open: ${esc(more.cap)}"><img src="assets/world/${c.key}_${f}" alt="${esc(c.title)}: ${esc(cap)}" loading="lazy"><span class="wm-open-tag">Click for demographics</span></button>` :
-    `<figure><img src="assets/world/${c.key}_${f}" alt="${esc(c.title)}: ${esc(cap)}" loading="lazy">`) +
+    more ? `<figure><button type="button" class="wm-open" data-i="${i}" aria-label="Open: ${esc(more.cap)}">${anim(`assets/world/${c.key}_${f}`, `${esc(c.title)}: ${esc(cap)}`)}<span class="wm-open-tag">Click for demographics</span></button>` :
+    `<figure>${anim(`assets/world/${c.key}_${f}`, `${esc(c.title)}: ${esc(cap)}`)}`) +
     `<figcaption>${esc(cap)}</figcaption></figure>`).join("");
   if (c.figs) box.querySelectorAll(".wm-open").forEach(btn => btn.addEventListener("click", () => {
     const more = c.figs[+btn.dataset.i][2], dlg = document.getElementById("wm-big");
-    dlg.querySelector("img").src = `assets/world/${c.key}_${more.open}`; dlg.querySelector("img").alt = `${c.title}: ${more.cap}`;
+    const v = dlg.querySelector("video"); v.src = `assets/world/${c.key}_${more.open}`.replace(/\.gif$/, ".mp4"); v.setAttribute("aria-label", `${c.title}: ${more.cap}`);
     dlg.querySelector("figcaption").textContent = more.cap; dlg.querySelector("h2").textContent = `${c.title} · demographics`;
     dlg.showModal(); }));
   if (c.figs && window.worldHeat) box.querySelectorAll(".wm-heat").forEach(h => window.worldHeat(h, h.dataset.src));

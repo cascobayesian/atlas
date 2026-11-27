@@ -660,7 +660,7 @@
     };
 
     // ---- subpanels: one at a time, chosen by tab or by what was clicked ----
-    // a place can bring a series of rendered GIFs (G.gifs: { base, note, items: [{ k, t, cap }] }, files <base><k>.gif / .png),
+    // a place can bring a series of rendered GIFs (G.gifs: { base, note, items: [{ k, t, cap }] }, files <base><k>.mp4 / .png),
     // e.g. Canada's turning PCA coloured by census shares; it gets its own tab after Demographics, or with G.gifs.pane = "demog"
     // it is the Demographics tab (in place of the live panels)
     const GIFS_IN_DEMOG = !!(G.gifs && G.gifs.items && G.gifs.items.length && G.gifs.pane === "demog");
@@ -683,16 +683,16 @@
         `<span class="ap-gif-count" aria-live="polite"></span>` +
         `<button type="button" class="ap-gif-nav" data-d="1" aria-label="Next GIF">&rsaquo;</button>` +
         `<button type="button" class="ap-gif-play" aria-pressed="false">Play the series</button></div>` +
-        `<img class="ap-gif-img" alt=""><figcaption></figcaption></figure>` +
+        `<video class="ap-gif-img" autoplay loop muted playsinline></video><figcaption></figcaption></figure>` +
         `<ol class="ap-gif-list">${L.map((x, i) => `<li><button type="button" data-i="${i}"><img src="${src(x, "png")}" alt="" loading="lazy"><span>${esc(x.t)}</span></button></li>`).join("")}</ol></div>` +
         (S2.note ? `<p class="ap-note">${S2.note}</p>` : "");
       const img = host.querySelector(".ap-gif-img"), cap = host.querySelector("figcaption"), cnt = host.querySelector(".ap-gif-count");
       const btns = [...host.querySelectorAll(".ap-gif-list button")], play = host.querySelector(".ap-gif-play");
       let cur = 0, timer = null, want = null;
-      // the still (small) goes up at once so the picture always matches the caption; the GIF (several MB) replaces it once loaded
+      // the still is the poster, so the picture always matches the caption; the video (the GIF re-encoded, scripts/gif2mp4.sh) plays once loaded
       const show = i => { cur = (i + L.length) % L.length; const x = L[cur];
-        img.src = src(x, "png"); const g = new Image(); want = g; g.onload = () => { if (want === g) img.src = g.src; }; g.src = src(x, "gif");
-        img.alt = `Turning PCA of the ${D.unit}, coloured by ${x.t}`;
+        img.poster = src(x, "png"); img.src = src(x, "mp4");
+        img.setAttribute("aria-label", `Turning PCA of the ${D.unit}, coloured by ${x.t}`);
         cap.innerHTML = `<b>${esc(x.t)}.</b> ${esc(x.cap || "")}`; cnt.textContent = `${cur + 1} / ${L.length}`;
         btns.forEach((b, j) => b.setAttribute("aria-current", String(j === cur))); };
       const stop = () => { clearInterval(timer); timer = null; play.setAttribute("aria-pressed", "false"); play.textContent = "Play the series"; };

@@ -39,7 +39,7 @@ h1 { font-family: "IBM Plex Serif", serif; font-weight: 600; font-size: clamp(1.
            display: flex; justify-content: space-between; align-items: baseline; }
 .tile h2 small { text-transform: none; letter-spacing: 0; color: var(--ng-muted); font-weight: 400; font-size: .78rem; }
 .pic { flex: 1; display: flex; align-items: center; justify-content: center; background: var(--ng-paper); border-radius: 6px; overflow: hidden; min-height: 17rem; }
-.pic img { width: 100%; height: 17rem; object-fit: contain; display: block; }
+.pic img, .pic video { width: 100%; height: 17rem; object-fit: contain; display: block; }
 .pic.dark { background: #0a1018; }
 .none { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--ng-muted); font-size: .9rem; text-align: center; padding: 1rem;
         border: 1px dashed var(--ng-line); border-radius: 6px; }
@@ -55,7 +55,7 @@ h1 { font-family: "IBM Plex Serif", serif; font-weight: 600; font-size: clamp(1.
 .detail h3 button { background: none; border: 1px solid #4a5d6e; color: var(--ng-ink); border-radius: 6px; cursor: pointer; font: inherit; font-size: .85rem; padding: .2rem .6rem; }
 .detail figure { margin: 0 0 1.4rem; }
 .detail figure .frame { background: var(--ng-paper); border-radius: 8px; padding: .5rem; }
-.detail figure img { width: 100%; height: auto; display: block; }
+.detail figure img, .detail figure video { width: 100%; height: auto; display: block; }
 .detail figcaption { color: var(--ng-muted); font-size: .88rem; line-height: 1.45; margin-top: .45rem; max-width: 75rem; }
 .detail .heatbox { background: #fff; color: #111; border-radius: 8px; padding: .6rem; }
 .btable-wrap { overflow-x: auto; }
@@ -87,6 +87,6 @@ table.btable { border-collapse: collapse; font-size: .84rem; min-width: 100%; }
 <section class="detail" id="c-detail" hidden aria-live="polite"></section>
 </main>
 <script src="assets/world_heat.js?v=2"></script>
-<script src="assets/country.js?v=42"></script>
+<script src="assets/country.js?v=43"></script>
 </body>
 </html>
