@@ -81,6 +81,7 @@
   <div class="wrap"><a href="https://cascobayesian.github.io/research/mapping-voting-blocs.html">About the method</a> &middot;
     Basemap &copy; OpenFreeMap, OpenMapTiles, OpenStreetMap.</div>
 </footer>
+<script src="assets/host.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
@@ -88,7 +89,7 @@
 <script src="assets/panel.js"></script>
 <script src="assets/us_map.js"></script>
 <script src="assets/high_contrast.js"></script>
-<script src="assets/atlas.js?v=43"></script>
+<script src="assets/atlas.js?v=45"></script>
 <script src="assets/world.js"></script>
 <script src="assets/world_heat.js"></script>
 <script src="assets/world_countries.js?v=3"></script>
@@ -101,7 +102,7 @@ function closePlace() {
   const dlg = document.getElementById("ap-big"); if (dlg && dlg.open) dlg.close();
 }
 // an animated figure: the .gif names in the data are played as the looping .mp4 beside it (scripts/gif2mp4.sh)
-const anim = (src, alt, extra = "") => /\.gif$/.test(src) ? `<video src="${src.replace(/\.gif$/, ".mp4")}" autoplay loop muted playsinline aria-label="${alt}"${extra}></video>`
+const anim = (src, alt, extra = "") => (src = atlasData(src)) && /\.gif$/.test(src) ? `<video src="${src.replace(/\.gif$/, ".mp4")}" autoplay loop muted playsinline aria-label="${alt}"${extra}></video>`
   : `<img src="${src}" alt="${alt}" loading="lazy"${extra}>`;
 document.getElementById("wm-big").addEventListener("close", e => { const v = e.target.querySelector("video"); v.removeAttribute("src"); v.load(); });
 function showCountry(c, scroll = true) {
@@ -112,20 +113,20 @@ function showCountry(c, scroll = true) {
   // a country with its own list of figures: [file in assets/world/ after "<key>_", caption]
   // a figure named "heat.json" is drawn as the clickable heatmap (assets/world_heat.js)
   // a third element { open, cap } makes the figure a button that opens assets/world/<key>_<open> in a dialog
-  if (c.figs) box.innerHTML = head + c.figs.map(([f, cap, more], i) => (f === "heat.json" ? `<figure><div class="wm-heat" data-src="assets/world/${c.key}_${f}"></div>` :
+  if (c.figs) box.innerHTML = head + c.figs.map(([f, cap, more], i) => (f === "heat.json" ? `<figure><div class="wm-heat" data-src="${atlasData(`assets/world/${c.key}_${f}`)}"></div>` :
     more ? `<figure><button type="button" class="wm-open" data-i="${i}" aria-label="Open: ${esc(more.cap)}">${anim(`assets/world/${c.key}_${f}`, `${esc(c.title)}: ${esc(cap)}`)}<span class="wm-open-tag">Click for demographics</span></button>` :
     `<figure>${anim(`assets/world/${c.key}_${f}`, `${esc(c.title)}: ${esc(cap)}`)}`) +
     `<figcaption>${esc(cap)}</figcaption></figure>`).join("");
   if (c.figs) box.querySelectorAll(".wm-open").forEach(btn => btn.addEventListener("click", () => {
     const more = c.figs[+btn.dataset.i][2], dlg = document.getElementById("wm-big");
-    const v = dlg.querySelector("video"); v.src = `assets/world/${c.key}_${more.open}`.replace(/\.gif$/, ".mp4"); v.setAttribute("aria-label", `${c.title}: ${more.cap}`);
+    const v = dlg.querySelector("video"); v.src = atlasData(`assets/world/${c.key}_${more.open}`).replace(/\.gif$/, ".mp4"); v.setAttribute("aria-label", `${c.title}: ${more.cap}`);
     dlg.querySelector("figcaption").textContent = more.cap; dlg.querySelector("h2").textContent = `${c.title} · demographics`;
     dlg.showModal(); }));
   if (c.figs && window.worldHeat) box.querySelectorAll(".wm-heat").forEach(h => window.worldHeat(h, h.dataset.src));
   else box.innerHTML = head +
-    `<figure><img src="assets/world/${c.key}_map.png" alt="Map of ${esc(c.title)}'s ${c.k} voting blocs" loading="lazy">` +
+    `<figure><img src="${atlasData(`assets/world/${c.key}_map.png`)}" alt="Map of ${esc(c.title)}'s ${c.k} voting blocs" loading="lazy">` +
     `<figcaption>Bloc map, K = ${c.k}.</figcaption></figure>` +
-    (c.pca ? `<figure><img src="assets/world/${c.key}_pca.png" alt="${esc(c.title)}: units on their first principal coordinates, coloured by bloc" loading="lazy">` +
+    (c.pca ? `<figure><img src="${atlasData(`assets/world/${c.key}_pca.png`)}" alt="${esc(c.title)}: units on their first principal coordinates, coloured by bloc" loading="lazy">` +
       `<figcaption>Principal coordinates of the units' vote shares, coloured by bloc.</figcaption></figure>` : "");
   box.hidden = false;
   try { const u = new URL(location.href); u.searchParams.delete("place"); u.searchParams.set("country", c.key); history.replaceState(null, "", u); } catch (e) {}
@@ -151,8 +152,8 @@ function fillPage(Q) {
     [byG(4).length + byG(3).length, "more countries with good or excellent records", "var(--wm-q4)"]
   ].map(([n, t, c]) => `<div class="wm-stat" style="--c:${c}"><b>${n}</b><span>${esc(t)}</span></div>`).join("");
   const cards = [{ key: "us", name: "United States of America", title: "United States", k: null, data: `${US_STATES.length} states and 22 cities and counties, from ballot measures and races`, img: "assets/us_map.png", open: openUS },
-    { ...CANADA, img: "assets/world/canada_map.png", pos: "left top" }, { ...GERMANY, img: "assets/world/germany_map.png" }]
-    .concat(FITTED.map(c => ({ ...c, img: `assets/world/${c.key}_map.png` })));
+    { ...CANADA, img: atlasData("assets/world/canada_map.png"), pos: "left top" }, { ...GERMANY, img: atlasData("assets/world/germany_map.png") }]
+    .concat(FITTED.map(c => ({ ...c, img: atlasData(`assets/world/${c.key}_map.png`) })));
   const host = document.getElementById("wm-cards");
   cards.forEach(c => { const b = document.createElement("button"); b.type = "button"; b.className = "wm-card";
     b.innerHTML = `<div class="pic"><img src="${c.img}" alt="" loading="lazy"${c.pos ? ` style="object-position:${c.pos}"` : ""}></div>` +

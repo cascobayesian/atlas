@@ -54,7 +54,7 @@
   const open = c => { stopSpin(); location.href = `country.html?c=${c.key}`; };
   // US states count as countries: a state with atlas blocs opens its own page (country.html?c=<state key>, data/places.json)
   let STATE_KEY = {};
-  fetch("data/places.json").then(r => r.ok ? r.json() : []).then(l => { STATE_KEY = Object.fromEntries(l.map(p => [p.title, p.key])); }).catch(() => {});
+  fetch(atlasData("data/places.json")).then(r => r.ok ? r.json() : []).then(l => { STATE_KEY = Object.fromEntries(l.map(p => [p.title, p.key])); }).catch(() => {});
   const openState = n => { const k = STATE_KEY[n]; if (!k) return; stopSpin(); location.href = `country.html?c=${k}`; };
   const Q = ["", "poor: not usable", "limited", "good", "excellent: ready to go"];
 

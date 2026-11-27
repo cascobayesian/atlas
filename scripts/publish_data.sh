@@ -1,4 +1,5 @@
 #!/bin/zsh
+# RETIRED: the data is now served from Cloudflare R2; use scripts/publish_place.sh (see README). Kept as a fallback.
 # Bundle data/ (written by Local.Political.Data/code/atlas/proto/01_export.R and the country exporters with
 # ATLAS_OUT=<this repo>/data), upload it to the "data" release, and republish the site.
 # The bundle goes up in 90 MB parts named atlas-data.<stamp>.part-aa, -ab, ..., then a marker atlas-data.<stamp>.complete;

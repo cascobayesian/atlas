@@ -7,13 +7,26 @@ Each place's panel (rotating PCA, bloc list, map, referendum heatmap, demographi
 in the browser from data, with MapLibre and PMTiles for the maps.
 
 - `index.html`, `assets/` — the page and its code. `?place=<key>` picks a place.
-- `data/` — not in git. Written by `code/atlas/proto/01_export.R` in the Local.Politics project
-  (`ATLAS_OUT=<this repo>/data`, with `SITE_DIR` set to a checkout of the site that has `files/images/research/atlas-fused/`), bundled and uploaded by `scripts/publish_data.sh` to the `data` release.
-  The Publish workflow combines the two on every push or upload.
+- `data/<key>/` and `assets/world/` — the data and the world page's figures. Not in git and not in the GitHub Pages
+  deploy: they are served from the Cloudflare R2 bucket `atlas-data`, at <https://votingblocatlas.org/>, which mirrors
+  these paths. `assets/host.js` holds that address; the pages fetch through its `atlasData(path)`. Add `?localdata`
+  to any page's URL to read them from the local checkout instead.
+  `data/` is written by `code/atlas/proto/01_export.R` in the Local.Politics project and the country exporters
+  (`ATLAS_OUT=<this repo>/data`); `assets/world/` figures are copied from the country projects.
 
-Animations are played as looping MP4s, not GIFs: `scripts/gif2mp4.sh` converts every `assets/world/*.gif` and
-`data/*/gifs/*.gif` that is newer than its `.mp4` (needs ffmpeg, or `pip install imageio-ffmpeg`). Run it before
-committing new `assets/world` figures; `publish_data.sh` runs it itself. The GIFs stay local (git and the bundle skip them).
+### Publishing
 
-To serve the data from elsewhere (e.g. a Cloudflare R2 bucket), set `data-data` on `#ap` in `index.html`
-to that bucket's URL.
+- **Code and pages:** commit and push to `main`. The Publish workflow deploys them (a few tens of MB).
+- **A place's data:** `scripts/publish_place.sh <key> [<key> ...]` mirrors `data/<key>/` to the bucket (only changed
+  files; files removed locally are removed there) and uploads `data/places.json`. `--world` does `assets/world/`,
+  `--all` does everything. Visitors see the new files within ten minutes (cache lifetime). Nothing is redeployed.
+- **Adding a country:** export to `data/<key>/` (and figures to `assets/world/`), `scripts/publish_place.sh <key>`
+  (and `--world`), then add it to `assets/world_countries.js` / `assets/countries/` and push.
+- Needs `rclone` (here `~/bin/rclone`) with a remote `r2` (`rclone config`: s3, provider Cloudflare, the R2 S3 API
+  endpoint without the bucket name, an Object Read & Write token for the bucket, `no_check_bucket = true`).
+- Animations play as looping MP4s, not GIFs: `scripts/gif2mp4.sh` converts every GIF newer than its `.mp4` (needs
+  ffmpeg, or `pip install imageio-ffmpeg`); `publish_place.sh` runs it and never uploads GIFs.
+- Bucket settings, in the Cloudflare dashboard (R2 → atlas-data → Settings): the custom domain, and a CORS policy
+  allowing GET/HEAD from `https://cascobayesian.github.io` (and `http://localhost:8765` for testing) with the
+  `Range` header, exposing `Content-Range`, `Content-Length`, `ETag` and `Accept-Ranges`.
+- `scripts/publish_data.sh` (the old single bundle on the `data` release) is retired; the release is kept as a backup.

@@ -22,7 +22,7 @@
   // a note under the title, shown from the start while the data load (pages with very many units)
   const NOTICES = { brazil: "Brazil is divided into about 94,000 polling places, so the maps, the PCA and the other panels may take a while to load and can be slow to respond, especially on phones and older computers." };
 // an animated figure: the .gif names in the data are played as the looping .mp4 beside it (scripts/gif2mp4.sh)
-  const anim = (src, alt, extra = "") => /\.gif$/.test(src) ? `<video src="${src.replace(/\.gif$/, ".mp4")}" autoplay loop muted playsinline aria-label="${alt}"${extra}></video>`
+  const anim = (src, alt, extra = "") => (src = atlasData(src)) && /\.gif$/.test(src) ? `<video src="${src.replace(/\.gif$/, ".mp4")}" autoplay loop muted playsinline aria-label="${alt}"${extra}></video>`
     : `<img src="${src}" alt="${alt}" loading="lazy"${extra}>`;
   function panelPage(C) {
     document.title = `${C.title} · Atlas of Voting Blocs`;
@@ -52,7 +52,7 @@
   }
 
   // a US state (or any place with a data bundle but no country file) opens on its data bundle, with its own census panels
-  const asState = () => fetch(`data/${key}/data.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  const asState = () => fetch(atlasData(`data/${key}/data.json`)).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(D => ({ key, title: D.title, panels: true, state: true }));
   fetch(`assets/countries/${key}.json`).then(r => r.ok ? r.json() : asState()).then(C => {
     if (C.panels) return panelPage(C);
@@ -72,9 +72,9 @@
           `${b.share != null ? ` <span class="tp" style="display:inline">· ${pct(b.share)} of ${esc(C.unit)}</span>` : ""}` +
           `<span class="tp">${esc(elLabel(last))}: ${(b.top[last] || []).slice(0, 2).map(([l, s]) => `${esc(l)} ${pct(s)}`).join(", ")}</span></span></li>`).join("")}</ul>` },
       { id: "map", title: "Map", sub: C.more_maps.length ? `+ ${C.more_maps.length} more` : "", ok: !!C.map,
-        body: () => `<div class="pic"><img src="${C.map.src}" alt="${esc(C.title)}: bloc map" loading="lazy"></div>` },
+        body: () => `<div class="pic"><img src="${atlasData(C.map.src)}" alt="${esc(C.title)}: bloc map" loading="lazy"></div>` },
       { id: "heat", title: "Heatmap", sub: "", ok: !!C.heat,
-        body: () => C.heat.src ? `<div class="pic"><img src="${C.heat.src}" alt="${esc(C.title)}: heatmap of vote shares by unit" loading="lazy"></div>`
+        body: () => C.heat.src ? `<div class="pic"><img src="${atlasData(C.heat.src)}" alt="${esc(C.title)}: heatmap of vote shares by unit" loading="lazy"></div>`
           : `<div class="pic"><span style="color:#333;font-size:.9rem;padding:1rem;text-align:center">Interactive heatmap: one row per ${esc(C.unit.replace(/s$/, ""))}, grouped by bloc.</span></div>` }
     ];
     $("c-row").innerHTML = tiles.map(t => `<button type="button" class="tile" data-id="${t.id}" aria-expanded="false" aria-controls="c-detail"${t.ok ? "" : " disabled"}>` +
@@ -95,7 +95,7 @@
         `</tbody></table></div><p class="note">Each bloc's mean vote shares (its fitted profile) in each election, top three lists. Blocs numbered as on the map` +
         `${B.blocs.some(b => b.colour) ? ", in the map's colours" : ""}; ${B.blocs.some(b => b.name) ? "names are interpretations." : "unnamed blocs are numbered."}</p>`,
       map: () => fig(C.map) + C.more_maps.map(f => fig(f)).join(""),
-      heat: () => C.heat.src ? fig(C.heat) + `<p class="note"><a href="${C.heat.src}" target="_blank" rel="noopener">Open the heatmap full size</a></p>`
+      heat: () => C.heat.src ? fig(C.heat) + `<p class="note"><a href="${atlasData(C.heat.src)}" target="_blank" rel="noopener">Open the heatmap full size</a></p>`
         : `<div class="heatbox"><div class="wm-heat" id="c-heat"></div></div><p class="note">${esc(C.heat.cap)}</p>`
     };
     const title = { pca: "Rotating PCA", blocs: "The blocs", map: "Bloc map", heat: "Heatmap" };

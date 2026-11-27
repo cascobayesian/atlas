@@ -1,6 +1,6 @@
-# Publish the atlas to GitHub Pages: the pages and code from this repo, plus the data bundle
-# (atlas-data.tar.gz, in parts, on the "data" release, uploaded by scripts/publish_data.sh). The data stays out of git,
-# so re-exports replace the bundle instead of adding to the history.
+# Publish the atlas's pages and code to GitHub Pages.  The data (data/<key>/ and assets/world/) is not in git or in
+# this deploy: it is served from the Cloudflare R2 bucket behind votingblocatlas.org (assets/host.js), uploaded place
+# by place with scripts/publish_place.sh, so a deploy is a few tens of MB however many places the atlas holds.
 name: Publish
 on:
   push:
@@ -21,22 +21,8 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch the data bundle
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # scripts/publish_data.sh uploads the bundle as atlas-data.<stamp>.part-aa, -ab, ... and then a marker
-          # atlas-data.<stamp>.complete; use the newest complete set (older layouts: unstamped parts, or one whole file)
-          gh release download data --pattern 'atlas-data*' --dir /tmp/bundle
-          cd /tmp/bundle
-          stamp=$(ls *.complete 2>/dev/null | sed 's/\.complete$//' | sort | tail -1)
-          if [ -n "$stamp" ]; then cat "$stamp".part-* > /tmp/atlas-data.tar.gz
-          elif ls atlas-data.tar.gz.part-* >/dev/null 2>&1; then cat atlas-data.tar.gz.part-* > /tmp/atlas-data.tar.gz
-          else mv atlas-data.tar.gz /tmp/atlas-data.tar.gz; fi
-          cd "$GITHUB_WORKSPACE"
-          mkdir -p data && tar -xzf /tmp/atlas-data.tar.gz -C data
-          rm -rf scripts .gitignore README.md
-          du -sh .
+      - name: Drop what the site does not serve
+        run: rm -rf scripts drafts .gitignore README.md && du -sh .
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
