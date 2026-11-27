@@ -14,6 +14,12 @@ const FITTED = [
   { name: "Bosnia and Herz.", key: "bosnia", title: "Bosnia and Herzegovina", k: 8, k4: "assets/world_k4/bosnia.json", model: "Dirichlet-multinomial mixture",
     data: "142 municipalities, House of Representatives elections 2010–2026, votes by party family",
     why: "K = 8 has the lowest BIC of K = 5–10", pca: true },
+  { name: "Brazil", key: "brazil", title: "Brazil", k: 15, k4: "assets/world_k4/brazil.json", model: "Dirichlet-multinomial mixture",
+    data: "93,725 polling places of 2026 (2018 and 2022 results placed on 2026 places), presidential first rounds 2018, 2022 and 2026, candidates with at least 1% nationally plus Other and Blank",
+    why: "K = 15 (ten EM starts; one reaches the best fit; every bloc holds at least 3% of polling places, the smallest 3.1%; larger K not yet fitted); the globe shades four groups of the K = 15 blocs along the PT–PL spectrum (blocs 1–4, 5–7, 8–11, 12–15), each municipality taking the group with most of its 2026 votes",
+    figs: [
+      ["map.png", "Bloc map, K = 15: the Voronoi catchments of the 2026 polling places, clipped to the state outlines, filled with their bloc's colour. Blocs numbered by 2026 PT minus PL share, most PT first; the names are drafts."],
+      ["pca.gif", "Rotating Jensen–Shannon principal coordinates (landmark MDS) of the polling places' first-round vote shares 2018–2026, coloured by the K = 15 blocs. PC1 (71%) runs from PT to PL; PC2 (9%) is the Missão vote of 2026; PC3 (3%) blank votes."]] },
   { name: "Bulgaria", key: "bulgaria", title: "Bulgaria", k: 10, k4: "assets/world_k4/bulgaria.json", model: "Dirichlet-multinomial mixture",
     data: "265 municipalities, 11 parliamentary elections 2013–2026",
     why: "K = 10 has the best BIC of K = 2–10 and passes the 3% rule (BIC still falling)", pca: false },
