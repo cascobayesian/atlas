@@ -15,7 +15,7 @@
   const root = document.getElementById("ap"), qp = root.dataset.place || new URLSearchParams(location.search).get("place");
   const COUNTRY = root.dataset.mode === "country";
   // where the data lives: data/ next to the page, or another host (e.g. a Cloudflare R2 bucket) set on #ap's data-data
-  const DATA = root.dataset.data || atlasData("data/");   // assets/host.js
+  const DATA = atlasData(root.dataset.data || "data/");   // assets/host.js maps data/ to the R2 bucket
   // no place chosen: the page is just the US map (assets/us_map.js); clicking a place reloads with ?place=<key>
   if (!(qp && /^[a-z_]+$/.test(qp))) return;
   const base = `${DATA}${qp}/`;
