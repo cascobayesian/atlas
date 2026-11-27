@@ -120,7 +120,12 @@
       const placeShare = (T, cats) => cats.reduce((s, c) => s + (PF.place[T][c] || 0), 0);
       G.col = G.col || {}; G.val = G.val || {}; G.tipfmt = G.tipfmt || {};
       G.panels = OV.panels.map(p => {
-        if (p.kind === "keep") return { ...old[p.k], t: p.t, key: old[p.k].key.replace(/<p>[\s\S]*?<\/p>/g, "") };
+        if (p.kind === "keep") {                    // a panel from demog.json; p.stops (0 to p.max) recolours it
+          const o = old[p.k], key = o.key.replace(/<p>[\s\S]*?<\/p>/g, "");
+          if (!p.stops) return { ...o, t: p.t, key };
+          G.col[p.k] = G.val[p.k].map(x => x == null ? "#bdbdbd" : at(p.stops, x / p.max));
+          return { ...o, t: p.t, key: key.replace(/background:linear-gradient\([^"]*\)/, "background:" + grad(p.stops)) };
+        }
         if (p.kind === "dens") {                    // ranked within the country, as the states are
           const v = U.id.map((_, i) => G.pop[i] > 0 && G.dens[i] != null ? G.dens[i] : null);
           const s = v.filter(x => x != null).sort((a, b) => a - b), n = s.length;
@@ -967,7 +972,7 @@
     const demogExpr = {};
     const bigColor = which => which === "pca" ? color : (demogExpr[which] = demogExpr[which] ||
       ["match", ["get", "u"], ...U.id.flatMap((_, i) => [i, G.col[which][i]]), "#bdbdbd"]);
-    const paintBig = () => { if (bigMap && bigMap.loadedUnits && bigWhich) { bigMap.setPaintProperty("units-fill", FC, bigColor(bigWhich)); bigMap.paintMunis(bigWhich === "pca" ? color : "#e4e6e8"); } };
+    const paintBig = () => { if (bigMap && bigMap.loadedUnits && bigWhich) { bigMap.setPaintProperty("units-fill", FC, bigColor(bigWhich)); bigMap.paintMunis(color); } };
     const showBigMap = which => {
       bigWhich = which; bigMapBox.hidden = false;
       if (D.nomap) { bigMapBox.querySelector(".ap-big-map").innerHTML = NOINFO(`No ${unitWord} boundaries in the atlas yet.`); return; }

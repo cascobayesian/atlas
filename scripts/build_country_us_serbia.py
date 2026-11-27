@@ -61,13 +61,13 @@ def serbia():
              note="Colours mix in proportion to each group&rsquo;s share of the municipality&rsquo;s residents (2022 census)."),
         dict(k="tert", t="University degree", kind="ramp", topic="education", cats=["tert"], max=40, stops=RB_RAMP,
              h="Residents 15+ with a university degree, municipality (2022 census)", tip="with a university degree (municipality)"),
-        dict(k="stu", t="Studentska lista, 2026", kind="keep"),
+        dict(k="stu", t="Studentska lista, 2026", kind="keep", stops=RB_RAMP, max=80),   # red (low) to blue (high)
     ]
     note = ("National Assembly votes from RIK&rsquo;s polling-station results, moved onto the 2026 polling stations; ethnicity, religion, "
             "education and unemployment from the 2022 census and the 2014 development groups (RZS), by municipality, so every station takes its "
             "municipality&rsquo;s values; weighted by 2026 registered voters, summed over")
     build(key, ids, pop, topics, comp, panels, note, "The same points and the same turning view as the PCA above. Hover a bloc in the list to bring it forward here too. "
-          "Census measures are municipal, so all of a municipality&rsquo;s stations share a value; density is the municipality&rsquo;s. "
+          "On the map, municipalities are filled with their main bloc, as on the bloc map above; the dots carry the measure. Census measures are municipal, so all of a municipality&rsquo;s stations share a value; density is the municipality&rsquo;s. "
           "Gray: Kosovo&rsquo;s stations (not enumerated in 2022).")
 
 
