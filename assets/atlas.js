@@ -164,13 +164,6 @@
             .sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, x]) => `${l} ${x}%`).join(" &middot; ")}</div>`;
           return { k: p.k, t: p.t, key: `<h4>${p.h || p.t}</h4><ul class="ap-race">${T.cats.map((c, j) => (p.skip || []).includes(c[0]) ? "" : `<li><span style="background:${cc[j]}"></span>${c[1]}</li>`).join("")}</ul>` };
         }
-        if (p.kind === "val") {                     // a measure that is not a share (OV.vals[p.k], e.g. income): p.lo to p.hi, log scale if p.log
-          const v = OV.vals[p.k], L = p.log ? Math.log : (x => x);
-          const pos = x => Math.max(0, Math.min(1, (L(Math.max(x, p.lo)) - L(p.lo)) / (L(p.hi) - L(p.lo))));
-          G.col[p.k] = v.map(x => x == null ? "#bdbdbd" : at(p.stops, pos(x))); G.val[p.k] = v; G.tipfmt[p.k] = p.tip;
-          return { k: p.k, t: p.t, key: `<h4>${p.h}</h4><div class="ap-ramp" style="background:${grad(p.stops)}"></div>` +
-            `<div class="ap-ticks">${p.ticks.map((x, j) => `<span style="left:${(100 * pos(x)).toFixed(1)}%">${(p.prefix || "") + x.toLocaleString("en-US")}${j === p.ticks.length - 1 && x >= p.hi ? "+" : ""}</span>`).join("")}</div>` };
-        }
         // ramp: the sum of some of the topic's shares, on one scale from 0 to p.max
         const v = U.id.map((_, i) => sh[p.cats[0]][i] == null ? null : p.cats.reduce((s, c) => s + (sh[c][i] || 0), 0));
         G.col[p.k] = v.map(x => x == null ? "#bdbdbd" : at(p.stops, x / p.max)); G.val[p.k] = v; G.tipfmt[p.k] = `<b>{v}%</b> ${p.tip}`;

@@ -48,8 +48,8 @@ def composition(rows, parts):
     return None if s <= 0 else {c: 100 * x / s for c, x in v}
 
 
-def build(key, units, pop, topics, comp, panels, note, demog_note, vals=None):
-    """comp(i) -> {topic: {cat: percent}} or {} for unit i; vals: {panel key: [value per unit | None]} for kind "val" panels"""
+def build(key, units, pop, topics, comp, panels, note, demog_note):
+    """comp(i) -> {topic: {cat: percent}} or {} for unit i"""
     P = json.load(open(os.path.join(REPO, "data", key, "profile.json"), encoding="utf-8"))
     D = json.load(open(os.path.join(REPO, "data", key, "data.json"), encoding="utf-8"))
     N = len(units)
@@ -73,7 +73,6 @@ def build(key, units, pop, topics, comp, panels, note, demog_note, vals=None):
     vote = P["topics"][-1]                                                     # the last election, as profile.json has it
     out = dict(topics=topics, vote=vote["k"], shares=shares, place=agg("place"),
                blocs={b: agg(b) for b in P["blocs"]}, panels=panels, note=note, demog_note=demog_note)
-    if vals: out["vals"] = vals
     f = os.path.join(OUT, f"{key}_us.json")
     json.dump(out, open(f, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     cover = sum(any(shares[T["k"]][T["cats"][0][0]][i] is not None for T in topics) for i in range(N))
